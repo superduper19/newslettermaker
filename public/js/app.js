@@ -35,6 +35,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Load from Supabase (DB) — overwrites if server has data
+    window.updateStateHintFromDiagnostic = async function () {
+        const hintEl = document.getElementById('state-load-hint');
+        const textEl = document.getElementById('state-load-hint-text');
+        if (!hintEl || !textEl) return;
+        try {
+            const res = await fetch('/api/state/diagnostic');
+            const d = await res.json().catch(() => ({}));
+            if (d.configured && d.sessionsCount && !d.dbError) {
+                hintEl.style.display = 'none';
+                return;
+            }
+            hintEl.style.display = 'block';
+            if (!res.ok) {
+                textEl.textContent = 'Cannot reach server. Check deployment and try Refresh from server.';
+                return;
+            }
+            if (!d.hasUrl) {
+                textEl.textContent = 'Server: SUPABASE_URL is not set in Vercel → Settings → Environment Variables. Add it and redeploy.';
+                return;
+            }
+            if (!d.hasKey) {
+                textEl.textContent = 'Server: No Supabase key set. Add SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) in Vercel → Environment Variables, then redeploy.';
+                return;
+            }
+            if (d.initError) {
+                textEl.textContent = 'Server: ' + d.initError + ' Check Vercel env vars and redeploy.';
+                return;
+            }
+            if (d.dbError) {
+                textEl.textContent = 'DB error: ' + d.dbError + ' (table: ' + (d.table || 'newsletter_state') + '). Check Supabase table exists and RLS allows read.';
+                return;
+            }
+            textEl.textContent = 'No sessions in database yet. Click Refresh from server after saving Week 1 from the app or running the upload script.';
+        } catch (e) {
+            hintEl.style.display = 'block';
+            textEl.textContent = 'Cannot reach /api/state. Is the server running? On Vercel, ensure the app is deployed with the Express server (see docs).';
+        }
+    };
+
     (async function loadFromDb() {
         try {
             const [wrRes, sessRes] = await Promise.all([
@@ -44,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const hintEl = document.getElementById('state-load-hint');
             if (sessRes.status === 503 || wrRes.status === 503) {
                 if (hintEl) hintEl.style.display = 'block';
+                await window.updateStateHintFromDiagnostic();
             }
             if (wrRes.ok) {
                 const { value } = await wrRes.json();
@@ -63,10 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
                     if (hintEl) hintEl.style.display = 'none';
                 }
+            } else if (hintEl && hintEl.style.display !== 'none') {
+                await window.updateStateHintFromDiagnostic();
             }
         } catch (e) {
             const hintEl = document.getElementById('state-load-hint');
             if (hintEl) hintEl.style.display = 'block';
+            await window.updateStateHintFromDiagnostic();
         }
     })();
 
@@ -1161,10 +1204,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const hintEl = document.getElementById('state-load-hint');
-        if (hintEl && names.length === 0) hintEl.style.display = 'block';
+        const textEl = document.getElementById('state-load-hint-text');
+        if (hintEl && names.length === 0) {
+            hintEl.style.display = 'block';
+            if (textEl && textEl.textContent === 'Loading…') {
+                if (typeof window.updateStateHintFromDiagnostic === 'function') window.updateStateHintFromDiagnostic();
+            }
+        }
     }
 
     window.refreshStateFromServer = async function () {
+        const hintEl = document.getElementById('state-load-hint');
+        const textEl = document.getElementById('state-load-hint-text');
         try {
             const [wrRes, sessRes] = await Promise.all([
                 fetch('/api/state?key=workspace'),
@@ -1185,6 +1236,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (wrRes.status === 503) {
                 msg = 'Server database not configured. ';
+                if (hintEl) hintEl.style.display = 'block';
+                await window.updateStateHintFromDiagnostic();
             }
             if (sessRes.ok) {
                 const { value } = await sessRes.json();
@@ -1193,16 +1246,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
                     const n = Object.keys(value).length;
                     msg += n + ' saved session(s) loaded (e.g. Week 1).';
-                    const hintEl = document.getElementById('state-load-hint');
                     if (hintEl) hintEl.style.display = 'none';
                 }
             } else if (sessRes.status === 503) {
                 msg = (msg || '') + 'Sessions: server database not configured.';
-                const hintEl = document.getElementById('state-load-hint');
                 if (hintEl) hintEl.style.display = 'block';
+                await window.updateStateHintFromDiagnostic();
             }
-            alert(msg || 'No data from server.');
+            alert(msg || 'No data from server. Check the yellow hint above for details.');
         } catch (e) {
+            if (hintEl) hintEl.style.display = 'block';
+            if (textEl) textEl.textContent = 'Could not reach server: ' + (e.message || 'network error') + '. Check that the API is deployed (e.g. Vercel runs the Express server).';
             alert('Could not reach server: ' + (e.message || 'network error'));
         }
     };

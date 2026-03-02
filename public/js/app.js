@@ -477,6 +477,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.uploadInspirationalImage = async () => {
+        const input = document.getElementById('insp-upload-input');
+        const btn = document.getElementById('btn-insp-upload');
+        const status = document.getElementById('insp-upload-status');
+        if (!input || !input.files || !input.files[0]) return alert('Choose an image file first.');
+
+        btn.textContent = 'Uploading...';
+        btn.disabled = true;
+        if (status) status.textContent = 'Uploading to server and publishing...';
+
+        const formData = new FormData();
+        formData.append('image', input.files[0]);
+
+        try {
+            const res = await fetch('/api/images/upload-inspirational', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                inspirationalImages.push(data.url);
+                saveState();
+                renderInspirationalView();
+                const pubMsg = data.published ? ' (published to GoDaddy)' : ' (local only — FTP not configured)';
+                if (status) status.textContent = 'Uploaded' + pubMsg;
+                if (data.ftpError && status) status.textContent += ' FTP error: ' + data.ftpError;
+            } else {
+                alert('Upload failed: ' + (data.error || 'Unknown error'));
+                if (status) status.textContent = 'Upload failed.';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Upload failed. See console.');
+            if (status) status.textContent = 'Upload failed.';
+        } finally {
+            btn.textContent = 'Upload';
+            btn.disabled = false;
+            input.value = '';
+        }
+    };
+
     window.selectInspirationalImage = (url) => {
         inspirationalImages.push(url);
         saveState();
@@ -624,9 +665,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.bringArticlesToPrompt = (category) => {
         const input = document.getElementById('bring-articles-input');
-        if (!input) return;
-        const nums = input.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-        if (nums.length === 0) return alert('Enter article numbers separated by commas (e.g. 1,2,3).');
+        if (!input || !input.value.trim()) return alert('Enter article numbers separated by commas (e.g. 1,2,3).');
+        const nums = input.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+        if (nums.length === 0) return alert('Enter valid article numbers separated by commas (e.g. 1,2,3).');
 
         const categoryArticles = articles.filter(a =>
             a.categories && a.categories.includes(category)
@@ -637,16 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const selected = nums.map(n => categoryArticles[n - 1]).filter(Boolean);
-        if (selected.length === 0) return alert('No matching articles for those numbers. Check the list on the right.');
+        if (selected.length === 0) return alert('No matching articles for those numbers. Check the numbered list on the right.');
 
-        let text = '';
-        selected.forEach(a => {
-            text += `Title: ${a.title}\nURL: ${a.url}\n\n`;
-        });
+        const urls = selected.map(a => a.url).join('\n');
 
         const promptEl = document.getElementById('editor-prompt');
         if (promptEl) {
-            promptEl.value = (promptEl.value ? promptEl.value + '\n\n' : '') + text;
+            const existing = promptEl.value.trim();
+            promptEl.value = existing ? existing + '\n\n' + urls : urls;
             updateNewsletterContent(category, 'prompt', promptEl.value);
         }
     };

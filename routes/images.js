@@ -91,4 +91,63 @@ router.post('/upload', uploadMiddleware.single('image'), (req, res) => {
     }
 });
 
+// POST /api/images/upload-inspirational - Upload image, publish to GoDaddy FTP, return public URL
+router.post('/upload-inspirational', uploadMiddleware.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const localPath = req.file.path;
+        const filename = req.file.filename;
+        const localUrl = `/uploads/${filename}`;
+
+        const ftpHost = process.env.GODADDY_FTP_HOST;
+        const ftpUser = process.env.GODADDY_FTP_USER;
+        const ftpPass = process.env.GODADDY_FTP_PASS;
+        const ftpPort = parseInt(process.env.GODADDY_FTP_PORT || '21');
+        const publicBase = process.env.GODADDY_PUBLIC_BASE_URL || '';
+
+        if (!ftpHost || !ftpUser || !ftpPass) {
+            console.warn('GoDaddy FTP not configured — returning local URL only');
+            return res.json({ success: true, url: localUrl, published: false });
+        }
+
+        const { Client } = require('basic-ftp');
+        const client = new Client();
+        client.ftp.verbose = false;
+
+        try {
+            await client.access({
+                host: ftpHost,
+                port: ftpPort,
+                user: ftpUser,
+                password: ftpPass,
+                secure: 'implicit',
+                secureOptions: { rejectUnauthorized: false }
+            });
+
+            const remotePath = `/public_html/News-roundup/images/${filename}`;
+            await client.ensureDir('/public_html/News-roundup/images/');
+            await client.uploadFrom(localPath, remotePath);
+            console.log(`FTP upload OK: ${remotePath}`);
+
+            const publicUrl = publicBase
+                ? `${publicBase}/images/${filename}`
+                : localUrl;
+
+            res.json({ success: true, url: publicUrl, published: true });
+        } catch (ftpErr) {
+            console.error('FTP upload failed:', ftpErr.message);
+            res.json({ success: true, url: localUrl, published: false, ftpError: ftpErr.message });
+        } finally {
+            client.close();
+        }
+
+    } catch (error) {
+        console.error('Inspirational Upload Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;

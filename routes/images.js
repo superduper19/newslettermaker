@@ -18,11 +18,19 @@ const diskStorage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        cb(null, `upload-${Date.now()}${ext}`);
+        // Sanitize filename to be safe but preserve original name
+        const originalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        cb(null, originalName);
     }
 });
 const uploadMiddleware = multer({ storage: diskStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+
+// FTP remote path from env (no leading slash). Public URL base with no trailing slash.
+function getRemotePath() {
+    const ftpPath = (process.env.GODADDY_FTP_PATH || 'News-roundup/images').replace(/^\/+/, '');
+    const publicBase = (process.env.GODADDY_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+    return { remoteDir: ftpPath, publicUrlBase: publicBase };
+}
 
 router.post('/search', async (req, res) => {
     try {
@@ -105,7 +113,6 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
         const ftpUser = process.env.GODADDY_FTP_USER;
         const ftpPass = process.env.GODADDY_FTP_PASS;
         const ftpPort = parseInt(process.env.GODADDY_FTP_PORT || '21');
-        const publicBase = process.env.GODADDY_PUBLIC_BASE_URL || '';
 
         if (!ftpHost || !ftpUser || !ftpPass) {
             console.warn('GoDaddy FTP not configured — returning local URL only');
@@ -116,6 +123,7 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
         const client = new Client();
         client.ftp.verbose = false;
 
+        const { remoteDir, publicUrlBase } = getRemotePath();
         try {
             await client.access({
                 host: ftpHost,
@@ -126,14 +134,11 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
                 secureOptions: { rejectUnauthorized: false }
             });
 
-            const remotePath = `/public_html/News-roundup/images/${filename}`;
-            await client.ensureDir('/public_html/News-roundup/images/');
-            await client.uploadFrom(localPath, remotePath);
-            console.log(`FTP upload OK (article): ${remotePath}`);
+            await client.ensureDir(remoteDir);
+            await client.uploadFrom(localPath, `${remoteDir}/${filename}`);
+            console.log(`FTP upload OK (article): ${remoteDir}/${filename}`);
 
-            const publicUrl = publicBase
-                ? `${publicBase}/images/${filename}`
-                : localUrl;
+            const publicUrl = publicUrlBase ? `${publicUrlBase}/${filename}` : localUrl;
 
             res.json({ success: true, url: publicUrl, published: true });
         } catch (ftpErr) {
@@ -161,7 +166,6 @@ router.post('/publish-to-purablis', async (req, res) => {
         const ftpUser = process.env.GODADDY_FTP_USER;
         const ftpPass = process.env.GODADDY_FTP_PASS;
         const ftpPort = parseInt(process.env.GODADDY_FTP_PORT || '21');
-        const publicBase = process.env.GODADDY_PUBLIC_BASE_URL || '';
 
         if (!ftpHost || !ftpUser || !ftpPass) {
             return res.status(503).json({ error: 'GoDaddy FTP not configured', configured: false });
@@ -185,8 +189,19 @@ router.post('/publish-to-purablis', async (req, res) => {
             });
             if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.status}`);
             const buf = await resp.buffer();
-            const ext = path.extname(new URL(url).pathname) || '.png';
-            filename = `publish-${Date.now()}${ext}`;
+            const urlObj = new URL(url);
+            let pathname = urlObj.pathname;
+            try {
+                pathname = decodeURIComponent(pathname);
+            } catch (e) {
+                // ignore malformed URI
+            }
+            const ext = path.extname(pathname) || '.png';
+            // Extract basename and sanitize
+            const base = path.basename(pathname, ext).replace(/[^a-zA-Z0-9.-]/g, '_');
+            // If base is empty or generic, use timestamp
+            filename = (base && base.length > 2) ? `${base}${ext}` : `publish-${Date.now()}${ext}`;
+
             localPath = path.join(uploadDir, filename);
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
             fs.writeFileSync(localPath, buf);
@@ -208,11 +223,13 @@ router.post('/publish-to-purablis', async (req, res) => {
                 secureOptions: { rejectUnauthorized: false }
             });
 
-            const remotePath = `/public_html/News-roundup/images/${filename}`;
-            await client.ensureDir('/public_html/News-roundup/images/');
-            await client.uploadFrom(localPath, remotePath);
+            const { remoteDir, publicUrlBase } = getRemotePath();
+            await client.ensureDir(remoteDir);
+            await client.uploadFrom(localPath, `${remoteDir}/${filename}`);
+            console.log(`FTP upload OK (publish): ${remoteDir}/${filename}`);
 
-            const publicUrl = publicBase ? `${publicBase}/images/${filename}` : url;
+            const publicUrl = publicUrlBase ? `${publicUrlBase}/${filename}` : `/uploads/${filename}`;
+
             res.json({ success: true, url: publicUrl, published: true });
         } catch (ftpErr) {
             console.error('FTP publish failed:', ftpErr.message);
@@ -241,13 +258,13 @@ router.post('/upload-inspirational', uploadMiddleware.single('image'), async (re
         const ftpUser = process.env.GODADDY_FTP_USER;
         const ftpPass = process.env.GODADDY_FTP_PASS;
         const ftpPort = parseInt(process.env.GODADDY_FTP_PORT || '21');
-        const publicBase = process.env.GODADDY_PUBLIC_BASE_URL || '';
 
         if (!ftpHost || !ftpUser || !ftpPass) {
             console.warn('GoDaddy FTP not configured — returning local URL only');
             return res.json({ success: true, url: localUrl, published: false });
         }
 
+        const { remoteDir, publicUrlBase } = getRemotePath();
         const { Client } = require('basic-ftp');
         const client = new Client();
         client.ftp.verbose = false;
@@ -262,14 +279,11 @@ router.post('/upload-inspirational', uploadMiddleware.single('image'), async (re
                 secureOptions: { rejectUnauthorized: false }
             });
 
-            const remotePath = `/public_html/News-roundup/images/${filename}`;
-            await client.ensureDir('/public_html/News-roundup/images/');
-            await client.uploadFrom(localPath, remotePath);
-            console.log(`FTP upload OK: ${remotePath}`);
+            await client.ensureDir(remoteDir);
+            await client.uploadFrom(localPath, `${remoteDir}/${filename}`);
+            console.log(`FTP upload OK: ${remoteDir}/${filename}`);
 
-            const publicUrl = publicBase
-                ? `${publicBase}/images/${filename}`
-                : localUrl;
+            const publicUrl = publicUrlBase ? `${publicUrlBase}/${filename}` : localUrl;
 
             res.json({ success: true, url: publicUrl, published: true });
         } catch (ftpErr) {

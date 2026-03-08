@@ -600,20 +600,27 @@ router.post('/modify', async (req, res) => {
     }
 });
 
-// POST /api/articles/summarize - Generate Summaries
+// POST /api/articles/summarize - Generate Summaries (supports Anthropic or Gemini)
 router.post('/summarize', async (req, res) => {
     try {
-        const { prompt, useRules, summaryRules, category } = req.body;
+        const { prompt, useRules, summaryRules, category, model } = req.body;
         
         if (!prompt) {
             return res.status(400).json({ error: 'Prompt is required' });
         }
 
-        console.log(`Generating summaries for ${category} with rules: ${useRules}`);
+        const useGemini = (model && String(model).toLowerCase().includes('gemini')) || (!process.env.ANTHROPIC_API_KEY && (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY));
+        const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+        const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 
-        if (!process.env.ANTHROPIC_API_KEY) {
-            return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured on the server. Add it in Vercel → Environment Variables.' });
+        if (useGemini && !hasGemini) {
+            return res.status(503).json({ error: 'GEMINI_API_KEY not configured. Add it in .env or use Claude (ANTHROPIC_API_KEY).' });
         }
+        if (!useGemini && !hasAnthropic) {
+            return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured. Add it in .env or use Gemini (GEMINI_API_KEY).' });
+        }
+
+        console.log(`Generating summaries for ${category} with rules: ${useRules} (${useGemini ? 'Gemini' : 'Claude'})`);
 
         let systemPrompt = `You are a professional newsletter editor. Summarize the provided articles based on the user's instructions.`;
 
@@ -633,15 +640,23 @@ router.post('/summarize', async (req, res) => {
             }
         }
 
-        const message = await anthropic.messages.create({
-            model: "claude-opus-4-6",
-            max_tokens: 4000,
-            system: systemPrompt,
-            messages: [
-                { role: "user", content: prompt }
-            ]
-        });
-        const content = message.content[0].text;
+        let content = '';
+        if (useGemini) {
+            const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+            const fullPrompt = `${systemPrompt}\n\nUser content to summarize:\n\n${prompt}`;
+            const result = await geminiModel.generateContent(fullPrompt);
+            content = result.response.text();
+        } else {
+            const message = await anthropic.messages.create({
+                model: "claude-opus-4-6",
+                max_tokens: 4000,
+                system: systemPrompt,
+                messages: [
+                    { role: "user", content: prompt }
+                ]
+            });
+            content = message.content[0].text;
+        }
 
         res.json({
             success: true,

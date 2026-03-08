@@ -324,6 +324,15 @@ input:focus, textarea:focus, select:focus {
     resize: vertical;
     box-sizing: border-box;
 }
+.article-added-at {
+    font-size: 0.75rem;
+    color: #555;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 2px 6px;
+    background: #f0f0f0;
+    border-radius: 4px;
+}
 .col-date { text-align: center; padding-top: 5px; }
 .col-date input {
     width: 100%;

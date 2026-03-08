@@ -50,7 +50,10 @@
                             <!-- Newsletter Name -->
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label style="font-size: 0.85rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Newsletter Name</label>
-                                <input type="text" id="newsletter-name" placeholder="e.g. Week 1 - Tech Update" value="Week 1" style="max-width: 400px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <input type="text" id="newsletter-name" placeholder="e.g. Week 1 - Tech Update" value="Week 1" style="max-width: 400px;">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="saveSession()" title="Save current name and articles as a session (no search needed)">Save current</button>
+                                </div>
                             </div>
 
                             <hr class="divider">
@@ -123,6 +126,8 @@
                                 <button class="btn btn-sm" style="color: #d32f2f; border: 1px solid #d32f2f; background: transparent; padding: 5px 10px; font-size: 0.8rem;" onclick="deleteSession()">Delete</button>
                             </div>
                             <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load Week 1 and other saved sessions from Supabase" id="btn-refresh-state">Refresh from server</button>
+                            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current articles and archive to the database">Push to server</button>
+                            <button class="btn btn-outline btn-sm" type="button" onclick="getLaterCoolFinds()" title="Bring back all Later Cool finds to the top of the list">Get Later Cool Finds</button>
                         </div>
                     </div>
 
@@ -142,6 +147,14 @@
                         <div id="step2-query-status" style="font-size: 0.85rem; color: #4caf50; font-weight: 500; margin-top: 5px; display: none;"></div>
                     </div>
 
+                    <!-- Add article + Batch filter -->
+                    <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openAddArticleModal()">+ Add article</button>
+                        <label style="font-size: 0.8rem; color: #555;">Batch:</label>
+                        <select id="batch-filter-select" onchange="setBatchFilter(this.value); renderArticles();" style="padding: 4px 8px; font-size: 0.85rem;">
+                            <option value="">All</option>
+                        </select>
+                    </div>
                     <!-- Articles Table Header -->
                 <div class="articles-table-header">
                     <div class="col-selected">
@@ -152,7 +165,7 @@
                     <div class="col-article">Article</div>
                     <div class="col-date">Date</div>
                     <div class="col-paywall">Paywall</div>
-                    <div class="col-status">Status</div>
+                    <div class="col-status header-sort" onclick="sortArticles('status')">Status</div>
                     <div class="col-cat header-sort" onclick="sortArticles('MED')">MED</div>
                     <div class="col-cat header-sort" onclick="sortArticles('THC')">THC</div>
                     <div class="col-cat header-sort" onclick="sortArticles('CBD')">CBD</div>
@@ -184,6 +197,10 @@
                             </div>
                         </div>
                         <p class="text-muted">Choose an image for each selected article.</p>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <button class="btn btn-primary btn-sm" onclick="publishAllImagesToPurablis()">Publish Selected to purablis</button>
+                            <button class="btn btn-success btn-sm" onclick="downloadAllImagesZip()">Download All Images (ZIP)</button>
+                        </div>
                     </div>
 
                     <!-- Save / Load Controls (same as Article View) -->
@@ -199,8 +216,7 @@
                                 <button class="btn btn-sm" style="color: #d32f2f; border: 1px solid #d32f2f; background: transparent; padding: 5px 10px; font-size: 0.8rem;" onclick="deleteSessionFromStep3()">Delete</button>
                             </div>
                             <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load Week 1 and other saved sessions from Supabase">Refresh from server</button>
-                            <button class="btn btn-secondary btn-sm" onclick="downloadAllImagesZip()" title="Download all selected article images as a ZIP file">Download All Images (ZIP)</button>
-                            <button class="btn btn-primary" onclick="publishAllImagesToPurablis()" title="Upload selected article images to purablis.com via GoDaddy">Publish Selected to purablis</button>
+                            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current articles and archive to the database">Push to server</button>
                         </div>
                     </div>
                     
@@ -209,10 +225,7 @@
 
                     <div class="controls-row" style="margin-top: 30px; justify-content: space-between; padding: 0 15px 15px;">
                         <button id="btn-back-step-2" class="btn btn-secondary">Back</button>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary" onclick="publishAllImagesToPurablis()">Publish Selected to purablis</button>
-                            <button id="btn-next-step-4" class="btn btn-primary">Next: Inspirational Images</button>
-                        </div>
+                        <button id="btn-next-step-4" class="btn btn-primary">Next: Inspirational Images</button>
                     </div>
                 </div>
             </section>
@@ -300,37 +313,63 @@
                         <div id="confirmation-summary" style="margin-bottom: 30px;">
                             <!-- Summary stats -->
                         </div>
-
-                        <div class="form-group" style="margin-bottom: 25px;">
-                            <label class="section-label">Generate & Publish</label>
-                            <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 15px;">Generate newsletters from templates, articles, images, and text. Then save to the database or download.</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
-                                <button class="btn btn-primary" onclick="generateNewsletters()" id="btn-generate-newsletters">Generate Newsletters</button>
-                                <button class="btn btn-success" onclick="uploadNewslettersToServer()" id="btn-upload-newsletters" disabled>Upload to Server / DB</button>
-                                <span id="generate-status" style="font-size: 0.85rem; color: #666;"></span>
-                            </div>
-                        </div>
                         
                         <div class="form-group">
                             <label>Export Actions</label>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                <button class="btn btn-success" onclick="exportSpreadsheet()">Export Spreadsheet</button>
-                                <button class="btn btn-success" onclick="exportNewsletter()">Download Workspace JSON</button>
-                                <button class="btn btn-success" onclick="exportGeneratedNewsletter()" id="btn-export-generated" disabled>Download Generated JSON</button>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-success" onclick="exportNewsletter()">Download JSON</button>
                                 <button class="btn btn-outline" onclick="window.print()">Print / PDF</button>
                             </div>
                         </div>
                     </div>
                     <div class="controls-row" style="margin-top: 30px; justify-content: space-between;">
                         <button id="btn-back-step-5" class="btn btn-secondary">Back</button>
+                        <button class="btn btn-primary" onclick="alert('Publishing functionality to be implemented!')">Publish Newsletter</button>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- Add Article Modal -->
+    <div id="add-article-modal" onclick="if(event.target===this) window.closeAddArticleModal&&closeAddArticleModal()" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="background: #fff; border-radius: 8px; padding: 20px; max-width: 420px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Add article (at top)</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #555;">Title</label>
+                    <input type="text" id="add-article-title" placeholder="Article title" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem;">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #555;">URL</label>
+                    <input type="url" id="add-article-url" placeholder="https://..." style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem;">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #555;">Status</label>
+                    <select id="add-article-status" style="width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem;">
+                        <option value="Y">Y</option>
+                        <option value="YM">YM</option>
+                        <option value="M">M</option>
+                        <option value="NO">NO</option>
+                        <option value="COOL FINDS">COOL FINDS</option>
+                        <option value="LATER COOL">Later Cool</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px;">
+                    <div><label style="font-size: 0.7rem; color: #555;">MED</label><input type="text" id="add-article-med" placeholder="" style="width: 100%; padding: 4px; font-size: 0.85rem;"></div>
+                    <div><label style="font-size: 0.7rem; color: #555;">THC</label><input type="text" id="add-article-thc" placeholder="" style="width: 100%; padding: 4px; font-size: 0.85rem;"></div>
+                    <div><label style="font-size: 0.7rem; color: #555;">CBD</label><input type="text" id="add-article-cbd" placeholder="" style="width: 100%; padding: 4px; font-size: 0.85rem;"></div>
+                    <div><label style="font-size: 0.7rem; color: #555;">INV</label><input type="text" id="add-article-inv" placeholder="" style="width: 100%; padding: 4px; font-size: 0.85rem;"></div>
+                </div>
+            </div>
+            <div style="margin-top: 18px; display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddArticleModal()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="addArticleFromModal()">Add at top</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

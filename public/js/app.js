@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global State
     let articles = [];
     let archivedArticles = [];
+    let laterCoolArticles = [];
     let inspirationalImages = [];
     let newsletterContent = {
         MED: { intro: '', outro: '' },
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let currentEditorTab = 'MED';
     let lastGeneratedNewsletter = null;
+    let batchFilter = ''; // '' = all, or addedAt ISO string to show only that batch
 
     // Load State: first from LocalStorage (instant), then from Supabase if configured (overwrites)
     try {
@@ -23,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 articles = data.articles || [];
                 archivedArticles = data.archivedArticles || [];
+                laterCoolArticles = data.laterCoolArticles || [];
                 inspirationalImages = data.inspirationalImages || [];
                 const nc = data.newsletterContent || { MED: { intro: '', outro: '' }, THC: { intro: '', outro: '' }, CBD: { intro: '', outro: '' }, INV: { intro: '', outro: '' } };
                 newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
@@ -88,17 +91,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (value && value.articles) {
                     articles = value.articles || [];
                     archivedArticles = value.archivedArticles || [];
+                    laterCoolArticles = value.laterCoolArticles || [];
                     inspirationalImages = value.inspirationalImages || [];
                     const nc = value.newsletterContent || newsletterContent;
                     newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
-                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, inspirationalImages, newsletterContent }));
+                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, laterCoolArticles, inspirationalImages, newsletterContent }));
                     if (typeof renderArticles === 'function') renderArticles();
                 }
             }
             if (sessRes.ok) {
                 const { value } = await sessRes.json();
                 if (value && typeof value === 'object') {
-                    localStorage.setItem('newsletter_saved_sessions', JSON.stringify(value));
+                    const local = JSON.parse(localStorage.getItem('newsletter_saved_sessions') || '{}');
+                    const merged = { ...value };
+                    Object.keys(local).forEach(k => { if (!(k in merged)) merged[k] = local[k]; });
+                    localStorage.setItem('newsletter_saved_sessions', JSON.stringify(merged));
                     if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
                     if (hintEl) hintEl.style.display = 'none';
                     const nameEl = document.getElementById('newsletter-name');
@@ -121,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const state = {
             articles,
             archivedArticles,
+            laterCoolArticles,
             inspirationalImages,
             newsletterContent
         };
@@ -249,8 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const selectedImageHtml = article.image 
                 ? `<div class="selected-image-container">
-                     <img src="${article.image}" class="img-fluid" style="max-height: 120px;">
+                     <img src="${article.image}" class="img-fluid" style="max-height: 120px;" onerror="this.onerror=null;this.src='${article.originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
                      <button class="btn-remove-image" onclick="removeImage(${originalIndex})">×</button>
+                     ${article.image.includes('purablis.com') ? '<span class="badge-published" title="Published">P</span>' : ''}
                    </div>`
                 : `<div class="no-image-placeholder">No Image</div>`;
 
@@ -332,9 +341,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const sessionLabel = currentSessionName
             ? `<span class="stat-item" style="background:#e8eaf6; color:#283593; font-weight:600;">${currentSessionName}</span>`
             : '';
+            
+        const count = relevantArticles.length;
+        const countStyle = count === 25 
+            ? 'background:#e8f5e9; color:#1b5e20; font-weight: bold; border: 2px solid #4caf50;' 
+            : 'background:#ffebee; color:#c62828; font-weight: bold; border: 2px solid #e57373;';
+            
         statsEl.innerHTML = `
             ${sessionLabel}
-            <span class="stat-item" title="Articles with categories in this view">Total: ${relevantArticles.length}</span>
+            <span class="stat-item" style="${countStyle}" title="Target is 25 articles">Total: ${count} / 25</span>
             <span class="stat-item" style="background:#e0f7fa; color:#006064;">Selected: ${validStatusCount}</span>
             <span class="stat-item" style="background:#e3f2fd; color:#0d47a1;">MED: ${counts.MED}</span>
             <span class="stat-item" style="background:#e8f5e9; color:#1b5e20;">THC: ${counts.THC}</span>
@@ -400,13 +415,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Select Image
     window.selectImage = (index, url) => {
         articles[index].image = url;
+        // When selecting a new image (from search or upload), treat it as the original source
+        articles[index].originalImageUrl = url;
+        
+        // If the URL is already a purablis URL, mark it as published
+        if (url && url.includes('purablis.com')) {
+            articles[index].publishedImageUrl = url;
+        } else {
+            articles[index].publishedImageUrl = null;
+        }
+        
         saveState();
         // Update the "Big Image" box
         const box = document.getElementById(`selected-img-${index}`);
         if (box) {
             box.innerHTML = `
                 <div class="selected-image-container">
-                     <img src="${url}" class="img-fluid" style="max-height: 150px;">
+                     <img src="${url}" class="img-fluid" style="max-height: 150px;" onerror="this.onerror=null;this.src='${articles[index].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
                      <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
                 </div>`;
         }
@@ -415,6 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove Image
     window.removeImage = (index) => {
         articles[index].image = null;
+        articles[index].originalImageUrl = null;
+        articles[index].publishedImageUrl = null;
         saveState();
         const box = document.getElementById(`selected-img-${index}`);
         if (box) {
@@ -450,7 +477,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (data.success) {
+                // selectImage will set image and originalImageUrl to the returned URL
+                // If published=true, data.url is the public URL. If false, it's local.
                 selectImage(index, data.url);
+                
                 if (data.published) {
                     articles[index].publishedImageUrl = data.url;
                     saveState();
@@ -900,7 +930,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.exportSpreadsheet = () => {
-        const chosen = articles.filter(a => ['Y', 'YM', 'COOL FINDS'].includes(a.status));
+        // Filter unique articles by URL to avoid duplicates in spreadsheet
+        const seenUrls = new Set();
+        const chosen = articles.filter(a => {
+            if (!['Y', 'YM', 'COOL FINDS'].includes(a.status)) return false;
+            if (a.url && seenUrls.has(a.url)) return false;
+            if (a.url) seenUrls.add(a.url);
+            return true;
+        });
+
         if (chosen.length === 0) return alert('No chosen articles to export.');
 
         const medText = (newsletterContent.MED && newsletterContent.MED.result) || '';
@@ -980,17 +1018,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function buildArticlesHtml(category) {
-        const relevant = articles.filter(a =>
-            ['Y', 'YM', 'COOL FINDS'].includes(a.status) &&
-            a.categories && a.categories.includes(category)
-        ).sort((a, b) => {
+        // Filter unique articles by URL to avoid duplicates in the generated newsletter HTML
+        const seenUrls = new Set();
+        const relevant = articles.filter(a => {
+            if (!['Y', 'YM', 'COOL FINDS'].includes(a.status)) return false;
+            if (!(a.categories && a.categories.includes(category))) return false;
+            if (a.url && seenUrls.has(a.url)) return false;
+            if (a.url) seenUrls.add(a.url);
+            return true;
+        }).sort((a, b) => {
             const rA = parseInt((a.ranks && a.ranks[category]) || 99);
             const rB = parseInt((b.ranks && b.ranks[category]) || 99);
             return rA - rB;
         });
         return relevant.map(a => `
             <div class="article-item">
-                ${a.image ? `<img src="${a.image}" alt="" style="max-width:90px;height:90px;object-fit:cover;">` : ''}
+                ${a.image ? `<img src="${a.image}" alt="" style="max-width:90px;height:90px;object-fit:cover;" onerror="this.onerror=null;this.src='${a.originalImageUrl || ''}';">` : ''}
                 <div>
                     <strong>${(a.title || '').replace(/</g, '&lt;')}</strong>
                     <a href="${a.url || '#'}">${(a.url || '').replace(/</g, '&lt;')}</a>
@@ -1096,10 +1139,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.publishAllImagesToPurablis = async () => {
         const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
-        const withImages = relevant.filter(a => a.image && (a.publishImage !== false) && !a.image.includes('purablis.com') && !a.image.startsWith('blob:'));
+        // Filter: has image, publish flag not false, AND (not yet published OR published URL doesn't match current image)
+        // We want to ensure everything is on purablis.
+        const withImages = relevant.filter(a => {
+            const hasImage = a.image || a.originalImageUrl;
+            const wantsPublish = a.publishImage !== false;
+            // Force re-verification/publishing if previous published URL is not reachable?
+            // For now, if we have a published URL, assume it's done unless user manually cleared it.
+            // But if verification logic was added, we might want to re-run.
+            // Let's just check if it's already published.
+            const isAlreadyPublished = a.publishedImageUrl && a.publishedImageUrl.includes('purablis.com');
+            const isBlob = (a.image && a.image.startsWith('blob:'));
+            
+            // If it's a blob, we definitely need to publish.
+            // If it's a URL but not purablis, we need to publish.
+            // If it is purablis, we skip unless we want to force re-upload.
+            
+            return (hasImage && wantsPublish && !isAlreadyPublished) || isBlob;
+        });
+
         if (withImages.length === 0) {
             const hasAny = relevant.some(a => a.image);
-            return alert(hasAny ? 'All images are already on purablis.com.' : 'No images to publish. Select images for articles first.');
+            // Check if any are actually published
+            const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && a.publishedImageUrl.includes('purablis.com')));
+            
+            return alert(allPublished ? 'All images are already published to purablis.com.' : 'No images to publish. Select images for articles first.');
         }
 
         const btn = document.querySelector('[onclick="publishAllImagesToPurablis()"]');
@@ -1110,10 +1174,16 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < withImages.length; i++) {
             const a = withImages[i];
             const idx = articles.indexOf(a);
-            let url = a.image;
+            
+            // Prefer original source, fall back to current image
+            let url = a.originalImageUrl || a.image;
+            
+            if (!url) continue;
+
             if (url.startsWith('/') && !url.startsWith('//') && typeof window !== 'undefined') {
                 url = window.location.origin + url;
             }
+            
             try {
                 const res = await fetch('/api/images/publish-to-purablis', {
                     method: 'POST',
@@ -1122,14 +1192,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const data = await res.json();
                 if (data.success && data.url) {
-                    articles[idx].image = data.url;
-                    articles[idx].publishedImageUrl = data.url;
-                    saveState();
-                    const box = document.getElementById(`selected-img-${idx}`);
-                    if (box) {
-                        box.innerHTML = `<div class="selected-image-container"><img src="${data.url}" class="img-fluid" style="max-height: 120px;"><button class="btn-remove-image" onclick="removeImage(${idx})">×</button></div>`;
+                    // Verify the published URL works before updating the UI
+                    let urlWorks = false;
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = resolve;
+                            img.onerror = () => reject(new Error('Image failed to load'));
+                            img.src = data.url;
+                            setTimeout(() => reject(new Error('Timeout')), 5000);
+                        });
+                        urlWorks = true;
+                    } catch (e) {
+                        console.warn(`Published URL unreachable: ${data.url}`, e);
                     }
-                    ok++;
+
+                    // Update state regardless, but be careful with display
+                    articles[idx].publishedImageUrl = data.url;
+                    
+                    // 3. Ensure original is kept (if it wasn't set before, set it now to what we just used)
+                    if (!articles[idx].originalImageUrl) {
+                        articles[idx].originalImageUrl = url;
+                    }
+                    
+                    if (urlWorks) {
+                        // Only switch display if it works
+                        articles[idx].image = data.url;
+                        ok++;
+                        
+                        const box = document.getElementById(`selected-img-${idx}`);
+                        if (box) {
+                            box.innerHTML = `<div class="selected-image-container"><img src="${data.url}" class="img-fluid" style="max-height: 120px;" onerror="this.onerror=null;this.src='${articles[idx].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');"><button class="btn-remove-image" onclick="removeImage(${idx})">×</button><span class="badge-published" title="Published">P</span></div>`;
+                        }
+                    } else {
+                        fail++;
+                        errors.push((a.title || 'Article').slice(0, 30) + ': Uploaded, but URL unreachable.');
+                    }
+                    saveState();
                 } else {
                     fail++;
                     errors.push((a.title || 'Article').slice(0, 30) + ': ' + (data.error || 'Unknown error'));
@@ -1154,53 +1253,144 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.downloadAllImagesZip = async () => {
         const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
-        const withImages = relevant.filter(a => a.image);
+        const withImages = relevant.filter(a => a.image || a.originalImageUrl);
+        
         if (withImages.length === 0) return alert('No images selected. Select images for articles first.');
-
         if (typeof JSZip === 'undefined') return alert('JSZip not loaded. Please refresh the page.');
 
         const zip = new JSZip();
         let done = 0;
         const total = withImages.length;
+        
+        // CSV Manifest content
+        let csvContent = "ID,Title,Original Image URL,Published Image URL,Filename\n";
+        
+        // Map to track processed URLs to avoid duplicates in ZIP
+        // Key: URL, Value: Filename in ZIP
+        const processedUrls = new Map();
+        // Set to track used filenames to avoid collisions
+        const usedFilenames = new Set();
+
+        const btn = document.querySelector('[onclick="downloadAllImagesZip()"]');
 
         for (let i = 0; i < withImages.length; i++) {
             const a = withImages[i];
-            const url = a.image;
-            const ext = url.match(/\.(png|jpg|jpeg|gif|webp|svg)/i) ? '' : '.png';
-            const safeTitle = (a.title || `article-${i + 1}`).replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40);
-            const filename = `${i + 1}-${safeTitle}${ext}`;
-            try {
-                if (url.startsWith('data:')) {
-                    const base64 = url.split(',')[1];
-                    if (base64) zip.file(filename, base64, { base64: true });
-                } else {
-                    const res = await fetch(url, { mode: 'cors' });
-                    if (res.ok) {
-                        const blob = await res.blob();
-                        zip.file(filename, blob);
-                    }
-                }
-            } catch (e) {
-                console.warn('Could not fetch image:', url?.slice(0, 50), e);
+            
+            // Prefer original URL for downloading, fallback to current
+            let url = a.originalImageUrl || a.image;
+            if (url && url.startsWith('/') && !url.startsWith('//')) {
+                url = window.location.origin + url;
             }
+
+            if (!url) continue;
+
+            let filename = processedUrls.get(url);
+
+            if (!filename) {
+                // New URL, determine filename
+                // 1. Try to get from original URL
+                if (a.originalImageUrl) {
+                    try {
+                        const urlObj = new URL(a.originalImageUrl);
+                        const pathname = decodeURIComponent(urlObj.pathname);
+                        const name = pathname.split('/').pop();
+                        if (name && name.includes('.')) {
+                            filename = name;
+                        }
+                    } catch (e) {}
+                }
+
+                // 2. Try to get from current image URL (if local path)
+                if (!filename && a.image && !a.image.startsWith('data:') && !a.image.startsWith('blob:')) {
+                    try {
+                        const name = a.image.split('/').pop();
+                        if (name && name.includes('.')) {
+                            filename = name;
+                        }
+                    } catch(e) {}
+                }
+
+                // 3. Fallback to title
+                const ext = (url.match(/\.(png|jpg|jpeg|gif|webp|svg)/i)) ? url.match(/\.(png|jpg|jpeg|gif|webp|svg)/i)[0] : '.png';
+                if (!filename) {
+                    const safeTitle = (a.title || `article-${i + 1}`).replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40);
+                    filename = `${safeTitle}${ext}`;
+                } else {
+                    // Ensure extension is correct if we extracted a name without one (unlikely given checks) or replace if needed?
+                    // Actually, if we extracted a filename, we trust it has an extension.
+                    // But we should sanitize it.
+                    filename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+                }
+
+                // Ensure unique filename
+                if (usedFilenames.has(filename)) {
+                    const namePart = filename.lastIndexOf('.') > 0 ? filename.substring(0, filename.lastIndexOf('.')) : filename;
+                    const extPart = filename.lastIndexOf('.') > 0 ? filename.substring(filename.lastIndexOf('.')) : ext;
+                    let counter = 1;
+                    let newFilename = `${namePart}-${counter}${extPart}`;
+                    while (usedFilenames.has(newFilename)) {
+                        counter++;
+                        newFilename = `${namePart}-${counter}${extPart}`;
+                    }
+                    filename = newFilename;
+                }
+
+                usedFilenames.add(filename);
+                processedUrls.set(url, filename);
+
+                // Add file to ZIP
+                try {
+                    if (url.startsWith('data:')) {
+                        const base64 = url.split(',')[1];
+                        if (base64) zip.file(filename, base64, { base64: true });
+                    } else {
+                        const res = await fetch(url, { mode: 'cors' });
+                        if (res.ok) {
+                            const blob = await res.blob();
+                            zip.file(filename, blob);
+                        } else {
+                            console.warn(`Failed to fetch ${url}: ${res.status}`);
+                            zip.file(filename + '.txt', `Failed to download: ${url} (Status: ${res.status})`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch image:', url?.slice(0, 50), e);
+                    zip.file(filename + '.error.txt', `Error downloading: ${url}\n${e.message}`);
+                }
+            }
+
+            // Add to CSV
+            const csvRow = [
+                i + 1,
+                `"${(a.title || '').replace(/"/g, '""')}"`,
+                `"${(a.originalImageUrl || '').replace(/"/g, '""')}"`,
+                `"${(a.publishedImageUrl || '').replace(/"/g, '""')}"`,
+                `"${filename}"`
+            ].join(',');
+            
+            // Avoid duplicate rows in CSV if same article is processed twice (should not happen with unique array, but safe check)
+            if (!csvContent.includes(csvRow)) {
+                csvContent += csvRow + "\n";
+            }
+
             done++;
-            if (done % 5 === 0 || done === total) {
-                const btn = document.querySelector('[onclick="downloadAllImagesZip()"]');
-                if (btn) btn.textContent = `Downloading... ${done}/${total}`;
+            if (btn && (done % 5 === 0 || done === total)) {
+                btn.textContent = `Downloading... ${done}/${total}`;
             }
         }
 
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `newsletter-images-${Date.now()}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Add CSV to zip
+        zip.file("images_manifest.csv", csvContent);
 
-        const btn = document.querySelector('[onclick="downloadAllImagesZip()"]');
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `newsletter-images-${Date.now()}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
         if (btn) btn.textContent = 'Download All Images (ZIP)';
     };
 
@@ -1271,10 +1461,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Compact timestamp for "added" indicator (e.g. 2/28)
+    function formatAddedAt(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    window.setBatchFilter = (value) => { batchFilter = value || ''; };
+
     // Render Articles Function (Table View)
     function renderArticles() {
         const list = document.getElementById('articles-list');
         list.innerHTML = ''; // Clear existing
+
+        // Populate batch filter dropdown (unique addedAt, sorted)
+        const batchSelect = document.getElementById('batch-filter-select');
+        if (batchSelect) {
+            const addedAts = [...new Set(articles.map(a => a.addedAt).filter(Boolean))].sort();
+            const currentVal = batchSelect.value;
+            batchSelect.innerHTML = '<option value="">All</option>' + addedAts.map(iso => {
+                const label = formatAddedAt(iso) + ' ' + (new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+                return `<option value="${iso}">${label}</option>`;
+            }).join('');
+            batchSelect.value = batchFilter || '';
+        }
 
         // Add Top Controls
         const controls = document.createElement('div');
@@ -1293,7 +1504,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        list.innerHTML += articles.map((article, index) => {
+        const indicesToShow = batchFilter
+            ? articles.map((a, i) => i).filter(i => articles[i].addedAt === batchFilter)
+            : articles.map((a, i) => i);
+
+        list.innerHTML += indicesToShow.map(realIndex => {
+            const article = articles[realIndex];
+            const index = realIndex;
             // Ensure defaults
             if (!article.status) article.status = 'Y';
             if (!article.categories) {
@@ -1304,7 +1521,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (article.selected === undefined) article.selected = true;
 
             // Checkbox logic for categories
-            const isStatusValid = ['Y', 'YM', 'M', 'COOL FINDS'].includes(article.status);
+            const isStatusValid = ['Y', 'YM', 'M', 'COOL FINDS', 'LATER COOL'].includes(article.status);
             const disabledAttr = isStatusValid ? '' : 'disabled';
             const disabledStyle = isStatusValid ? '' : 'opacity: 0.5; cursor: not-allowed;';
 
@@ -1334,13 +1551,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <div class="col-article">
-                        <textarea 
-                            class="title-edit" 
-                            rows="2" 
-                            onchange="updateArticleField(${index}, 'title', this.value)"
-                            style="font-family: inherit;"
-                        >${article.title}</textarea>
-                        
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <textarea 
+                                class="title-edit" 
+                                rows="2" 
+                                onchange="updateArticleField(${index}, 'title', this.value)"
+                                style="font-family: inherit; flex: 1; min-width: 120px;"
+                            >${article.title}</textarea>
+                            <span class="article-added-at" title="${article.addedAt ? 'Added ' + article.addedAt : 'No add date'}">${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}</span>
+                        </div>
                         <p style="margin: 5px 0; font-size: 0.85rem; color: #666;">
                             ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
                         </p>
@@ -1379,6 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="M" ${article.status === 'M' ? 'selected' : ''}>M</option>
                             <option value="NO" ${article.status === 'NO' ? 'selected' : ''}>NO</option>
                             <option value="COOL FINDS" ${article.status === 'COOL FINDS' ? 'selected' : ''}>COOL FINDS</option>
+                            <option value="LATER COOL" ${article.status === 'LATER COOL' ? 'selected' : ''}>Later Cool</option>
                         </select>
                     </div>
 
@@ -1406,6 +1626,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Article Field
     window.updateArticleField = (index, field, value) => {
+        if (field === 'status' && value === 'LATER COOL') {
+            const article = articles[index];
+            article.status = 'LATER COOL';
+            laterCoolArticles.push(article);
+            articles.splice(index, 1);
+            saveState();
+            renderArticles();
+            const activeStep = document.querySelector('.step.active');
+            if (activeStep && activeStep.getAttribute('data-step') === '3') renderImagesView();
+            return;
+        }
         articles[index][field] = value;
         
         // Logic: If status becomes invalid, clear categories?
@@ -1422,6 +1653,54 @@ document.addEventListener('DOMContentLoaded', () => {
             // For other fields, just save
             saveState();
         }
+    };
+
+    window.openAddArticleModal = () => {
+        const modal = document.getElementById('add-article-modal');
+        if (!modal) return;
+        document.getElementById('add-article-title').value = '';
+        document.getElementById('add-article-url').value = '';
+        document.getElementById('add-article-status').value = 'Y';
+        ['med', 'thc', 'cbd', 'inv'].forEach(c => { document.getElementById('add-article-' + c).value = ''; });
+        modal.style.display = 'flex';
+    };
+
+    window.closeAddArticleModal = () => {
+        const modal = document.getElementById('add-article-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.addArticleFromModal = () => {
+        const title = document.getElementById('add-article-title').value.trim() || 'Untitled';
+        const url = document.getElementById('add-article-url').value.trim() || '';
+        const status = document.getElementById('add-article-status').value;
+        const ranks = {};
+        ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
+            const v = document.getElementById('add-article-' + cat.toLowerCase()).value.trim();
+            if (v) ranks[cat] = v;
+        });
+        const newArticle = {
+            id: 1,
+            title,
+            url,
+            description: '',
+            date: '',
+            categories: Object.keys(ranks),
+            ranks,
+            notes: '',
+            paywall: false,
+            status: status || 'Y',
+            image: null,
+            imageSearchQuery: '',
+            isValid: true,
+            selected: true,
+            addedAt: new Date().toISOString()
+        };
+        articles.forEach(a => { a.id = (a.id || 0) + 1; });
+        articles.unshift(newArticle);
+        saveState();
+        renderArticles();
+        closeAddArticleModal();
     };
 
     window.updateCategoryRank = (index, cat, value) => {
@@ -1451,17 +1730,29 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStats(); // Refresh stats
     };
 
-    // Sort Articles
+    // Sort Articles (sortKey: 'MED'|'THC'|'CBD'|'INV' for category, or 'status' for status)
+    const STATUS_ORDER = ['Y', 'YM', 'M', 'NO', 'COOL FINDS', 'LATER COOL'];
     window.sortArticles = (sortKey) => {
         if (!articles || articles.length === 0) return;
-        
-        // Sort by boolean: those having the category come first
-        articles.sort((a, b) => {
-            const hasA = a.categories && a.categories.includes(sortKey);
-            const hasB = b.categories && b.categories.includes(sortKey);
-            if (hasA === hasB) return 0;
-            return hasA ? -1 : 1;
-        });
+
+        if (sortKey === 'status') {
+            articles.sort((a, b) => {
+                const i = STATUS_ORDER.indexOf((a.status || '').toUpperCase());
+                const j = STATUS_ORDER.indexOf((b.status || '').toUpperCase());
+                const orderA = i >= 0 ? i : STATUS_ORDER.length;
+                const orderB = j >= 0 ? j : STATUS_ORDER.length;
+                if (orderA !== orderB) return orderA - orderB;
+                return (a.status || '').localeCompare(b.status || '');
+            });
+        } else {
+            // Sort by boolean: those having the category come first
+            articles.sort((a, b) => {
+                const hasA = a.categories && a.categories.includes(sortKey);
+                const hasB = b.categories && b.categories.includes(sortKey);
+                if (hasA === hasB) return 0;
+                return hasA ? -1 : 1;
+            });
+        }
         saveState(); // Save sorted order
         renderArticles();
     };
@@ -1500,31 +1791,26 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Remove Article
+    // Remove Article (no confirmation)
     window.removeArticle = (index) => {
-        if (confirm('Remove this article?')) {
-            articles.splice(index, 1);
-            saveState();
-            renderArticles();
-            const activeStep = document.querySelector('.step.active');
-            if (activeStep && activeStep.getAttribute('data-step') === '3') {
-                renderImagesView();
-            }
+        articles.splice(index, 1);
+        saveState();
+        renderArticles();
+        const activeStep = document.querySelector('.step.active');
+        if (activeStep && activeStep.getAttribute('data-step') === '3') {
+            renderImagesView();
         }
     };
 
     window.archiveArticle = (index) => {
-        if (confirm('Archive this article? It will be moved to the archive.')) {
-            const article = articles[index];
-            archivedArticles.push(article);
-            articles.splice(index, 1);
-            saveState();
-            renderArticles();
-            const activeStep = document.querySelector('.step.active');
-            if (activeStep && activeStep.getAttribute('data-step') === '3') {
-                renderImagesView();
-            }
-            alert('Article archived.');
+        const article = articles[index];
+        archivedArticles.push(article);
+        articles.splice(index, 1);
+        saveState();
+        renderArticles();
+        const activeStep = document.querySelector('.step.active');
+        if (activeStep && activeStep.getAttribute('data-step') === '3') {
+            renderImagesView();
         }
     };
 
@@ -1576,6 +1862,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (articles.length > 0 && !confirm(`This will replace the current ${articles.length} articles. Continue?`)) return;
 
         articles = session.articles || [];
+        const savedAt = session.savedAt || new Date().toISOString();
+        articles.forEach(a => { if (!a.addedAt) a.addedAt = savedAt; });
         archivedArticles = session.archivedArticles || [];
         inspirationalImages = session.inspirationalImages || [];
         const nc = session.newsletterContent || { MED: { intro: '', outro: '' }, THC: { intro: '', outro: '' }, CBD: { intro: '', outro: '' }, INV: { intro: '', outro: '' } };
@@ -1649,6 +1937,56 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteSession();
     };
 
+    window.pushStateToServer = async function () {
+        const state = {
+            articles,
+            archivedArticles,
+            laterCoolArticles,
+            inspirationalImages,
+            newsletterContent
+        };
+        try {
+            const res = await fetch('/api/state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'workspace', value: state })
+            });
+            if (res.ok) {
+                localStorage.setItem('newsletter_articles', JSON.stringify(state));
+                alert('Pushed to server: ' + articles.length + ' articles, ' + archivedArticles.length + ' archived, ' + laterCoolArticles.length + ' later cool.');
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert('Push failed: ' + (err.error || res.status));
+            }
+        } catch (e) {
+            alert('Push failed: ' + (e.message || 'network error'));
+        }
+    };
+
+    window.getLaterCoolFinds = async function () {
+        try {
+            const res = await fetch('/api/state?key=workspace');
+            const wr = res.ok ? await res.json() : {};
+            const value = wr.value || {};
+            const fromServer = value.laterCoolArticles || [];
+            const fromLocal = laterCoolArticles || [];
+            const toAdd = fromServer.length ? fromServer : fromLocal;
+            if (toAdd.length === 0) {
+                alert('No Later Cool finds saved.');
+                return;
+            }
+            const addedAt = new Date().toISOString();
+            toAdd.forEach(a => { a.addedAt = a.addedAt || addedAt; });
+            articles = [...toAdd, ...articles];
+            laterCoolArticles = [];
+            saveState();
+            renderArticles();
+            alert('Added ' + toAdd.length + ' Later Cool find(s) to the top.');
+        } catch (e) {
+            alert('Failed to get Later Cool finds: ' + (e.message || 'network error'));
+        }
+    };
+
     window.refreshStateFromServer = async function () {
         const hintEl = document.getElementById('state-load-hint');
         const textEl = document.getElementById('state-load-hint-text');
@@ -1664,10 +2002,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     articles.length = 0;
                     articles.push(...(value.articles || []));
                     archivedArticles = value.archivedArticles || [];
+                    laterCoolArticles = value.laterCoolArticles || [];
                     inspirationalImages = value.inspirationalImages || [];
                     const nc = value.newsletterContent || newsletterContent;
                     newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
-                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, inspirationalImages, newsletterContent }));
+                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, laterCoolArticles, inspirationalImages, newsletterContent }));
                     if (typeof renderArticles === 'function') renderArticles();
                     msg = (value.articles || []).length + ' articles in workspace. ';
                     const nameEl = document.getElementById('newsletter-name');
@@ -1683,10 +2022,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sessRes.ok) {
                 const { value } = await sessRes.json();
                 if (value && typeof value === 'object') {
-                    localStorage.setItem('newsletter_saved_sessions', JSON.stringify(value));
+                    const local = JSON.parse(localStorage.getItem('newsletter_saved_sessions') || '{}');
+                    const merged = { ...value };
+                    Object.keys(local).forEach(k => { if (!(k in merged)) merged[k] = local[k]; });
+                    localStorage.setItem('newsletter_saved_sessions', JSON.stringify(merged));
                     if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
-                    const n = Object.keys(value).length;
-                    msg += n + ' saved session(s) loaded (e.g. Week 1).';
+                    const n = Object.keys(merged).length;
+                    msg += n + ' saved session(s) (server + local).';
                     if (hintEl) hintEl.style.display = 'none';
                 }
             } else if (sessRes.status === 503) {
@@ -1761,9 +2103,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingUrls = new Set(articles.map(a => normalizeUrl(a.url)));
                 const newArticles = data.articles.filter(a => !existingUrls.has(normalizeUrl(a.url)));
 
-                // Assign IDs continuing from current max
+                // Assign IDs continuing from current max; mark when added
                 const maxId = articles.reduce((max, a) => Math.max(max, a.id || 0), 0);
-                newArticles.forEach((a, i) => { a.id = maxId + i + 1; });
+                const addedAt = new Date().toISOString();
+                newArticles.forEach((a, i) => { a.id = maxId + i + 1; a.addedAt = addedAt; });
 
                 articles = articles.concat(newArticles);
                 saveState();

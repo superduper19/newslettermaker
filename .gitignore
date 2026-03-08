@@ -6,3 +6,5 @@ public/uploads/
 *.log
 debug_dump.json
 .DS_Store
+
+.vercel

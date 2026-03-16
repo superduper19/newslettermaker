@@ -1,4 +1,101 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const GREETING_OPTIONS = Array.from(new Set([
+        'Thanks and have a great week',
+        'Thanks',
+        'Enjoy your week!',
+        'Have a stupendous week!',
+        'Thanks and have a marvelous week!',
+        'I hope you have a special week!',
+        'Have a tremendous week!',
+        'I hope you have a remarkable week',
+        'Have a wondrous week!',
+        'I hope you have a sensational week!',
+        'Have a Super New Year!',
+        'Thanks and have a dynamite week!',
+        'I hope your week is something else!',
+        'Have a brilliant week!',
+        'Have an enjoyable week!',
+        'Thanks and have a fabulous week!',
+        'Thanks and have an excellent week!',
+        'Thanks and have a magnificent week!',
+        'Thanks and have a phenomenal week!',
+        'Thanks and have a superb week!',
+        'Thanks and have a pleasant week!',
+        'Stay safe and cozy! :)',
+        'Stay safe and cozy!',
+        'Have a Terrific Week',
+        'Thanks and have a stupendous week!',
+        'Have an exceptional week!',
+        'Have a fantastic week and stay safe,',
+        'Thanks and have a great week!',
+        'Have a warm summer week!',
+        'Thanks and have a sunny week!',
+        'Thanks and have a spectacular week!',
+        'Thanks and have an astounding week!',
+        'Thanks and have an impressive week!',
+        'Thanks and have a productive week!',
+        'Thanks and have a wonderful week!',
+        'Thanks and have an extraordinary week!',
+        'Thanks and have a super week!',
+        'Thanks and have an incredible week!',
+        'Thanks and have an unbelievable week!',
+        'Thanks and have a sublime week!',
+        'Thanks and have a rad week! :)',
+        'Thanks and have an outstanding week!',
+        'Thanks and have a splendid week!',
+        'Thanks and have a very good week!',
+        'Thanks and I hope you go vote!',
+        'Thanks and I hope you have a relaxing week,',
+        'Thanks and I hope you have a stellar week!',
+        'Happy Thanksgiving!',
+        'Have an awesome week!',
+        'Thanks and have a tremendous week!',
+        'Thanks and have an amazing week!',
+        'Happy Holidays!',
+        'Have a super-duper week!',
+        'I hope you have a marvelous week!',
+        'I hope your week is rad!',
+        'Have a sensational week!',
+        'Have a fantastic week!',
+        'I hope you have a productive week!',
+        'Have a magnificent week!',
+        'Have a relaxing week,',
+        'Have a fabulous week!',
+        'Have an incredible week!',
+        'Happy 420,',
+        'Have an excellent week!',
+        'Have an outstanding week!',
+        'Have a splendid week,',
+        'Have a wonderful week!',
+        'Have a stellar week!',
+        'Have an unbelievable week!',
+        'Have a dynamite week!',
+        'Best Wishes,',
+        'Have a sunny week,',
+        'Have a terrific week!',
+        'Have a spectacular week!',
+        'Have an extraordinary week!',
+        'Have an amazing week!',
+        'Have an impressive week!',
+        'Have a great week!',
+        'enjoy your week',
+        'Happy Hallowen!',
+        'Get ready for 2022! :)',
+        'Make 2022 awesome!',
+        'Have a peaceful week!',
+        'Enjoy Your Week!',
+        'Have a radical week',
+        'Have a rad week!',
+        'Please spread the love this thanksgiving! :)',
+        'Thanks and I hope you have a wondrous week,',
+        'Happy 4th of July!',
+        'Thanks and I hope you have a terrific week!',
+        'Merry Christmas!',
+        'Happy MLK Day!',
+        'Happy Labor Day!'
+    ]));
+    const DEFAULT_GREETING = 'Have a fantastic week and stay safe,';
+
     // Global State
     let articles = [];
     let archivedArticles = [];
@@ -10,7 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         THC: { intro: '', outro: '' },
         CBD: { intro: '', outro: '' },
         INV: { intro: '', outro: '' },
-        templates: { MED: '', THC: '', CBD: '', INV: '' }
+        templates: { MED: '', THC: '', CBD: '', INV: '' },
+        selectedGreeting: DEFAULT_GREETING
     };
     let currentEditorTab = 'MED';
     let currentConfirmationTab = 'MED';
@@ -18,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmationTemplateCache = {};
     const confirmationRenderedHtml = { MED: '', THC: '', CBD: '', INV: '' };
     let confirmationInspirationalImage = '';
+    let articleTitleSortOrder = '';
     let batchFilter = ''; // '' = all, or addedAt ISO string to show only that batch
     const INSPIRATIONAL_LIBRARY_CACHE_KEY = 'newsletter_inspirational_library';
 
@@ -29,12 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(data)) {
                 articles = data;
             } else {
-                articles = data.articles || [];
-                archivedArticles = data.archivedArticles || [];
-                laterCoolArticles = data.laterCoolArticles || [];
-                inspirationalImages = data.inspirationalImages || [];
-                const nc = data.newsletterContent || { MED: { intro: '', outro: '' }, THC: { intro: '', outro: '' }, CBD: { intro: '', outro: '' }, INV: { intro: '', outro: '' } };
-                newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
+                applyWorkspaceState(data, { mergeLibrary: true });
             }
         }
         const savedLibrary = localStorage.getItem(INSPIRATIONAL_LIBRARY_CACHE_KEY);
@@ -43,6 +137,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } catch (e) {
         console.error('Failed to load state', e);
+    }
+
+    function buildWorkspaceState() {
+        return {
+            articles,
+            archivedArticles,
+            laterCoolArticles,
+            inspirationalImages,
+            confirmationInspirationalImage,
+            inspirationalLibraryImages,
+            newsletterContent,
+            lastGeneratedNewsletter
+        };
+    }
+
+    function persistWorkspaceLocal(state) {
+        const nextState = state || buildWorkspaceState();
+        localStorage.setItem('newsletter_articles', JSON.stringify(nextState));
+        localStorage.setItem(INSPIRATIONAL_LIBRARY_CACHE_KEY, JSON.stringify(nextState.inspirationalLibraryImages || []));
+    }
+
+    function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
+        const value = state || {};
+        articles = Array.isArray(value.articles) ? value.articles : [];
+        archivedArticles = Array.isArray(value.archivedArticles) ? value.archivedArticles : [];
+        laterCoolArticles = Array.isArray(value.laterCoolArticles) ? value.laterCoolArticles : [];
+        inspirationalImages = Array.isArray(value.inspirationalImages) ? value.inspirationalImages : [];
+        confirmationInspirationalImage = typeof value.confirmationInspirationalImage === 'string' ? value.confirmationInspirationalImage : '';
+        if (Array.isArray(value.inspirationalLibraryImages)) {
+            inspirationalLibraryImages = value.inspirationalLibraryImages;
+        } else if (!mergeLibrary) {
+            inspirationalLibraryImages = [];
+        }
+        const nc = value.newsletterContent || { MED: { intro: '', outro: '' }, THC: { intro: '', outro: '' }, CBD: { intro: '', outro: '' }, INV: { intro: '', outro: '' } };
+        newsletterContent = {
+            ...nc,
+            templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' },
+            selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING
+        };
+        lastGeneratedNewsletter = value.lastGeneratedNewsletter || null;
+        persistWorkspaceLocal(buildWorkspaceState());
+    }
+
+    function buildSessionsState(includeCurrentWorkspace = false) {
+        const sessions = getSavedSessions();
+        if (includeCurrentWorkspace) {
+            const nameEl = document.getElementById('newsletter-name');
+            const name = currentSessionName || (nameEl ? nameEl.value.trim() : '');
+            if (name) {
+                sessions[name] = {
+                    articles: JSON.parse(JSON.stringify(articles)),
+                    archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
+                    inspirationalImages: [...inspirationalImages],
+                    newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
+                    savedAt: new Date().toISOString()
+                };
+            }
+        }
+        return sessions;
+    }
+
+    async function convertLocalUploadUrlsForSharing() {
+        const urls = new Set();
+        const addUrl = (value) => {
+            const str = String(value || '').trim();
+            if (!str) return;
+            if (str.startsWith('/uploads/') || /\/uploads\/[^?#]+/i.test(str)) {
+                urls.add(str);
+            }
+        };
+
+        articles.forEach((article) => {
+            addUrl(article.image);
+            addUrl(article.originalImageUrl);
+            addUrl(article.publishedImageUrl);
+            addUrl(article.uploadedImageUrl);
+        });
+        inspirationalImages.forEach(addUrl);
+        inspirationalLibraryImages.forEach((item) => addUrl(item && item.url));
+
+        if (urls.size === 0) return;
+
+        const res = await fetch('/api/images/inline-local', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: Array.from(urls) })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to convert local uploads for sharing');
+        }
+
+        const mapUrl = (value) => {
+            const str = String(value || '').trim();
+            return data.results && data.results[str] ? data.results[str] : value;
+        };
+
+        articles = articles.map((article) => ({
+            ...article,
+            image: mapUrl(article.image),
+            originalImageUrl: mapUrl(article.originalImageUrl),
+            publishedImageUrl: mapUrl(article.publishedImageUrl),
+            uploadedImageUrl: mapUrl(article.uploadedImageUrl)
+        }));
+        inspirationalImages = inspirationalImages.map(mapUrl);
+        inspirationalLibraryImages = inspirationalLibraryImages.map((item) => item && item.url ? { ...item, url: mapUrl(item.url) } : item);
+    }
+
+    async function parseJsonResponse(res, fallbackMessage) {
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('application/json')) {
+            return res.json();
+        }
+        const text = await res.text();
+        const looksLikeHtml = /^\s*<!doctype html/i.test(text) || /^\s*<html/i.test(text);
+        if (looksLikeHtml) {
+            throw new Error(fallbackMessage || 'Server returned HTML instead of JSON. Restart the app server and try again.');
+        }
+        throw new Error(fallbackMessage || 'Server did not return JSON.');
     }
 
     // Load from Supabase (DB) — overwrites if server has data
@@ -99,13 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wrRes.ok) {
                 const { value } = await wrRes.json();
                 if (value && value.articles) {
-                    articles = value.articles || [];
-                    archivedArticles = value.archivedArticles || [];
-                    laterCoolArticles = value.laterCoolArticles || [];
-                    inspirationalImages = value.inspirationalImages || [];
-                    const nc = value.newsletterContent || newsletterContent;
-                    newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
-                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, laterCoolArticles, inspirationalImages, newsletterContent }));
+                    applyWorkspaceState(value, { mergeLibrary: true });
                     if (typeof renderArticles === 'function') renderArticles();
                 }
             }
@@ -135,14 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let workspaceSyncTimeout = null;
     function saveState() {
-        const state = {
-            articles,
-            archivedArticles,
-            laterCoolArticles,
-            inspirationalImages,
-            newsletterContent
-        };
-        localStorage.setItem('newsletter_articles', JSON.stringify(state));
+        const state = buildWorkspaceState();
+        persistWorkspaceLocal(state);
         // Debounced sync to Supabase
         if (workspaceSyncTimeout) clearTimeout(workspaceSyncTimeout);
         workspaceSyncTimeout = setTimeout(() => {
@@ -624,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         btn.textContent = 'Uploading...';
         btn.disabled = true;
-        if (status) status.textContent = 'Uploading to server and publishing...';
+        if (status) status.textContent = 'Uploading image to Supabase Storage...';
 
         const formData = new FormData();
         formData.append('image', input.files[0]);
@@ -634,14 +835,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: formData
             });
-            const data = await res.json();
+            const data = await parseJsonResponse(res, 'Upload route did not return JSON. Restart the app server and try again.');
             if (data.success && data.url) {
-                inspirationalImages.push(data.url);
+                if (!isPublicHostedUrl(data.url)) {
+                    throw new Error('Upload did not return a public Supabase URL.');
+                }
+                inspirationalImages = [data.url];
+                confirmationInspirationalImage = data.url;
                 saveState();
                 await loadInspirationalLibrary();
-                const pubMsg = data.published ? ' (published to GoDaddy)' : ' (local only — FTP not configured)';
-                if (status) status.textContent = 'Uploaded' + pubMsg;
-                if (data.ftpError && status) status.textContent += ' FTP error: ' + data.ftpError;
+                renderInspirationalView();
+                if (status) status.textContent = 'Uploaded to Supabase Storage and selected for the newsletter.';
             } else {
                 alert('Upload failed: ' + (data.error || 'Unknown error'));
                 if (status) status.textContent = 'Upload failed.';
@@ -651,22 +855,77 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Upload failed. See console.');
             if (status) status.textContent = 'Upload failed.';
         } finally {
-            btn.textContent = 'Upload';
+            btn.textContent = 'Upload to Supabase';
             btn.disabled = false;
             input.value = '';
         }
     };
 
-    window.selectInspirationalImage = (url) => {
-        if (!inspirationalImages.includes(url)) {
-            inspirationalImages.push(url);
+    window.addInspirationalUrl = async () => {
+        const input = document.getElementById('insp-url-input');
+        const btn = document.getElementById('btn-insp-url-upload');
+        const status = document.getElementById('insp-upload-status');
+        const url = input ? input.value.trim() : '';
+        if (!url) return alert('Paste an image URL first.');
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
         }
+        if (status) status.textContent = 'Fetching the pasted image and uploading it to Supabase Storage...';
+
+        try {
+            const res = await fetch('/api/images/publish-inspirational-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            const data = await parseJsonResponse(res, 'URL upload route did not return JSON. Restart the app server and try again.');
+            if (!res.ok || !data.success || !data.url) {
+                throw new Error(data.error || 'Failed to upload image URL to Supabase');
+            }
+            if (!isPublicHostedUrl(data.url)) {
+                throw new Error('Upload did not return a public Supabase URL.');
+            }
+
+            inspirationalImages = [data.url];
+            confirmationInspirationalImage = data.url;
+            saveState();
+            await loadInspirationalLibrary();
+            renderInspirationalView();
+
+            if (input) input.value = '';
+            if (status) status.textContent = 'Uploaded to Supabase Storage and selected for the newsletter.';
+        } catch (e) {
+            console.error(e);
+            if (status) status.textContent = 'Upload failed: ' + (e.message || 'Unknown error');
+            alert('Failed to upload image URL: ' + (e.message || 'Unknown error'));
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Upload URL';
+            }
+        }
+    };
+
+    window.selectInspirationalImage = (url) => {
+        if (!isPublicHostedUrl(url)) {
+            alert('Please select an inspirational image with a public Supabase URL.');
+            return;
+        }
+        inspirationalImages = [url];
+        confirmationInspirationalImage = url;
         saveState();
         renderInspirationalView();
     };
 
     window.removeInspirationalImage = (index) => {
         inspirationalImages.splice(index, 1);
+        if (!inspirationalImages.length) {
+            confirmationInspirationalImage = '';
+        } else if (!inspirationalImages.includes(confirmationInspirationalImage)) {
+            confirmationInspirationalImage = inspirationalImages[0];
+        }
         saveState();
         renderInspirationalView();
     };
@@ -880,6 +1139,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const summaryRulesValue = newsletterContent.summaryRules || '';
         const resultValue = content.result || '';
         const templateValue = (newsletterContent.templates && newsletterContent.templates[currentEditorTab]) || '';
+        const selectedGreeting = newsletterContent.selectedGreeting || DEFAULT_GREETING;
+        const greetingOptionsHtml = GREETING_OPTIONS.map(greeting => `
+            <option value="${escapeHtml(greeting)}" ${greeting === selectedGreeting ? 'selected' : ''}>${escapeHtml(greeting)}</option>
+        `).join('');
         const selectedResults = getSelectedCategoryResults();
         const selectedSummaryHtml = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
             const selectedText = selectedResults[cat] || '';
@@ -960,6 +1223,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
                     ${selectedSummaryHtml}
                 </div>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid #e5e7eb;">
+                <label style="font-weight: 700; display: block; margin-bottom: 10px;">Greetings Selection</label>
+                <select class="form-control" style="max-width: 520px;" onchange="updateSelectedGreeting(this.value)">
+                    ${greetingOptionsHtml}
+                </select>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 8px;">This changes only the greeting line. The sign-off name stays as Jessica.</div>
             </div>
         `;
         const templateEl = document.getElementById('editor-template');
@@ -1103,6 +1374,11 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     };
 
+    window.updateSelectedGreeting = (value) => {
+        newsletterContent.selectedGreeting = value || DEFAULT_GREETING;
+        saveState();
+    };
+
     window.selectGeneratedContent = (category) => {
         const resultEl = document.getElementById('editor-result');
         const generatedText = resultEl ? resultEl.value.trim() : ((newsletterContent[category] && newsletterContent[category].result) || '').trim();
@@ -1213,18 +1489,44 @@ document.addEventListener('DOMContentLoaded', () => {
         footerLegal: 'Copyright and image use not authorized. Please contact news@purabici.com for disputes or removal.'
     };
 
+    function isIncludedInConfirmation(article) {
+        return article.publishImage !== false;
+    }
+
     function getMainArticlesForCategory(category) {
-        return getArticlesForCategory(category).filter(a => ['Y', 'YM'].includes(a.status));
+        return getArticlesForCategory(category).filter(a => ['Y', 'YM'].includes(a.status) && isIncludedInConfirmation(a));
     }
 
     function getInterestingFindsArticles() {
         return articles
-            .filter(a => a.status === 'COOL FINDS')
+            .filter(a => a.status === 'COOL FINDS' && isIncludedInConfirmation(a))
             .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
     }
 
+    function getDownloadSafeAssetUrl(url) {
+        const value = (url || '').trim();
+        if (!value) return '';
+        if (/^data:/i.test(value)) return value;
+        if (/^blob:/i.test(value)) return '';
+        if (/^https?:\/\//i.test(value)) return value;
+        if (/^\/\//.test(value)) return `${window.location.protocol}${value}`;
+        if (value.startsWith('/')) return `${window.location.origin}${value}`;
+        return value;
+    }
+
+    function isPublicHostedUrl(url) {
+        const value = getDownloadSafeAssetUrl(url);
+        if (!/^https:\/\//i.test(value)) return false;
+        try {
+            const hostname = new URL(value).hostname.toLowerCase();
+            return hostname !== 'localhost' && hostname !== '127.0.0.1';
+        } catch (e) {
+            return false;
+        }
+    }
+
     function getArticleImageUrl(article) {
-        return article.publishedImageUrl || article.image || article.originalImageUrl || article.uploadedImageUrl || '';
+        return getDownloadSafeAssetUrl(article.publishedImageUrl || article.image || article.originalImageUrl || article.uploadedImageUrl || '');
     }
 
     function getSourceLabel(url) {
@@ -1238,15 +1540,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function chooseConfirmationInspirationalImage() {
-        const available = inspirationalImages.filter(Boolean);
+        const available = inspirationalImages.map(getDownloadSafeAssetUrl).filter(isPublicHostedUrl);
         if (!available.length) {
             confirmationInspirationalImage = '';
             return '';
         }
-        if (confirmationInspirationalImage && available.includes(confirmationInspirationalImage)) {
-            return confirmationInspirationalImage;
+        const selected = getDownloadSafeAssetUrl(confirmationInspirationalImage);
+        if (selected && available.includes(selected)) {
+            confirmationInspirationalImage = selected;
+            return selected;
         }
-        confirmationInspirationalImage = available[Math.floor(Math.random() * available.length)];
+        confirmationInspirationalImage = available[0];
         return confirmationInspirationalImage;
     }
 
@@ -1313,6 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const summaryText = getSelectedOrGeneratedSummary(category);
         const introCell = Array.from(doc.querySelectorAll('td, div, p')).find(el => (el.textContent || '').includes('Hi [FNAME],'));
         if (!introCell || !summaryText) return;
+        const selectedGreeting = escapeHtml(newsletterContent.selectedGreeting || DEFAULT_GREETING);
 
         const lines = summaryText
             .split(/\r?\n/)
@@ -1320,7 +1625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(Boolean)
             .map(line => escapeHtml(line));
 
-        introCell.innerHTML = `<span style="font-size:14px;line-height: 150%;color: #000000;">Hi [FNAME],<br><br>${lines.join('<br>')}<br><br>Have a fantastic week and stay safe,<br>Jessica<br><br>If this newsletter&#8217;s not for you, just <a href="${TEMPLATE_FIXED_CONTENT.unsubscribeHref}" style="color:#2baadf;text-decoration:underline;">unsubscribe</a> and you won&#8217;t hear from us again. :) </span><br />&nbsp;`;
+        introCell.innerHTML = `<span style="font-size:14px;line-height: 150%;color: #000000;">Hi [FNAME],<br><br>${lines.join('<br>')}<br><br>${selectedGreeting}<br>Jessica<br><br>If this newsletter&#8217;s not for you, just <a href="${TEMPLATE_FIXED_CONTENT.unsubscribeHref}" style="color:#2baadf;text-decoration:underline;">unsubscribe</a> and you won&#8217;t hear from us again. :) </span><br />&nbsp;`;
     }
 
     function getGeneratedConfirmationHeading(category) {
@@ -1424,6 +1729,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildSummaryHtml(category) {
         const summaryText = getSelectedOrGeneratedSummary(category);
         if (!summaryText) return null;
+        const selectedGreeting = escapeHtml(newsletterContent.selectedGreeting || DEFAULT_GREETING);
         const lines = summaryText
             .split(/\r?\n/)
             .map(line => line.trim())
@@ -1433,7 +1739,7 @@ document.addEventListener('DOMContentLoaded', () => {
 									<br />
 									${lines.join('<br />\n\t\t\t\t\t\t\t\t\t')}<br />
 									<br />
-									Have a fantastic week and stay safe,<br />
+									${selectedGreeting}<br />
 									Jessica<br />
 									<br />
 									If this newsletter&#8217;s not for you, just <a href="${TEMPLATE_FIXED_CONTENT.unsubscribeHref}" style="color:#2baadf;text-decoration:underline;">unsubscribe</a> and you won&#8217;t hear from us again. :) </span><br />
@@ -2025,27 +2331,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.exportArticlesXls = () => {
         if (articles.length === 0) return alert('No articles to export.');
+        const headers = ['Title', 'URL', 'Description', 'Date', 'Status', 'Paywall', 'MED', 'THC', 'CBD', 'INV', 'Notes', 'Image URL'];
+        const optionalCell = (value) => {
+            const text = String(value ?? '').trim();
+            return text ? text : undefined;
+        };
+        const rows = articles.map(a => ([
+            a.title || '',
+            a.url || '',
+            optionalCell(a.description),
+            optionalCell(a.date),
+            optionalCell(a.status),
+            a.paywall ? 'Yes' : 'No',
+            optionalCell(a.ranks && a.ranks.MED),
+            optionalCell(a.ranks && a.ranks.THC),
+            optionalCell(a.ranks && a.ranks.CBD),
+            optionalCell(a.ranks && a.ranks.INV),
+            optionalCell(a.notes),
+            optionalCell(a.image)
+        ]));
 
-        const rows = articles.map(a => ({
-            'Title': a.title || '',
-            'URL': a.url || '',
-            'Description': a.description || '',
-            'Date': a.date || '',
-            'Status': a.status || '',
-            'Paywall': a.paywall ? 'Yes' : 'No',
-            'MED': (a.ranks && a.ranks.MED) || '',
-            'THC': (a.ranks && a.ranks.THC) || '',
-            'CBD': (a.ranks && a.ranks.CBD) || '',
-            'INV': (a.ranks && a.ranks.INV) || '',
-            'Notes': a.notes || '',
-            'Image URL': a.image || ''
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(rows);
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
         // Auto-size columns
-        const colWidths = Object.keys(rows[0]).map(key => {
-            const maxLen = Math.max(key.length, ...rows.map(r => String(r[key]).length));
+        const colWidths = headers.map((key, index) => {
+            const maxLen = Math.max(key.length, ...rows.map(r => String(r[index] ?? '').length));
             return { wch: Math.min(maxLen + 2, 60) };
         });
         ws['!cols'] = colWidths;
@@ -2055,6 +2365,105 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('newsletter-name').value || 'newsletter';
         XLSX.writeFile(wb, `${name.replace(/[^a-zA-Z0-9 ]/g, '')}-articles.xlsx`);
     };
+
+    function updateChosenFileName(inputId, labelId) {
+        const input = document.getElementById(inputId);
+        const label = document.getElementById(labelId);
+        if (!label) return;
+        label.textContent = input && input.files && input.files.length > 0
+            ? input.files[0].name
+            : 'No file chosen';
+    }
+
+    function assignImportedArticles(importedArticles) {
+        const importedAt = new Date().toISOString();
+        articles = (importedArticles || []).map((article, index) => ({
+            ...article,
+            id: index + 1,
+            addedAt: article.addedAt || importedAt
+        }));
+        archivedArticles = [];
+        laterCoolArticles = [];
+    }
+
+    function upsertImportedSession(name) {
+        if (!name) return;
+        const sessions = getSavedSessions();
+        sessions[name] = {
+            articles: JSON.parse(JSON.stringify(articles)),
+            archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
+            inspirationalImages: [...inspirationalImages],
+            newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
+            savedAt: new Date().toISOString()
+        };
+        saveSavedSessions(sessions);
+        currentSessionName = name;
+        populateSavedDropdown();
+    }
+
+    async function uploadArticlesWorkbook({ inputId, buttonId, buttonLabel, replacePrompt, successMessage, switchToStep2 = false }) {
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        const nameEl = document.getElementById('newsletter-name');
+        const newsletterName = (nameEl && nameEl.value.trim()) || 'Week 1';
+
+        if (!input || !input.files || !input.files.length) {
+            alert('Please select an Excel file first.');
+            return false;
+        }
+
+        if (replacePrompt && articles.length > 0 && !confirm(replacePrompt.replace('{count}', articles.length))) {
+            return false;
+        }
+
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Uploading...';
+        }
+
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+        formData.append('newsletterName', newsletterName);
+
+        try {
+            const response = await fetch('/api/articles/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Upload failed.');
+            }
+
+            assignImportedArticles(data.articles || []);
+            if (nameEl) {
+                nameEl.value = data.newsletterName || newsletterName;
+            }
+            saveState();
+            upsertImportedSession((data.newsletterName || newsletterName).trim());
+            renderArticles();
+
+            if (switchToStep2) {
+                switchStep(2);
+            } else {
+                updateStats();
+            }
+
+            alert(successMessage.replace('{count}', articles.length).replace('{name}', data.newsletterName || newsletterName));
+            input.value = '';
+            return true;
+        } catch (err) {
+            console.error(err);
+            alert(err.message || 'Upload failed. See console.');
+            return false;
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent = buttonLabel;
+            }
+        }
+    }
 
     // Event Listeners for Steps
     steps.forEach((step) => {
@@ -2066,16 +2475,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // File Upload Preview
     const fileInput = document.getElementById('excel-upload');
-    const fileNameDisplay = document.getElementById('file-name');
+    const articleViewFileInput = document.getElementById('article-view-excel-upload');
 
     if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                fileNameDisplay.textContent = e.target.files[0].name;
-            } else {
-                fileNameDisplay.textContent = "No file chosen";
-            }
-        });
+        fileInput.addEventListener('change', () => updateChosenFileName('excel-upload', 'file-name'));
+    }
+
+    if (articleViewFileInput) {
+        articleViewFileInput.addEventListener('change', () => updateChosenFileName('article-view-excel-upload', 'article-view-file-name'));
     }
 
     const btnLoadTemplate = document.getElementById('btn-load-template');
@@ -2102,7 +2509,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Articles Function (Table View)
     function renderArticles() {
         const list = document.getElementById('articles-list');
+        if (!list) return;
         list.innerHTML = ''; // Clear existing
+
+        const titleSortSelect = document.getElementById('article-sort-order');
+        if (titleSortSelect) {
+            titleSortSelect.value = articleTitleSortOrder;
+        }
 
         // Populate batch filter dropdown (unique addedAt, sorted)
         const batchSelect = document.getElementById('batch-filter-select');
@@ -2412,6 +2825,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const STATUS_ORDER = ['Y', 'YM', 'M', 'NO', 'COOL FINDS', 'LATER COOL'];
     window.sortArticles = (sortKey) => {
         if (!articles || articles.length === 0) return;
+        articleTitleSortOrder = '';
+        const titleSortSelect = document.getElementById('article-sort-order');
+        if (titleSortSelect) titleSortSelect.value = '';
 
         if (sortKey === 'status') {
             articles.sort((a, b) => {
@@ -2443,6 +2859,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sort by MED, then THC, then CBD, then INV (lowest number first). Uses same effective rank as display.
     window.sortByRanks = () => {
         if (!articles || articles.length === 0) return;
+        articleTitleSortOrder = '';
+        const titleSortSelect = document.getElementById('article-sort-order');
+        if (titleSortSelect) titleSortSelect.value = '';
         const order = ['MED', 'THC', 'CBD', 'INV'];
         articles.sort((a, b) => {
             for (const cat of order) {
@@ -2451,6 +2870,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (rA !== rB) return rA - rB;
             }
             return (a.title || '').localeCompare(b.title || '');
+        });
+        saveState();
+        renderArticles();
+    };
+
+    window.sortArticlesByTitle = (order) => {
+        articleTitleSortOrder = order || '';
+        if (!articles || articles.length === 0 || !articleTitleSortOrder) {
+            renderArticles();
+            return;
+        }
+
+        const direction = articleTitleSortOrder === 'za' ? -1 : 1;
+        articles.sort((a, b) => {
+            const titleA = String(a.title || '').trim().toLowerCase();
+            const titleB = String(b.title || '').trim().toLowerCase();
+            return titleA.localeCompare(titleB) * direction;
         });
         saveState();
         renderArticles();
@@ -2552,7 +2988,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!name) return alert('Please enter a newsletter name on the first page.');
 
         const sessions = getSavedSessions();
-
         sessions[name] = {
             articles: JSON.parse(JSON.stringify(articles)),
             archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
@@ -2666,25 +3101,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.pushStateToServer = async function () {
-        const state = {
-            articles,
-            archivedArticles,
-            laterCoolArticles,
-            inspirationalImages,
-            newsletterContent
-        };
         try {
-            const res = await fetch('/api/state', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'workspace', value: state })
-            });
-            if (res.ok) {
-                localStorage.setItem('newsletter_articles', JSON.stringify(state));
-                alert('Pushed to server: ' + articles.length + ' articles, ' + archivedArticles.length + ' archived, ' + laterCoolArticles.length + ' later cool.');
+            await convertLocalUploadUrlsForSharing();
+            const workspace = buildWorkspaceState();
+            const sessions = buildSessionsState(true);
+            const requests = [
+                fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'workspace', value: workspace })
+                }),
+                fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'sessions', value: sessions })
+                })
+            ];
+            if (lastGeneratedNewsletter && lastGeneratedNewsletter.meta && lastGeneratedNewsletter.meta.name) {
+                requests.push(
+                    fetch('/api/newsletters', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: lastGeneratedNewsletter.meta.name, generated: lastGeneratedNewsletter })
+                    })
+                );
+            }
+
+            const responses = await Promise.all(requests);
+            const failed = [];
+            for (const res of responses) {
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    failed.push(err.error || res.status);
+                }
+            }
+
+            if (failed.length === 0) {
+                persistWorkspaceLocal(workspace);
+                localStorage.setItem('newsletter_saved_sessions', JSON.stringify(sessions));
+                currentSessionName = currentSessionName || document.getElementById('newsletter-name')?.value.trim() || '';
+                populateSavedDropdown();
+                const generatedNote = lastGeneratedNewsletter ? ', generated newsletter synced' : '';
+                alert('Pushed to server: ' + articles.length + ' articles, ' + archivedArticles.length + ' archived, ' + laterCoolArticles.length + ' later cool, ' + Object.keys(sessions).length + ' saved session(s)' + generatedNote + '.');
             } else {
-                const err = await res.json().catch(() => ({}));
-                alert('Push failed: ' + (err.error || res.status));
+                alert('Push failed: ' + failed.join('; '));
             }
         } catch (e) {
             alert('Push failed: ' + (e.message || 'network error'));
@@ -2727,14 +3187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wrRes.ok) {
                 const { value } = await wrRes.json();
                 if (value && value.articles) {
-                    articles.length = 0;
-                    articles.push(...(value.articles || []));
-                    archivedArticles = value.archivedArticles || [];
-                    laterCoolArticles = value.laterCoolArticles || [];
-                    inspirationalImages = value.inspirationalImages || [];
-                    const nc = value.newsletterContent || newsletterContent;
-                    newsletterContent = { ...nc, templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' } };
-                    localStorage.setItem('newsletter_articles', JSON.stringify({ articles, archivedArticles, laterCoolArticles, inspirationalImages, newsletterContent }));
+                    applyWorkspaceState(value, { mergeLibrary: true });
                     if (typeof renderArticles === 'function') renderArticles();
                     msg = (value.articles || []).length + ' articles in workspace. ';
                     const nameEl = document.getElementById('newsletter-name');
@@ -3037,59 +3490,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadBtn = document.getElementById('btn-upload-file');
     if (uploadBtn) {
         uploadBtn.addEventListener('click', async () => {
-            const fileInput = document.getElementById('excel-upload');
-            const newsletterName = document.getElementById('newsletter-name').value;
-            
-            if (!fileInput.files.length) {
-                alert("Please select an Excel file first.");
-                return;
+            const success = await uploadArticlesWorkbook({
+                inputId: 'excel-upload',
+                buttonId: 'btn-upload-file',
+                buttonLabel: 'Upload & Load',
+                replacePrompt: 'This will replace the current {count} articles in your workspace. Continue?',
+                successMessage: 'Loaded {count} articles for "{name}".',
+                switchToStep2: true
+            });
+            if (success) {
+                updateChosenFileName('excel-upload', 'file-name');
             }
+        });
+    }
 
-            console.log("Initiating File Upload...", { newsletterName, file: fileInput.files[0].name });
-            
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = "Uploading...";
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('newsletterName', newsletterName);
-
-            try {
-                const response = await fetch('/api/articles/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    console.log("Upload Results:", data.articles);
-                    articles = data.articles || [];
-                    document.getElementById('newsletter-name').value = data.newsletterName || 'Week 1';
-                    saveState();
-                    renderArticles();
-                    switchStep(2);
-                    // Persist to Supabase as Week 1
-                    const sessions = getSavedSessions();
-                    const week1Data = {
-                        articles: JSON.parse(JSON.stringify(articles)),
-                        archivedArticles: [],
-                        inspirationalImages: [],
-                        newsletterContent: newsletterContent,
-                        savedAt: new Date().toISOString()
-                    };
-                    sessions['Week 1'] = week1Data;
-                    saveSavedSessions(sessions);
-                    alert(`Loaded ${articles.length} articles and saved as "Week 1" in the database.`);
-                } else {
-                    alert(data.error || "Upload failed.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Upload failed. See console.");
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.textContent = "Upload & Load";
+    const articleViewUploadBtn = document.getElementById('btn-article-view-upload');
+    if (articleViewUploadBtn) {
+        articleViewUploadBtn.addEventListener('click', async () => {
+            const success = await uploadArticlesWorkbook({
+                inputId: 'article-view-excel-upload',
+                buttonId: 'btn-article-view-upload',
+                buttonLabel: 'Upload XLS Here',
+                replacePrompt: 'This will replace the current {count} articles shown in Article View and clear archived/later-cool lists. Continue?',
+                successMessage: 'Restored {count} articles into "{name}". You can continue from Article View now.'
+            });
+            if (success) {
+                updateChosenFileName('article-view-excel-upload', 'article-view-file-name');
             }
         });
     }

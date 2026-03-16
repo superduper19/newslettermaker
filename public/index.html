@@ -131,6 +131,12 @@
                             <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load Week 1 and other saved sessions from Supabase" id="btn-refresh-state">Refresh from server</button>
                             <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current articles and archive to the database">Push to server</button>
                             <button class="btn btn-outline btn-sm" type="button" onclick="getLaterCoolFinds()" title="Bring back all Later Cool finds to the top of the list">Get Later Cool Finds</button>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <label for="article-view-excel-upload" class="btn btn-secondary btn-sm">Choose XLS</label>
+                                <input type="file" id="article-view-excel-upload" accept=".xlsx,.xls" hidden>
+                                <span id="article-view-file-name" class="file-name" style="max-width: 220px;">No file chosen</span>
+                                <button class="btn btn-success btn-sm" type="button" id="btn-article-view-upload" title="Replace current articles with a saved article sheet">Upload XLS Here</button>
+                            </div>
                         </div>
                     </div>
 
@@ -157,7 +163,11 @@
                         <select id="batch-filter-select" onchange="setBatchFilter(this.value); renderArticles();" style="padding: 4px 8px; font-size: 0.85rem;">
                             <option value="">All</option>
                         </select>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="sortByRanks()" title="Sort by MED, then THC, then CBD, then INV (lowest number first)">Sort</button>
+                        <select id="article-sort-order" class="form-control" style="width: 140px; min-width: 140px;" onchange="sortArticlesByTitle(this.value)" title="Sort articles by title">
+                            <option value="">Sort</option>
+                            <option value="az">A-Z</option>
+                            <option value="za">Z-A</option>
+                        </select>
                     </div>
                     <!-- Articles Table Header -->
                 <div class="articles-table-header">
@@ -248,17 +258,18 @@
                             <label>Upload Image</label>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="file" accept="image/*" id="insp-upload-input" style="flex: 1;" class="form-control">
-                                <button class="btn btn-primary" onclick="uploadInspirationalImage()" id="btn-insp-upload">Upload</button>
+                                <button class="btn btn-primary" onclick="uploadInspirationalImage()" id="btn-insp-upload">Upload to Supabase</button>
                             </div>
                             <div id="insp-upload-status" style="font-size: 0.8rem; color: #888; margin-top: 4px;"></div>
                         </div>
 
                         <div class="form-group" style="margin-top: 15px;">
-                            <label>Or Add Image by URL</label>
+                            <label>Or Save Image URL to Supabase</label>
                             <div style="display: flex; gap: 10px;">
                                 <input type="text" id="insp-url-input" placeholder="https://example.com/image.jpg" style="flex: 1;" class="form-control">
-                                <button class="btn btn-secondary" onclick="addInspirationalUrl()">Add URL</button>
+                                <button class="btn btn-secondary" onclick="addInspirationalUrl()" id="btn-insp-url-upload">Upload URL</button>
                             </div>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 4px;">This fetches the pasted image, stores it in Supabase Storage, and uses that public Supabase link in Confirmation.</div>
                         </div>
 
                         <hr class="divider">

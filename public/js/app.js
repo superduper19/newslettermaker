@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmationRenderedHtml = { MED: '', THC: '', CBD: '', INV: '' };
     let confirmationInspirationalImage = '';
     let articleTitleSortOrder = '';
+    let imageViewSortOrder = '';
     let batchFilter = ''; // '' = all, or addedAt ISO string to show only that batch
     const INSPIRATIONAL_LIBRARY_CACHE_KEY = 'newsletter_inspirational_library';
 
@@ -459,7 +460,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = document.getElementById('images-list');
         list.innerHTML = '';
 
-        const relevantArticles = articles.filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M'));
+        const sortSelect = document.getElementById('image-sort-order');
+        if (sortSelect) {
+            sortSelect.value = imageViewSortOrder;
+        }
+
+        const relevantArticles = articles
+            .filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M'))
+            .slice();
+
+        if (imageViewSortOrder === 'az' || imageViewSortOrder === 'za') {
+            const direction = imageViewSortOrder === 'za' ? -1 : 1;
+            relevantArticles.sort((a, b) => {
+                const titleA = String(a.title || '').trim().toLowerCase();
+                const titleB = String(b.title || '').trim().toLowerCase();
+                return titleA.localeCompare(titleB) * direction;
+            });
+        } else if (imageViewSortOrder === 'oldnew' || imageViewSortOrder === 'newold') {
+            const direction = imageViewSortOrder === 'newold' ? -1 : 1;
+            relevantArticles.sort((a, b) => {
+                const timeA = a.addedAt ? new Date(a.addedAt).getTime() : 0;
+                const timeB = b.addedAt ? new Date(b.addedAt).getTime() : 0;
+                if (timeA !== timeB) return (timeA - timeB) * direction;
+                return String(a.title || '').localeCompare(String(b.title || ''));
+            });
+        }
         
         if (relevantArticles.length === 0) {
             list.innerHTML = '<div style="padding: 30px; text-align: center; color: #777;">No selected articles are ready for Image View yet. Check the articles you want in Article View and assign categories first.</div>';
@@ -3010,6 +3035,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (articleTitleSortOrder === 'oldnew' || articleTitleSortOrder === 'newold') {
+            const direction = articleTitleSortOrder === 'newold' ? -1 : 1;
+            articles.sort((a, b) => {
+                const timeA = a.addedAt ? new Date(a.addedAt).getTime() : 0;
+                const timeB = b.addedAt ? new Date(b.addedAt).getTime() : 0;
+                if (timeA !== timeB) return (timeA - timeB) * direction;
+                return String(a.title || '').localeCompare(String(b.title || ''));
+            });
+            saveState();
+            renderArticles();
+            return;
+        }
+
         const direction = articleTitleSortOrder === 'za' ? -1 : 1;
         articles.sort((a, b) => {
             const titleA = String(a.title || '').trim().toLowerCase();
@@ -3018,6 +3056,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         saveState();
         renderArticles();
+    };
+
+    window.sortImagesView = (order) => {
+        imageViewSortOrder = order || '';
+        renderImagesView();
     };
 
     function isPrioritySummaryRank(rank) {
@@ -3567,10 +3610,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // "Find Articles" Button Logic
     const searchBtn = document.getElementById('btn-search-articles');
     const nextStep2Btn = document.getElementById('btn-next-step-2');
+    const nextStep2BottomBtn = document.getElementById('btn-next-step-2-bottom');
     const searchStatus = document.getElementById('search-status');
 
     if (nextStep2Btn) {
         nextStep2Btn.addEventListener('click', () => switchStep(2));
+    }
+
+    if (nextStep2BottomBtn) {
+        nextStep2BottomBtn.addEventListener('click', () => switchStep(2));
     }
 
     if (searchBtn) {

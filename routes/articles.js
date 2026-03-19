@@ -4,6 +4,8 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const fs = require('fs');
+const path = require('path');
 
 // Configure Multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -466,7 +468,11 @@ Example format:
                 console.error("Failed to write error log file", fsErr);
             }
             
-            return res.status(500).json({ error: "AI returned invalid JSON format. Log ID: " + logId });
+            return res.status(500).json({
+                error: "AI needs more detail before it can continue.",
+                details: String(content || '').trim(),
+                logId
+            });
         }
 
         console.log(`AI found ${rawArticles.length} articles. Starting Stage 2: Verification & Categorization...`);
@@ -584,7 +590,10 @@ router.post('/modify', async (req, res) => {
             modifiedArticles = extractJSON(content);
         } catch (e) {
             console.error("Failed to parse AI JSON response:", content);
-            return res.status(500).json({ error: "Failed to parse AI response" });
+            return res.status(500).json({
+                error: "AI needs more detail before it can continue.",
+                details: String(content || '').trim()
+            });
         }
 
         console.log(`Successfully modified ${modifiedArticles.length} articles.`);
@@ -791,6 +800,27 @@ Return only valid JSON with keys MED, THC, CBD, INV.`;
     } catch (error) {
         console.error('Error generating subjects:', error);
         res.status(500).json({ error: 'Failed to generate subjects', details: error.message });
+    }
+});
+
+router.get('/error-log/:logId', async (req, res) => {
+    try {
+        const logId = String(req.params.logId || '').trim();
+        if (!/^\d+$/.test(logId)) {
+            return res.status(400).json({ error: 'Invalid log ID' });
+        }
+
+        const filename = `error_json_${logId}.log`;
+        const filepath = path.join(process.cwd(), filename);
+        if (!fs.existsSync(filepath)) {
+            return res.status(404).json({ error: 'Log not found' });
+        }
+
+        const content = fs.readFileSync(filepath, 'utf8');
+        return res.json({ success: true, logId, content });
+    } catch (error) {
+        console.error('Error reading AI parse log:', error);
+        return res.status(500).json({ error: 'Failed to read log file' });
     }
 });
 

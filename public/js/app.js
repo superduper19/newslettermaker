@@ -95,6 +95,32 @@ document.addEventListener('DOMContentLoaded', () => {
         'Happy Labor Day!'
     ]));
     const DEFAULT_GREETING = 'Have a fantastic week and stay safe,';
+    const DEFAULT_SUMMARY_RULES = [
+        '1.  Only use the URLs provided in the user input.',
+        '2.  Do not use prior knowledge.',
+        '3.  Do not supplement with outside research.',
+        '4.  Do not infer facts not explicitly stated in the article.',
+        '5.  If a link cannot be accessed, explicitly state that the link could',
+        '    not be accessed.',
+        '6.  If a paywall prevents access, explicitly state that the article is',
+        '    paywalled.',
+        '7.  If partial access is available, only summarize the visible content.',
+        '8. Dont use em dashes'
+    ].join('\n');
+    function normalizeSummaryRules(value) {
+        const text = String(value || '').trim();
+        if (!text) return DEFAULT_SUMMARY_RULES;
+        if (
+            text.includes('# Newsletter Summary Rules') ||
+            text.includes('## SYSTEM PROMPT: Newsletter Summary Engine') ||
+            text.includes('## SOURCE RESTRICTIONS') ||
+            text.includes('## SUMMARY STRUCTURE') ||
+            text.includes('## OUTPUT FORMAT')
+        ) {
+            return DEFAULT_SUMMARY_RULES;
+        }
+        return value;
+    }
     const LEGACY_DEFAULT_SUBJECT_PROMPT = 'From these three articles, Create me a small very clicky subject seperated by suitable Emojis, and if articles are same, Use same subject and emoji.';
     const DEFAULT_SUBJECT_PROMPT = 'From these three articles, Create me a small very clicky subject seperated by suitable Emojis, and if articles are same, Use same subject and emoji. And no "|" in between.';
 
@@ -110,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         CBD: { intro: '', outro: '' },
         INV: { intro: '', outro: '' },
         templates: { MED: '', THC: '', CBD: '', INV: '' },
+        summaryRules: DEFAULT_SUMMARY_RULES,
         selectedGreeting: DEFAULT_GREETING,
         subjectPrompt: DEFAULT_SUBJECT_PROMPT,
         generatedSubjects: { MED: '', THC: '', CBD: '', INV: '' }
@@ -200,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newsletterContent = {
             ...nc,
             templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' },
+            summaryRules: normalizeSummaryRules(nc.summaryRules),
             selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
             subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
             generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' }
@@ -284,6 +312,27 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error(fallbackMessage || 'Server returned HTML instead of JSON. Restart the app server and try again.');
         }
         throw new Error(fallbackMessage || 'Server did not return JSON.');
+    }
+
+    async function getAiClarificationFromError(data) {
+        const directDetails = String(data?.details || '').trim();
+        if (directDetails) return directDetails;
+
+        const errorText = String(data?.error || '').trim();
+        const logMatch = errorText.match(/Log ID:\s*(\d+)/i);
+        if (!logMatch) return '';
+
+        try {
+            const res = await fetch(`/api/articles/error-log/${logMatch[1]}`);
+            const logData = await res.json().catch(() => ({}));
+            if (res.ok && logData && logData.success && logData.content) {
+                return String(logData.content).trim();
+            }
+        } catch (err) {
+            console.error('Failed to fetch AI clarification log:', err);
+        }
+
+        return '';
     }
 
     // Load from Supabase (DB) — overwrites if server has data
@@ -1197,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveState();
         }
 
-        const summaryRulesValue = newsletterContent.summaryRules || '';
+        const summaryRulesValue = normalizeSummaryRules(newsletterContent.summaryRules);
         const resultValue = content.result || '';
         const templateValue = (newsletterContent.templates && newsletterContent.templates[currentEditorTab]) || '';
         const selectedGreeting = newsletterContent.selectedGreeting || DEFAULT_GREETING;
@@ -1259,13 +1308,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <div>
-                    <div id="editor-articles-list" style="margin-bottom: 15px; font-size: 0.85rem;"></div>
-                    <div class="form-group">
-                        <label style="font-weight: 600;">Summary Rules</label>
-                        <textarea id="editor-summary-rules" rows="14" class="form-control" style="font-size: 0.85rem; background: #fffde7; border-color: #fbc02d;" oninput="updateSummaryRules(this.value)" placeholder="Persistent rules sent as system instructions to the AI...">${summaryRulesValue}</textarea>
-                        <div style="font-size: 0.7rem; color: #999; margin-top: 4px;">These rules persist across saves and categories.</div>
-                    </div>
+            </div>
+
+            <div>
+                <div id="editor-articles-list" style="margin-bottom: 15px; font-size: 0.85rem;"></div>
+                <div class="form-group">
+                    <label style="font-weight: 600;">Summary Rules</label>
+                    <textarea id="editor-summary-rules" rows="14" class="form-control" style="font-size: 0.85rem; background: #fffde7; border-color: #fbc02d;" oninput="updateSummaryRules(this.value)" placeholder="Persistent rules sent as system instructions to the AI...">${summaryRulesValue}</textarea>
+                    <div style="font-size: 0.7rem; color: #999; margin-top: 4px;">These rules persist across saves and categories.</div>
                 </div>
             </div>
 
@@ -1316,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.updateSummaryRules = (value) => {
-        newsletterContent.summaryRules = value;
+        newsletterContent.summaryRules = value || DEFAULT_SUMMARY_RULES;
         saveState();
     };
 
@@ -1382,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = document.getElementById('editor-prompt').value;
         const rulesOnEl = document.getElementById(`rules-on-${category}`);
         const isUseRules = rulesOnEl ? rulesOnEl.checked : true;
-        const summaryRules = isUseRules ? (newsletterContent.summaryRules || '') : '';
+        const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
         const categoryArticles = getSummaryArticlesForCategory(category);
         const btnText = document.getElementById(`gen-btn-text-${category}`);
 
@@ -1888,9 +1938,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return rendered;
         } catch (error) {
             console.error(`Failed to build ${category} confirmation HTML:`, error);
-            const errorHtml = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;padding:24px;color:#111;"><h2>Template Error</h2><p>Confirmation preview could not load the required example template for ${category}.</p><p>Restart the local server so the new <code>/api/newsletters/template/${category}</code> route is available, then reload the page.</p></body></html>`;
-            confirmationRenderedHtml[category] = errorHtml;
-            return errorHtml;
+            const fallbackHtml = buildFallbackConfirmationHtml(category);
+            confirmationRenderedHtml[category] = fallbackHtml;
+            return fallbackHtml;
         }
     }
 
@@ -3209,6 +3259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newsletterContent = {
             ...nc,
             templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' },
+            summaryRules: normalizeSummaryRules(nc.summaryRules),
             selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
             subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
             generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' }
@@ -3493,7 +3544,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 status.textContent = msg;
                 status.style.display = 'block';
             } else {
-                alert('Search Error: ' + (data.error || 'Unknown error'));
+                const clarification = await getAiClarificationFromError(data);
+                const details = clarification || String(data.details || '').trim();
+                alert('Search Error: ' + (details || data.error || 'Unknown error'));
             }
         } catch (err) {
             console.error(err);
@@ -3553,7 +3606,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 status.textContent = `Modified ${data.articles.length} articles.`;
                 status.style.display = 'block';
             } else {
-                alert('Error: ' + data.error);
+                const clarification = await getAiClarificationFromError(data);
+                const details = clarification || String(data.details || '').trim();
+                alert('Error: ' + (details || data.error || 'Unknown error'));
             }
         } catch (err) {
             console.error(err);
@@ -3672,7 +3727,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                 } else {
                     // Show specific error message from backend (e.g. "Credit balance too low")
-                    alert("Search Error:\n" + data.error);
+                    const clarification = await getAiClarificationFromError(data);
+                    const details = clarification || String(data.details || '').trim();
+                    alert("Search Error:\n" + (details || data.error || 'Unknown error'));
                     if (data.details) console.error("Error Details:", data.details);
                 }
             } catch (err) {

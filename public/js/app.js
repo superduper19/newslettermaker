@@ -955,8 +955,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.error(e);
-            alert('Upload failed. See console.');
-            if (status) status.textContent = 'Upload failed.';
+            alert('Upload failed: ' + (e.message || 'Unknown error'));
+            if (status) status.textContent = 'Upload failed: ' + (e.message || 'Unknown error');
         } finally {
             btn.textContent = 'Upload to Supabase';
             btn.disabled = false;

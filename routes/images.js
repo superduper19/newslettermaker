@@ -24,6 +24,7 @@ const diskStorage = multer.diskStorage({
     }
 });
 const uploadMiddleware = multer({ storage: diskStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+const memoryUploadMiddleware = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 const STATE_TABLE = process.env.SUPABASE_STATE_TABLE || 'newsletter_state';
 const INSPIRATIONAL_LIBRARY_KEY = 'inspirational_library';
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'newsletter-images';
@@ -640,16 +641,20 @@ router.post('/publish-inspirational-url', async (req, res) => {
 });
 
 // POST /api/images/upload-inspirational - Upload image to Supabase Storage, return public URL
-router.post('/upload-inspirational', uploadMiddleware.single('image'), async (req, res) => {
+router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const localPath = req.file.path;
-        const filename = req.file.filename;
-        const buffer = fs.readFileSync(localPath);
-        const uploaded = await uploadInspirationalBufferToSupabase(buffer, filename, req.file.mimetype || getMimeTypeFromName(filename));
+        const originalName = String(req.file.originalname || `insp-${Date.now()}.png`);
+        const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const buffer = req.file.buffer;
+        if (!buffer || !buffer.length) {
+            return res.status(400).json({ error: 'Uploaded file buffer was empty' });
+        }
+
+        const uploaded = await uploadInspirationalBufferToSupabase(buffer, safeName, req.file.mimetype || getMimeTypeFromName(safeName));
         try {
             const existing = await getInspirationalLibraryFromDb();
             const next = normalizeLibraryImages([...(existing || []), { name: uploaded.filename, url: uploaded.publicUrl, source: 'supabase' }]);

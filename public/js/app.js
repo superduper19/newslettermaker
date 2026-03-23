@@ -643,15 +643,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const statsEl = document.getElementById('image-view-stats');
         if (!statsEl) return;
         const relevantArticles = articles.filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M'));
-        const counts = { MED: 0, THC: 0, CBD: 0, INV: 0 };
+        const counts = getSelectedRankCounts();
         let selectedCount = 0;
         relevantArticles.forEach(a => {
             if (a.publishImage !== false) selectedCount++;
-            if (a.ranks) {
-                ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
-                    if (a.ranks[cat]) counts[cat]++;
-                });
-            }
         });
         const sessionLabel = currentSessionName
             ? `<span class="stat-item" style="background:#e8eaf6; color:#283593; font-weight:600;">${currentSessionName}</span>`
@@ -3122,6 +3117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function getSummaryArticlesForCategory(category) {
         return articles.filter(a => {
             if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
+            if (a.selected === false) return false;
             const rank = getRankForSort(a, category);
             return isPrioritySummaryRank(rank);
         }).sort((a, b) => {
@@ -3136,6 +3132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function getArticlesForCategory(category) {
         return articles.filter(a => {
             if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
+            if (a.selected === false) return false;
             const rank = getRankForSort(a, category);
             return rank !== '' && rank !== undefined;
         }).sort((a, b) => {
@@ -3146,21 +3143,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getSelectedRankCounts() {
+        return {
+            MED: getArticlesForCategory('MED').length,
+            THC: getArticlesForCategory('THC').length,
+            CBD: getArticlesForCategory('CBD').length,
+            INV: getArticlesForCategory('INV').length
+        };
+    }
+
     function updateStats() {
         const statsEl = document.getElementById('article-stats');
         if (!statsEl) return;
 
-        const counts = { MED: 0, THC: 0, CBD: 0, INV: 0 };
+        const counts = getSelectedRankCounts();
         let selectedCount = 0;
 
         articles.forEach(a => {
             if (a.selected !== false) selectedCount++;
-
-            if (a.ranks) {
-                ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
-                    if (a.ranks[cat]) counts[cat]++;
-                });
-            }
         });
 
         const sessionLabel = currentSessionName 
@@ -3269,6 +3269,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSessionName = name;
         saveState();
         renderArticles();
+        const activeStep = document.querySelector('.step.active');
+        if (activeStep && activeStep.getAttribute('data-step') === '3') {
+            renderImagesView();
+        }
         alert(`Loaded "${name}" (${articles.length} articles).`);
     };
 
@@ -3434,6 +3438,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (value && value.articles) {
                     applyWorkspaceState(value, { mergeLibrary: true });
                     if (typeof renderArticles === 'function') renderArticles();
+                    const activeStep = document.querySelector('.step.active');
+                    if (activeStep && activeStep.getAttribute('data-step') === '3' && typeof renderImagesView === 'function') {
+                        renderImagesView();
+                    }
                     msg = (value.articles || []).length + ' articles in workspace. ';
                     const nameEl = document.getElementById('newsletter-name');
                     if (nameEl && nameEl.value.trim()) {

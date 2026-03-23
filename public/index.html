@@ -320,7 +320,10 @@
                     <div class="card-header">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h2>Text Editor</h2>
-                            <button class="btn btn-primary btn-sm" onclick="saveSession()">Save</button>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <button class="btn btn-primary btn-sm" type="button" onclick="pushStateToServer()" title="Save current text, templates, and workspace to Supabase">Push to server</button>
+                                <button class="btn btn-primary btn-sm" onclick="saveSession()">Save</button>
+                            </div>
                         </div>
                         <p class="text-muted">Write prompts, import article links, generate summaries with AI.</p>
                     </div>

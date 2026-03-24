@@ -128,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return value;
     }
-    const LEGACY_DEFAULT_SUBJECT_PROMPT = 'From these three articles, Create me a small very clicky subject seperated by suitable Emojis, and if articles are same, Use same subject and emoji.';
-    const DEFAULT_SUBJECT_PROMPT = 'From these three articles, Create me a small very clicky subject seperated by suitable Emojis, and if articles are same, Use same subject and emoji. And no "|" in between.';
+    const LEGACY_DEFAULT_SUBJECT_PROMPT = 'From these three articles, Create me a small very clicky subject seperated by suitable Emojis, and if articles are same, Use same subject and emoji. And no "|" in between.';
+    const DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 
     // Global State
     let articles = [];

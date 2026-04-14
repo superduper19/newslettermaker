@@ -1,3 +1,5 @@
+import validateHeadlines from './headline-validator.js';
+
 const GREETING_OPTIONS = Array.from(new Set([
     'Thanks and have a great week',
     'Thanks',
@@ -2093,18 +2095,54 @@ async function renderConfirmationPreviews() {
     const container = document.getElementById('confirmation-previews');
     if (!container) return;
 
-    const selectedSummary = getSelectedOrGeneratedSummary(currentConfirmationTab);
+    // const selectedSummary = getSelectedOrGeneratedSummary(currentConfirmationTab);
+    const [previewColor, previewText, previewUnicode] =
+        validateHeadlines(
+            articles
+                .filter(a =>
+                    a.categories.includes(currentConfirmationTab) &&
+                    a.publishImage &&
+                    ['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status),
+                ).map(a => a.title),
+        );
+    console.log(
+        articles
+            .filter(a =>
+                a.categories.includes(currentConfirmationTab) &&
+                a.publishImage &&
+                ['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status),
+            ).map(a => a.title),
+    )
     container.innerHTML =
         `<div class="tabs-container mb-4.5 border-b border-[#ddd]">
-            <button class="tab-btn ${currentConfirmationTab === 'MED' ? 'active' : ''}" onclick="switchConfirmationTab('MED')">MED</button>
-            <button class="tab-btn ${currentConfirmationTab === 'THC' ? 'active' : ''}" onclick="switchConfirmationTab('THC')">THC</button>
-            <button class="tab-btn ${currentConfirmationTab === 'CBD' ? 'active' : ''}" onclick="switchConfirmationTab('CBD')">CBD</button>
-            <button class="tab-btn ${currentConfirmationTab === 'INV' ? 'active' : ''}" onclick="switchConfirmationTab('INV')">INV</button>
+            <button
+                class="tab-btn ${currentConfirmationTab === 'MED' ? 'active' : ''}"
+                onclick="switchConfirmationTab('MED')">
+                MED
+            </button>
+            <button
+                class="tab-btn ${currentConfirmationTab === 'THC' ? 'active' : ''}"
+                onclick="switchConfirmationTab('THC')">
+                THC
+            </button>
+            <button
+                class="tab-btn ${currentConfirmationTab === 'CBD' ? 'active' : ''}"
+                onclick="switchConfirmationTab('CBD')">
+                CBD
+            </button>
+            <button
+                class="tab-btn ${currentConfirmationTab === 'INV' ? 'active' : ''}"
+                onclick="switchConfirmationTab('INV')">
+                INV
+            </button>
         </div>
         <div class="flex justify-between items-start gap-4 flex-wrap mb-3.5">
             <div>
-                <div class="text-[1rem] font-bold mb-1">${currentConfirmationTab} Preview</div>
-                <div class="text-[0.85rem] text-[#666]">Uses the example email template itself, then fills in the current summary, ranked articles, interesting finds, and one inspirational image.</div>
+                <div>
+                    <span class="text-base font-bold">${currentConfirmationTab} Preview</span>
+                    <span class="text-base font-bold text-[${previewColor}]"><b>${previewUnicode}</b></span>
+                </div>
+                <span class="text-sm text-[${previewColor}] mt-1">${previewText}</span>
             </div>
             <div class="flex gap-2.5 flex-wrap">
                 <button
@@ -2121,15 +2159,22 @@ async function renderConfirmationPreviews() {
                 </button>
             </div>
         </div>
-        <div id="confirmation-preview-frame-wrap" class="border border-[#ddd] rounded-[10px] overflow-auto bg-white">
-            <div class="p-6 text-center text-[#666]">Loading ${currentConfirmationTab} template preview...</div>
+        <div
+            id="confirmation-preview-frame-wrap"
+            class="border border-[#ddd] rounded-[10px] overflow-auto bg-white">
+            <div class="p-6 text-center text-[#666]">
+                Loading ${currentConfirmationTab} template preview...
+            </div>
         </div>`;
 
     const html = await buildConfirmationHtml(currentConfirmationTab);
     const frameWrap = document.getElementById('confirmation-preview-frame-wrap');
     if (!frameWrap) return;
 
-    frameWrap.innerHTML = `<iframe title="${currentConfirmationTab} newsletter preview" class="w-225 min-w-225 min-h-275 border-0 bg-white block mx-auto"></iframe>`;
+    frameWrap.innerHTML =
+        `<iframe
+            title="${currentConfirmationTab} newsletter preview"
+            class="w-225 min-w-225 min-h-275 border-0 bg-white block mx-auto"></iframe>`;
     const iframe = frameWrap.querySelector('iframe');
     if (iframe) iframe.srcdoc = html;
 }

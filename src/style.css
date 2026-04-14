@@ -451,7 +451,7 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .article-link {
-  @apply text-[#2196F3] no-underline text-[0.85rem] hover:underline;
+  @apply /*text-[#2196F3]*/ no-underline text-[0.85rem] hover:underline;
 }
 
 /* Badges */
@@ -515,7 +515,7 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .article-link-sm {
-  @apply text-[0.8rem] text-[#2196F3] underline break-all;
+  @apply text-[0.8rem] /*text-[#2196F3]*/ underline break-all;
 }
 
 .selected-image-container {

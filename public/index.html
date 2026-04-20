@@ -145,7 +145,7 @@
               <label for="article-view-excel-upload" class="btn btn-secondary btn-sm">Choose XLS</label>
               <input type="file" id="article-view-excel-upload" accept=".xlsx,.xls" hidden>
               <span id="article-view-file-name" class="file-name max-w-55">No file chosen</span>
-              <button class="btn btn-secondary btn-success btn-sm" type="button" id="btn-article-view-upload" title="Replace current articles with a saved article sheet">Upload XLS Here</button>
+              <button class="btn btn-secondary btn-sm" type="button" id="btn-article-view-upload" title="Replace current articles with a saved article sheet">Upload XLS Here</button>
             </div>
           </div>
         </div>
@@ -232,7 +232,7 @@
         <div class="controls-row px-4 pb-5 justify-between">
           <button id="btn-back-step-1" class="btn btn-secondary">Back</button>
           <div class="flex gap-2.5">
-            <button class="btn btn-outline btn-success btn-sm" onclick="exportArticlesXls()">Export XLS</button>
+            <button class="btn btn-outline btn-sm" onclick="exportArticlesXls()">Export XLS</button>
             <button id="btn-next-step-3" class="btn btn-primary">Next: Image View</button>
           </div>
         </div>
@@ -250,7 +250,7 @@
           <p class="text-muted">Choose an image for each selected article.</p>
           <div class="mt-2.5 flex gap-2.5 flex-wrap">
             <button class="btn btn-primary btn-sm" onclick="AllImagesToPurabpublishlis()">Publish Selected to purablis</button>
-            <button class="btn btn-secondary btn-success btn-sm" onclick="downloadAllImagesZip()">Download All Images (ZIP)</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadAllImagesZip()">Download All Images (ZIP)</button>
           </div>
         </div>
 
@@ -346,8 +346,8 @@
           <div class="flex justify-between items-center">
             <h2 class="font-bold">Text Editor</h2>
             <div class="flex gap-2.5 items-center flex-wrap">
-              <button class="btn btn-primary btn-sm" type="button" onclick="pushStateToServer()" title="Save current text, templates, and workspace to Supabase">Push to server</button>
               <button class="btn btn-primary btn-sm" onclick="saveSession()">Save</button>
+              <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current text, templates, and workspace to Supabase">Push to server</button>
             </div>
           </div>
           <p class="text-muted">Write prompts, import article links, generate summaries with AI.</p>
@@ -444,9 +444,10 @@
     };
 
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, {passive: true});
   })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

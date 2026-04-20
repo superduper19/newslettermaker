@@ -600,8 +600,8 @@ window.renderImagesView = () => {
     }
 
     // Table header
-    list.innerHTML = `
-        <div class="img-table-header">
+    list.innerHTML =
+        `<div class="img-table-header">
             <div class="img-col-select img-header-select">
                 <div class="header-label">Publish</div>
                 <div class="header-inline-actions">
@@ -619,8 +619,7 @@ window.renderImagesView = () => {
             <div class="img-col-selected"><div class="header-label">Selected</div></div>
             <div class="img-col-results"><div class="header-label">Results</div></div>
             <div class="img-col-actions"><div class="header-label">Actions</div></div>
-        </div>
-    `;
+        </div>`;
 
     relevantArticles.forEach((article) => {
         const originalIndex = articles.indexOf(article);
@@ -630,13 +629,14 @@ window.renderImagesView = () => {
             article.imageSearchQuery = words.slice(0, 2).join(' ');
         }
 
-        const selectedImageHtml = article.image
-            ? `<div class="selected-image-container">
+        const selectedImageHtml =
+            article.image
+                ? `<div class="selected-image-container">
                     <img src="${article.image}" class="img-fluid max-h-30" onerror="this.onerror=null;this.src='${article.originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
                     <button class="btn-remove-image" onclick="removeImage(${originalIndex})">×</button>
                     ${article.image.includes('purablis.com') ? '<span class="badge-published" title="Published">P</span>' : ''}
                 </div>`
-            : `<div class="no-image-placeholder">No Image</div>`;
+                : `<div class="no-image-placeholder">No Image</div>`;
 
         const gridId = `grid-${originalIndex}`;
 
@@ -651,19 +651,29 @@ window.renderImagesView = () => {
             </div>`;
         }).join('');
 
-        if (article.publishImage === undefined) article.publishImage = !!article.image;
+        if (article.publishImage === undefined) {
+            article.publishImage = !!article.image;
+        }
 
-        const rowHtml = `
-            <div class="img-table-row">
+        const rowHtml =
+            `<div class="img-table-row">
                 <div class="img-col-select flex items-center justify-center pt-2">
-                    <input type="checkbox" ${article.publishImage ? 'checked' : ''} onchange="updateArticleField(${originalIndex}, 'publishImage', this.checked)">
+                    <input
+                        type="checkbox"
+                        ${article.publishImage ? 'checked' : ''}
+                        onchange="updateArticleField(${originalIndex}, 'publishImage', this.checked)">
                 </div>
                 <div class="img-col-article">
                     <textarea
                         rows="2"
                         onchange="updateArticleField(${originalIndex}, 'title', this.value)"
                         class="title-edit font-[inherit] text-[0.9rem]">${article.title}</textarea>
-                    <a href="${article.url}" target="_blank" class="article-link-sm">${article.url}</a>
+                    <a
+                        href="${article.url}"
+                        target="_blank"
+                        class="article-link-sm">
+                        ${article.url}
+                    </a>
                 </div>
                 ${catInputs}
                 <div class="img-col-search">
@@ -674,11 +684,24 @@ window.renderImagesView = () => {
                             value="${article.imageSearchQuery}"
                             placeholder="Keyword..."
                             class="form-control h-8 py-1 px-px text-[0.85rem]">
-                        <button class="btn btn-sm btn-primary whitespace-nowrap" onclick="searchArticleImages(${originalIndex})">Search</button>
+                        <button
+                            class="btn btn-sm btn-primary whitespace-nowrap"
+                            onclick="searchArticleImages(${originalIndex})">
+                            Search
+                        </button>
                     </div>
                     <div class="border-t border-[#eee] pt-1.5">
-                        <input type="file" accept="image/*" id="img-upload-input-${originalIndex}" class="hidden" onchange="uploadArticleImage(${originalIndex}, this)">
-                        <label for="img-upload-input-${originalIndex}" class="btn btn-sm btn-secondary cursor-pointer m-0 text-[0.78rem] py-1 px-2.5">Upload File</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            id="img-upload-input-${originalIndex}"
+                            class="hidden"
+                            onchange="uploadArticleImage(${originalIndex}, this)">
+                        <label
+                            for="img-upload-input-${originalIndex}"
+                            class="btn btn-sm btn-secondary cursor-pointer m-0 text-[0.78rem] py-1 px-2.5">
+                            Upload File
+                        </label>
                     </div>
                 </div>
                 <div class="img-col-selected" id="selected-img-${originalIndex}">
@@ -690,11 +713,18 @@ window.renderImagesView = () => {
                     </div>
                 </div>
                 <div class="img-col-actions">
-                    <button class="btn btn-sm btn-outline text-[#f57c00] border-[#f57c00] mb-2 w-full" onclick="archiveArticle(${originalIndex})">Archive</button>
-                    <button class="btn btn-sm btn-outline text-[#d32f2f] border-[#d32f2f] w-full" onclick="removeArticle(${originalIndex})">Remove</button>
+                    <button
+                        class="btn btn-sm btn-outline text-[#f57c00] border-[#f57c00] mb-2 w-full"
+                        onclick="archiveArticle(${originalIndex})">
+                        Archive
+                    </button>
+                    <button
+                        class="btn btn-sm btn-outline text-[#d32f2f] border-[#d32f2f] w-full"
+                        onclick="removeArticle(${originalIndex})">
+                        Remove
+                    </button>
                 </div>
-            </div>
-        `;
+            </div>`;
         list.innerHTML += rowHtml;
     });
 
@@ -719,15 +749,14 @@ function updateImageViewStats() {
         ? 'bg-[#e8f5e9] text-[#1b5e20] font-bold border-2 border-[#4caf50]'
         : 'bg-[#ffebee] text-[#c62828] font-bold border-2 border-[#e57373]';
 
-    statsEl.innerHTML = `
-        ${sessionLabel}
+    statsEl.innerHTML =
+        `${sessionLabel}
         <span class="stat-item ${countClass}" title="Target is 25 articles">Total: ${count} / 25</span>
         <span class="stat-item bg-[#e0f7fa] text-[#006064]" title="Articles currently selected for Image View">Selected: ${selectedCount}</span>
         <span class="stat-item bg-[#e3f2fd] text-[#0d47a1]">MED: ${counts.MED}</span>
         <span class="stat-item bg-[#e8f5e9] text-[#1b5e20]">THC: ${counts.THC}</span>
         <span class="stat-item bg-[#fff3e0] text-[#e65100]">CBD: ${counts.CBD}</span>
-        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>
-    `;
+        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>`;
 }
 
 // Search Images
@@ -769,11 +798,10 @@ window.searchArticleImages = async (index) => {
             const navDiv = document.createElement('div');
             navDiv.className = 'img-page-nav';
             const currentPage = article.imagePage || 1;
-            navDiv.innerHTML = `
-                <button class="btn btn-sm btn-outline" ${currentPage <= 1 ? 'disabled' : ''} onclick="changeImagePage(${index}, -1)" title="Previous">&larr;</button>
+            navDiv.innerHTML =
+                `<button class="btn btn-sm btn-outline" ${currentPage <= 1 ? 'disabled' : ''} onclick="changeImagePage(${index}, -1)" title="Previous">&larr;</button>
                 <span class="text-[0.8rem] text-[#555]">Page ${currentPage}</span>
-                <button class="btn btn-sm btn-outline" onclick="changeImagePage(${index}, 1)" title="Next">&rarr;</button>
-            `;
+                <button class="btn btn-sm btn-outline" onclick="changeImagePage(${index}, 1)" title="Next">&rarr;</button>`;
             grid.appendChild(navDiv);
         } else {
             grid.innerHTML = '<div class="grid-placeholder">No images found.</div>';
@@ -842,10 +870,10 @@ window.selectImage = (index, url) => {
     // Update the "Big Image" box
     const box = document.getElementById(`selected-img-${index}`);
     if (box) {
-        box.innerHTML = `
-            <div class="selected-image-container">
-                    <img src="${url}" class="img-fluid max-h-37.5" onerror="this.onerror=null;this.src='${articles[index].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
-                    <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
+        box.innerHTML =
+            `<div class="selected-image-container">
+                <img src="${url}" class="img-fluid max-h-37.5" onerror="this.onerror=null;this.src='${articles[index].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
+                <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
             </div>`;
     }
 };
@@ -1315,16 +1343,14 @@ window.renderEditorContent = () => {
     const selectedResults = getSelectedCategoryResults();
     const selectedSummaryHtml = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
         const selectedText = selectedResults[cat] || '';
-        return `
-            <div class="p-3 border border-[#e0e0e0] rounded-lg bg-[#fafafa]">
+        return `<div class="p-3 border border-[#e0e0e0] rounded-lg bg-[#fafafa]">
                 <div class="font-bold">${cat}</div>
                 <textarea rows="5" class="form-control text-[0.85rem] bg-white mt-2 p-2" oninput="updateSelectedCategoryResult('${cat}', this.value)" placeholder="No selected ${cat} content yet...">${selectedText}</textarea>
-            </div>
-        `;
+            </div>`;
     }).join('');
 
-    container.innerHTML = `
-        <div class="form-group p-3 bg-[#f8f9fa] rounded-lg border border-[#e9ecef] mb-5">
+    container.innerHTML =
+        `<div class="form-group p-3 bg-[#f8f9fa] rounded-lg border border-[#e9ecef] mb-5">
             <label class="font-semibold">Template for ${currentEditorTab}</label>
             <p class="text-muted text-[0.8rem] mb-2.5">HTML template for this newsletter. Use {{SUMMARY}}, {{ARTICLES_HTML}}, {{INSPIRATIONAL_IMAGE}}, {{NEWSLETTER_NAME}} as placeholders.</p>
             <div class="flex flex-wrap gap-3 items-center mb-2.5">
@@ -1401,8 +1427,7 @@ window.renderEditorContent = () => {
                 ${greetingOptionsHtml}
             </select>
             <div class="text-[0.8rem] text-[#666] mt-2">This changes only the greeting line. The sign-off name stays as Jessica.</div>
-        </div>
-    `;
+        </div>`;
     const templateEl = document.getElementById('editor-template');
     if (templateEl) templateEl.value = templateValue || '';
     const listEl = document.getElementById('editor-articles-list');
@@ -1626,8 +1651,8 @@ function renderConfirmationView() {
     };
     const subjectPrompt = normalizeSubjectPrompt(newsletterContent.subjectPrompt);
 
-    summary.innerHTML = `
-        <h3>Newsletter Summary</h3>
+    summary.innerHTML =
+        `<h3>Newsletter Summary</h3>
         <p><strong>Newsletter Name:</strong> ${activeNewsletterName}</p>
         <p><strong>Inspirational Images:</strong> ${inspirationalImages.length} selected</p>
         <div class="grid grid-cols-5 gap-2.5 mt-4">
@@ -1675,8 +1700,7 @@ function renderConfirmationView() {
                     </div>
                 `).join('')}
             </div>
-        </div>
-    `;
+        </div>`;
     const uploadBtn = document.getElementById('btn-upload-newsletters');
     const exportGenBtn = document.getElementById('btn-export-generated');
     if (uploadBtn) uploadBtn.disabled = !lastGeneratedNewsletter;
@@ -1716,7 +1740,10 @@ function isIncludedInConfirmation(article) {
 }
 
 function getMainArticlesForCategory(category) {
-    return getArticlesForCategory(category).filter(a => ['Y', 'YM'].includes(a.status) && isIncludedInConfirmation(a));
+    return getArticlesForCategory(category).filter(a =>
+        ['Y', 'YM'].includes(a.status) &&
+        isIncludedInConfirmation(a),
+    );
 }
 
 function getInterestingFindsArticles() {
@@ -1807,15 +1834,13 @@ function buildFallbackConfirmationHtml(category) {
         const url = article.url || '#';
         const source = escapeHtml(getSourceLabel(article.url || ''));
         const image = getArticleImageUrl(article);
-        return `
-            <div style="display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
+        return `<div style="display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
                 ${image ? `<img src="${image}" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">` : ''}
                 <div>
                     <a href="${url}" target="_blank" style="color: #111; font-weight: 700; text-decoration: none;">${title}</a>
                     <div><a href="${url}" target="_blank" style="color: #2a6edc; font-size: 0.85rem;">${source}</a></div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
     const findsHtml = getInterestingFindsArticles().slice(0, 4).map(article => {
         const title = escapeHtml(article.title || 'Untitled');
@@ -1888,13 +1913,12 @@ function enforceFixedTemplateChrome(doc, category) {
 
     const footerBlocks = Array.from(doc.querySelectorAll('table.footer td'));
     if (footerBlocks[0]) {
-        footerBlocks[0].innerHTML = `
-            <div><em>Copyright &copy; 2026 Purablis, All rights reserved.</em></div>
+        footerBlocks[0].innerHTML =
+            `<div><em>Copyright &copy; 2026 Purablis, All rights reserved.</em></div>
             <div>Email Contact:</div>
             <div><a href="mailto:${TEMPLATE_FIXED_CONTENT.contactEmail}" style="mso-line-height-rule: exactly; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; color: #0000f1; font-weight: normal; text-decoration: underline;" target="_blank">${TEMPLATE_FIXED_CONTENT.contactEmail}</a><br />
             <a href="${TEMPLATE_FIXED_CONTENT.unsubscribeHref}" style="color: #2baadf; text-decoration: underline;">Unsubscribe</a></div>
-            <div>${escapeHtml(TEMPLATE_FIXED_CONTENT.footerAddress).replace(/·/g, '&middot;')}</div>
-        `;
+            <div>${escapeHtml(TEMPLATE_FIXED_CONTENT.footerAddress).replace(/·/g, '&middot;')}</div>`;
     }
     if (footerBlocks[1]) {
         footerBlocks[1].innerHTML = `<span style="font-size: 11px; line-height: 150%; color: #989898;">${escapeHtml(TEMPLATE_FIXED_CONTENT.footerLegal)}</span>`;
@@ -2036,12 +2060,16 @@ window.switchConfirmationTab = (category) => {
 };
 
 window.downloadConfirmationHtml = async (category) => {
-    const html = confirmationRenderedHtml[category] || await buildConfirmationHtml(category);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const zip = new JSZip();
+    const filename =
+        `${getActiveNewsletterName().replace(/[^\w\-]+/g, '-') || 'newsletter'}-${category}`;
+    zip.file(
+        `${filename}.html`,
+        confirmationRenderedHtml[category] || await buildConfirmationHtml(category),
+    );
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${getActiveNewsletterName().replace(/[^\w\-]+/g, '-') || 'newsletter'}-${category}.html`;
+    a.href = URL.createObjectURL(await zip.generateAsync({ type: 'blob' }));
+    a.download = `${filename}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2066,8 +2094,8 @@ async function renderConfirmationPreviews() {
     if (!container) return;
 
     const selectedSummary = getSelectedOrGeneratedSummary(currentConfirmationTab);
-    container.innerHTML = `
-        <div class="tabs-container mb-4.5 border-b border-[#ddd]">
+    container.innerHTML =
+        `<div class="tabs-container mb-4.5 border-b border-[#ddd]">
             <button class="tab-btn ${currentConfirmationTab === 'MED' ? 'active' : ''}" onclick="switchConfirmationTab('MED')">MED</button>
             <button class="tab-btn ${currentConfirmationTab === 'THC' ? 'active' : ''}" onclick="switchConfirmationTab('THC')">THC</button>
             <button class="tab-btn ${currentConfirmationTab === 'CBD' ? 'active' : ''}" onclick="switchConfirmationTab('CBD')">CBD</button>
@@ -2079,14 +2107,23 @@ async function renderConfirmationPreviews() {
                 <div class="text-[0.85rem] text-[#666]">Uses the example email template itself, then fills in the current summary, ranked articles, interesting finds, and one inspirational image.</div>
             </div>
             <div class="flex gap-2.5 flex-wrap">
-                <button class="btn btn-success btn-sm" onclick="downloadConfirmationHtml('${currentConfirmationTab}')">Download HTML</button>
-                <button class="btn btn-outline btn-sm" onclick="downloadConfirmationDoc('${currentConfirmationTab}')">Download DOC</button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    onclick="downloadConfirmationHtml('${currentConfirmationTab}')"
+                    title="ZIP file to upload as MailWizz template">
+                    Download HTML
+                </button>
+                <button
+                    class="btn btn-outline btn-sm"
+                    onclick="downloadConfirmationDoc('${currentConfirmationTab}')"
+                    title="Legacy Microsoft Office document format">
+                    Download DOC
+                </button>
             </div>
         </div>
         <div id="confirmation-preview-frame-wrap" class="border border-[#ddd] rounded-[10px] overflow-auto bg-white">
             <div class="p-6 text-center text-[#666]">Loading ${currentConfirmationTab} template preview...</div>
-        </div>
-    `;
+        </div>`;
 
     const html = await buildConfirmationHtml(currentConfirmationTab);
     const frameWrap = document.getElementById('confirmation-preview-frame-wrap');
@@ -2301,12 +2338,13 @@ window.generateNewsletters = () => {
                 .replace(/\{\{NEWSLETTER_NAME\}\}/g, newsletterName);
         } else {
             const safeResult = (resultText || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-            html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${(newsletterName + ' - ' + cat).replace(/</g, '&lt;')}</title></head><body>
+            html =
+                `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${(newsletterName + ' - ' + cat).replace(/</g, '&lt;')}</title></head><body>
                 <h1>${(newsletterName + ' - ' + cat).replace(/</g, '&lt;')}</h1>
                 ${inspirationalImg ? `<img src="${inspirationalImg.replace(/"/g, '&quot;')}" alt="Header" style="max-width: 100%;">` : ''}
                 <div class="summary">${safeResult}</div>
                 <div class="articles">${articlesHtml}</div>
-            </body></html>`;
+                </body></html>`;
         }
 
         newsletters[cat] = {
@@ -2487,11 +2525,17 @@ window.publishAllImagesToPurablis = async () => {
 };
 
 window.downloadAllImagesZip = async () => {
-    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
-    const withImages = relevant.filter(a => a.image || a.originalImageUrl);
+    const withImages =
+        articles
+            .filter(a =>
+                (a.categories && a.categories.length > 0) ||
+                a.status === 'COOL FINDS' ||
+                a.status === 'M',
+            ).filter(a => a.image || a.originalImageUrl);
 
-    if (withImages.length === 0) return alert('No images selected. Select images for articles first.');
-    if (typeof JSZip === 'undefined') return alert('JSZip not loaded. Please refresh the page.');
+    if (withImages.length === 0) {
+        return alert('No images selected. Select images for articles first.');
+    }
 
     const zip = new JSZip();
     let done = 0;
@@ -2855,114 +2899,132 @@ function renderArticles() {
         ? articles.map((a, i) => i).filter(i => articles[i].addedAt === batchFilter)
         : articles.map((a, i) => i);
 
-    list.innerHTML += indicesToShow.map(realIndex => {
-        const article = articles[realIndex];
-        const index = realIndex;
-        // Ensure defaults
-        if (!article.status) article.status = 'Y';
-        if (!article.categories) {
-            // Backward compatibility if single category exists
-            article.categories = article.category ? [article.category] : [];
-        }
-        if (!article.notes) article.notes = article.keyword || ''; // Migration
-        if (article.selected === undefined) article.selected = true;
+    list.innerHTML +=
+        indicesToShow
+            .map(realIndex => {
+                const article = articles[realIndex];
+                const index = realIndex;
+                // Ensure defaults
+                if (!article.status) article.status = 'Y';
+                if (!article.categories) {
+                    // Backward compatibility if single category exists
+                    article.categories = article.category ? [article.category] : [];
+                }
+                if (!article.notes) article.notes = article.keyword || ''; // Migration
+                if (article.selected === undefined) article.selected = true;
 
-        // Checkbox logic for categories
-        const isStatusValid = ['Y', 'YM', 'M', 'COOL FINDS', 'LATER COOL'].includes(article.status);
-        const disabledAttr = isStatusValid ? '' : 'disabled';
-        const disabledClass = isStatusValid ? '' : 'opacity-50 cursor-not-allowed';
+                // Checkbox logic for categories
+                const isStatusValid = ['Y', 'YM', 'M', 'COOL FINDS', 'LATER COOL'].includes(article.status);
+                const disabledAttr = isStatusValid ? '' : 'disabled';
+                const disabledClass = isStatusValid ? '' : 'opacity-50 cursor-not-allowed';
 
-        const categoryInputs = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
-            let rank = (article.ranks && (article.ranks[cat] ?? article.ranks[cat.toLowerCase()])) ?? (article.categories && article.categories.includes(cat) ? 'Y' : '');
-            // Same resolution as getRankForSort so display and sort match (incl. lowercase keys)
+                const categoryInputs =
+                    ['MED', 'THC', 'CBD', 'INV']
+                        .map(cat => {
+                            let rank = (
+                                article.ranks &&
+                                (article.ranks[cat] ?? article.ranks[cat.toLowerCase()])
+                            ) ?? (article.categories && article.categories.includes(cat)
+                                ? 'Y' :
+                                '');
+                            // Same resolution as getRankForSort so display and sort match (incl. lowercase keys)
 
-            return `
-                <div class="col-cat">
-                    <input type="text"
-                        value="${rank}"
-                        oninput="updateCategoryRank(${index}, '${cat}', this.value)"
-                        class="${disabledClass}"
-                        ${disabledAttr}
-                        placeholder=""
-                    >
-                </div>
-            `;
-        }).join('');
+                            return `<div class="col-cat">
+                                <input
+                                    type="text"
+                                    value="${rank}"
+                                    oninput="updateCategoryRank(${index}, '${cat}', this.value)"
+                                    class="${disabledClass}"
+                                    ${disabledAttr}
+                                    placeholder="">
+                            </div>`;
+                        }).join('');
 
-        return `
-            <div class="article-row">
-                <div class="col-selected">
-                    <input type="checkbox"
-                        ${article.selected ? 'checked' : ''}
-                        onchange="updateArticleField(${index}, 'selected', this.checked)">
-                </div>
-
-                <div class="col-article">
-                    <div class="flex items-start gap-2">
-                        <textarea
-                            class="title-edit font-[inherit] flex-1 min-w-30"
-                            rows="2"
-                            onchange="updateArticleField(${index}, 'title', this.value)"
-                        >${article.title}</textarea>
-                        <span class="article-added-at" title="${article.addedAt ? 'Added ' + article.addedAt : 'No add date'}">${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}</span>
+                return `<div class="article-row">
+                    <div class="col-selected">
+                        <input
+                            type="checkbox"
+                            ${article.selected ? 'checked' : ''}
+                            onchange="updateArticleField(${index}, 'selected', this.checked)">
                     </div>
-                    <p class="my-1.25 text-[0.85rem] text-[#666]">
-                        ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
-                    </p>
 
-                    <div class="flex items-center gap-1.25">
+                    <div class="col-article">
+                        <div class="flex items-start gap-2">
+                            <textarea
+                                class="title-edit font-[inherit] flex-1 min-w-30"
+                                rows="2"
+                                onchange="updateArticleField(${index}, 'title', this.value)">${article.title}</textarea>
+                            <span
+                                class="article-added-at"
+                                title="${article.addedAt ? 'Added ' + article.addedAt : 'No add date'}">
+                                ${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}
+                            </span>
+                        </div>
+                        <p class="my-1.25 text-[0.85rem] text-[#666]">
+                            ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
+                        </p>
+
+                        <div class="flex items-center gap-1.25">
+                            <input
+                                type="text"
+                                class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63]"
+                                value="${article.url}"
+                                onchange="updateArticleField(${index}, 'url', this.value)">
+                            <a href="${article.url}" target="_blank" title="Open Link" class="no-underline">🔗</a>
+                        </div>
+                    </div>
+
+                    <div class="col-date">
                         <input
                             type="text"
-                            class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63]"
-                            value="${article.url}"
-                            onchange="updateArticleField(${index}, 'url', this.value)">
-                        <a href="${article.url}" target="_blank" title="Open Link" class="no-underline">🔗</a>
+                            value="${article.date || ''}"
+                            onchange="updateArticleField(${index}, 'date', this.value)"
+                            placeholder="MM/DD/YY">
                     </div>
-                </div>
 
-                <div class="col-date">
-                    <input type="text"
-                        value="${article.date || ''}"
-                        onchange="updateArticleField(${index}, 'date', this.value)"
-                        placeholder="MM/DD/YY"
-                    >
-                </div>
+                    <div class="col-paywall">
+                        <input
+                            type="checkbox"
+                            ${article.paywall ? 'checked' : ''}
+                            onchange="updateArticleField(${index}, 'paywall', this.checked)">
+                    </div>
 
-                <div class="col-paywall">
-                    <input type="checkbox"
-                        ${article.paywall ? 'checked' : ''}
-                        onchange="updateArticleField(${index}, 'paywall', this.checked)">
-                </div>
-
-                <div class="col-status">
+                    <div class="col-status">
                         <select onchange="updateArticleField(${index}, 'status', this.value)">
-                        <option value="">Status...</option>
-                        <option value="Y" ${article.status === 'Y' ? 'selected' : ''}>Y</option>
-                        <option value="YM" ${article.status === 'YM' ? 'selected' : ''}>YM</option>
-                        <option value="M" ${article.status === 'M' ? 'selected' : ''}>M</option>
-                        <option value="NO" ${article.status === 'NO' ? 'selected' : ''}>NO</option>
-                        <option value="COOL FINDS" ${article.status === 'COOL FINDS' ? 'selected' : ''}>COOL FINDS</option>
-                        <option value="LATER COOL" ${article.status === 'LATER COOL' ? 'selected' : ''}>Later Cool</option>
-                    </select>
-                </div>
+                            <option value="">Status...</option>
+                            <option value="Y" ${article.status === 'Y' ? 'selected' : ''}>Y</option>
+                            <option value="YM" ${article.status === 'YM' ? 'selected' : ''}>YM</option>
+                            <option value="M" ${article.status === 'M' ? 'selected' : ''}>M</option>
+                            <option value="NO" ${article.status === 'NO' ? 'selected' : ''}>NO</option>
+                            <option value="COOL FINDS" ${article.status === 'COOL FINDS' ? 'selected' : ''}>COOL FINDS</option>
+                            <option value="LATER COOL" ${article.status === 'LATER COOL' ? 'selected' : ''}>Later Cool</option>
+                        </select>
+                    </div>
 
-                ${categoryInputs}
+                    ${categoryInputs}
 
-                <div class="col-keyword">
-                    <textarea
-                        class="form-control w-full h-15 text-[0.85rem] resize-y"
-                        onchange="updateArticleField(${index}, 'notes', this.value)"
-                        placeholder="Notes..."
-                    >${article.notes || ''}</textarea>
-                </div>
+                    <div class="col-keyword">
+                        <textarea
+                            class="form-control w-full h-15 text-[0.85rem] resize-y"
+                            onchange="updateArticleField(${index}, 'notes', this.value)"
+                            placeholder="Notes..."
+                        >${article.notes || ''}</textarea>
+                    </div>
 
-                <div class="col-actions">
-                    <button class="btn btn-sm btn-outline text-[#f57c00] border-[#f57c00] mb-2 w-full" onclick="archiveArticle(${index})">Archive</button>
-                    <button class="btn btn-sm btn-outline text-[#d32f2f] border-[#d32f2f] w-full" onclick="removeArticle(${index})">Remove</button>
-                </div>
-            </div>
-        `;
-    }).join('');
+                    <div class="col-actions">
+                        <button
+                            class="btn btn-sm btn-outline text-[#f57c00] border-[#f57c00] mb-2 w-full"
+                            onclick="archiveArticle(${index})">
+                            Archive
+                        </button>
+                        <button
+                            class="btn btn-sm btn-outline text-[#d32f2f] border-[#d32f2f] w-full"
+                            onclick="removeArticle(${index})">
+                            Remove
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
 
     updateStats();
     highlightLongTitles();
@@ -3238,17 +3300,18 @@ function getSummaryArticlesForCategory(category) {
 
 // Articles shown in Confirmation/final newsletter: broader ranked + selected article set.
 function getArticlesForCategory(category) {
-    return articles.filter(a => {
-        if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
-        if (a.selected === false) return false;
-        const rank = getRankForSort(a, category);
-        return rank !== '' && rank !== undefined;
-    }).sort((a, b) => {
-        const rA = rankToSortValue(getRankForSort(a, category));
-        const rB = rankToSortValue(getRankForSort(b, category));
-        if (rA !== rB) return rA - rB;
-        return (a.title || '').localeCompare(b.title || '');
-    });
+    return articles
+        .filter(a => {
+            if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
+            if (a.selected === false) return false;
+            const rank = getRankForSort(a, category);
+            return rank !== '' && rank !== undefined;
+        }).sort((a, b) => {
+            const rA = rankToSortValue(getRankForSort(a, category));
+            const rB = rankToSortValue(getRankForSort(b, category));
+            if (rA !== rB) return rA - rB;
+            return (a.title || '').localeCompare(b.title || '');
+        });
 }
 
 function getSelectedRankCounts() {
@@ -3275,15 +3338,14 @@ function updateStats() {
         ? `<span class="stat-item bg-[#e8eaf6] text-[#283593] font-semibold">${currentSessionName}</span>`
         : '';
 
-    const statsHtml = `
-        ${sessionLabel}
+    const statsHtml =
+        `${sessionLabel}
         <span class="stat-item" title="Total articles in list">Total: ${articles.length}</span>
         <span class="stat-item bg-[#e0f7fa] text-[#006064]" title="Articles checked in the Select column">Selected: ${selectedCount}</span>
         <span class="stat-item bg-[#e3f2fd] text-[#0d47a1]">MED: ${counts.MED}</span>
         <span class="stat-item bg-[#e8f5e9] text-[#1b5e20]">THC: ${counts.THC}</span>
         <span class="stat-item bg-[#fff3e0] text-[#e65100]">CBD: ${counts.CBD}</span>
-        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>
-    `;
+        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>`;
     statsEl.innerHTML = statsHtml;
     const footerEl = document.getElementById('article-stats-footer');
     if (footerEl) footerEl.innerHTML = statsHtml;
@@ -3413,12 +3475,14 @@ function populateSavedDropdown() {
     const sessions = getSavedSessions();
     const names = Object.keys(sessions).sort();
 
-    const optionsHtml = names.map(name => {
-        const s = sessions[name];
-        const count = (s.articles || []).length;
-        const date = s.savedAt ? new Date(s.savedAt).toLocaleDateString() : '';
-        return `<option value="${name}">${name} (${count} articles, ${date})</option>`;
-    }).join('');
+    const optionsHtml =
+        names
+            .map(name => {
+                const s = sessions[name];
+                const count = (s.articles || []).length;
+                const date = s.savedAt ? new Date(s.savedAt).toLocaleDateString() : '';
+                return `<option value="${name}">${name} (${count} articles, ${date})</option>`;
+            }).join('');
 
     if (dropdownStep1) {
         dropdownStep1.innerHTML = '<option value="">Saved newsletters</option>' + optionsHtml;

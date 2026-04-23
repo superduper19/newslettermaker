@@ -1,98 +1,101 @@
-const GREETING_OPTIONS = Array.from(new Set([
-    'Thanks and have a great week',
-    'Thanks',
-    'Enjoy your week!',
-    'Have a stupendous week!',
-    'Thanks and have a marvelous week!',
-    'I hope you have a special week!',
-    'Have a tremendous week!',
-    'I hope you have a remarkable week',
-    'Have a wondrous week!',
-    'I hope you have a sensational week!',
-    'Have a Super New Year!',
-    'Thanks and have a dynamite week!',
-    'I hope your week is something else!',
-    'Have a brilliant week!',
-    'Have an enjoyable week!',
-    'Thanks and have a fabulous week!',
-    'Thanks and have an excellent week!',
-    'Thanks and have a magnificent week!',
-    'Thanks and have a phenomenal week!',
-    'Thanks and have a superb week!',
-    'Thanks and have a pleasant week!',
-    'Stay safe and cozy! :)',
-    'Stay safe and cozy!',
-    'Have a Terrific Week',
-    'Thanks and have a stupendous week!',
-    'Have an exceptional week!',
-    'Have a fantastic week and stay safe,',
-    'Thanks and have a great week!',
-    'Have a warm summer week!',
-    'Thanks and have a sunny week!',
-    'Thanks and have a spectacular week!',
-    'Thanks and have an astounding week!',
-    'Thanks and have an impressive week!',
-    'Thanks and have a productive week!',
-    'Thanks and have a wonderful week!',
-    'Thanks and have an extraordinary week!',
-    'Thanks and have a super week!',
-    'Thanks and have an incredible week!',
-    'Thanks and have an unbelievable week!',
-    'Thanks and have a sublime week!',
-    'Thanks and have a rad week! :)',
-    'Thanks and have an outstanding week!',
-    'Thanks and have a splendid week!',
-    'Thanks and have a very good week!',
-    'Thanks and I hope you go vote!',
-    'Thanks and I hope you have a relaxing week,',
-    'Thanks and I hope you have a stellar week!',
-    'Happy Thanksgiving!',
-    'Have an awesome week!',
-    'Thanks and have a tremendous week!',
-    'Thanks and have an amazing week!',
-    'Happy Holidays!',
-    'Have a super-duper week!',
-    'I hope you have a marvelous week!',
-    'I hope your week is rad!',
-    'Have a sensational week!',
-    'Have a fantastic week!',
-    'I hope you have a productive week!',
-    'Have a magnificent week!',
-    'Have a relaxing week,',
-    'Have a fabulous week!',
-    'Have an incredible week!',
-    'Happy 420,',
-    'Have an excellent week!',
-    'Have an outstanding week!',
-    'Have a splendid week,',
-    'Have a wonderful week!',
-    'Have a stellar week!',
-    'Have an unbelievable week!',
-    'Have a dynamite week!',
-    'Best Wishes,',
-    'Have a sunny week,',
-    'Have a terrific week!',
-    'Have a spectacular week!',
-    'Have an extraordinary week!',
-    'Have an amazing week!',
-    'Have an impressive week!',
-    'Have a great week!',
-    'enjoy your week',
-    'Happy Hallowen!',
-    'Get ready for 2022! :)',
-    'Make 2022 awesome!',
-    'Have a peaceful week!',
-    'Enjoy Your Week!',
-    'Have a radical week',
-    'Have a rad week!',
-    'Please spread the love this thanksgiving! :)',
-    'Thanks and I hope you have a wondrous week,',
-    'Happy 4th of July!',
-    'Thanks and I hope you have a terrific week!',
-    'Merry Christmas!',
-    'Happy MLK Day!',
-    'Happy Labor Day!',
-]));
+const GREETING_OPTIONS =
+    Array.from(new Set([
+        'Thanks and have a great week',
+        'Thanks',
+        'Enjoy your week!',
+        'Have a stupendous week!',
+        'Thanks and have a marvelous week!',
+        'I hope you have a special week!',
+        'Have a tremendous week!',
+        'I hope you have a remarkable week',
+        'Have a wondrous week!',
+        'I hope you have a sensational week!',
+        'Have a Super New Year!',
+        'Thanks and have a dynamite week!',
+        'I hope your week is something else!',
+        'Have a brilliant week!',
+        'Have an enjoyable week!',
+        'Thanks and have a fabulous week!',
+        'Thanks and have an excellent week!',
+        'Thanks and have a magnificent week!',
+        'Thanks and have a phenomenal week!',
+        'Thanks and have a superb week!',
+        'Thanks and have a pleasant week!',
+        'Stay safe and cozy! :)',
+        'Stay safe and cozy!',
+        'Have a Terrific Week',
+        'Thanks and have a stupendous week!',
+        'Have an exceptional week!',
+        'Have a fantastic week and stay safe,',
+        'Thanks and have a great week!',
+        'Have a warm summer week!',
+        'Thanks and have a sunny week!',
+        'Thanks and have a spectacular week!',
+        'Thanks and have an astounding week!',
+        'Thanks and have an impressive week!',
+        'Thanks and have a productive week!',
+        'Thanks and have a wonderful week!',
+        'Thanks and have an extraordinary week!',
+        'Thanks and have a super week!',
+        'Thanks and have an incredible week!',
+        'Thanks and have an unbelievable week!',
+        'Thanks and have a sublime week!',
+        'Thanks and have a rad week! :)',
+        'Thanks and have an outstanding week!',
+        'Thanks and have a splendid week!',
+        'Thanks and have a very good week!',
+        'Thanks and I hope you go vote!',
+        'Thanks and I hope you have a relaxing week,',
+        'Thanks and I hope you have a stellar week!',
+        'Happy Thanksgiving!',
+        'Have an awesome week!',
+        'Thanks and have a tremendous week!',
+        'Thanks and have an amazing week!',
+        'Happy Holidays!',
+        'Have a super-duper week!',
+        'I hope you have a marvelous week!',
+        'I hope your week is rad!',
+        'Have a sensational week!',
+        'Have a fantastic week!',
+        'I hope you have a productive week!',
+        'Have a magnificent week!',
+        'Have a relaxing week,',
+        'Have a fabulous week!',
+        'Have an incredible week!',
+        'Happy 420,',
+        'Have an excellent week!',
+        'Have an outstanding week!',
+        'Have a splendid week,',
+        'Have a wonderful week!',
+        'Have a stellar week!',
+        'Have an unbelievable week!',
+        'Have a dynamite week!',
+        'Best Wishes,',
+        'Have a sunny week,',
+        'Have a terrific week!',
+        'Have a spectacular week!',
+        'Have an extraordinary week!',
+        'Have an amazing week!',
+        'Have an impressive week!',
+        'Have a great week!',
+        'Enjoy your week',
+        'Happy Hallowen!',
+        'Get ready for 2022! :)',
+        'Make 2022 awesome!',
+        'Have a peaceful week!',
+        'Enjoy Your Week!',
+        'Have a radical week',
+        'Have a rad week!',
+        'Please spread the love this thanksgiving! :)',
+        'Thanks and I hope you have a wondrous week,',
+        'Happy 4th of July!',
+        'Thanks and I hope you have a terrific week!',
+        'Merry Christmas!',
+        'Happy MLK Day!',
+        'Happy Labor Day!',
+    ]));
+GREETING_OPTIONS.sort();
+
 const DEFAULT_GREETING = 'Have a fantastic week and stay safe,';
 const DEFAULT_SUMMARY_RULES = [
     '1.  Only use the URLs provided in the user input.',
@@ -2094,8 +2097,8 @@ async function renderConfirmationPreviews() {
     if (!container) return;
 
     // const selectedSummary = getSelectedOrGeneratedSummary(currentConfirmationTab);
-    const [previewColor, previewText, previewUnicode] =
-        validateHeadlines(
+    const admonition =
+        getHeadlineFormatAdmonition(
             articles
                 .filter(a =>
                     a.categories.includes(currentConfirmationTab) &&
@@ -2103,14 +2106,6 @@ async function renderConfirmationPreviews() {
                     ['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status),
                 ).map(a => a.title),
         );
-    console.log(
-        articles
-            .filter(a =>
-                a.categories.includes(currentConfirmationTab) &&
-                a.publishImage &&
-                ['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status),
-            ).map(a => a.title),
-    )
     container.innerHTML =
         `<div class="tabs-container mb-4.5 border-b border-[#ddd]">
             <button
@@ -2138,9 +2133,9 @@ async function renderConfirmationPreviews() {
             <div>
                 <div>
                     <span class="text-base font-bold">${currentConfirmationTab} Preview</span>
-                    <span class="text-base font-bold text-[${previewColor}]"><b>${previewUnicode}</b></span>
+                    <span class="text-base font-bold text-[${admonition.color}]"><b>${admonition.symbol}</b></span>
                 </div>
-                <span class="text-sm text-[${previewColor}] mt-1">${previewText}</span>
+                <span class="text-sm text-[${admonition.color}] mt-1">${admonition.message}</span>
             </div>
             <div class="flex gap-2.5 flex-wrap">
                 <button
@@ -2947,6 +2942,7 @@ function renderArticles() {
             .map(realIndex => {
                 const article = articles[realIndex];
                 const index = realIndex;
+
                 // Ensure defaults
                 if (!article.status) article.status = 'Y';
                 if (!article.categories) {
@@ -2982,6 +2978,7 @@ function renderArticles() {
                                     placeholder="">
                             </div>`;
                         }).join('');
+                const admonition = getHeadlineLengthAdmonition(article.title);
 
                 return `<div class="article-row">
                     <div class="col-selected">
@@ -2997,11 +2994,14 @@ function renderArticles() {
                                 class="title-edit font-[inherit] flex-1 min-w-30"
                                 rows="2"
                                 onchange="updateArticleField(${index}, 'title', this.value)">${article.title}</textarea>
-                            <span
-                                class="article-added-at"
-                                title="${article.addedAt ? 'Added ' + article.addedAt : 'No add date'}">
-                                ${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}
-                            </span>
+                            <div class="flex flex-col" id="admonition-container-${index}">
+                                <span
+                                    class="article-added-at"
+                                    title="${article.addedAt ? 'Added ' + article.addedAt : 'No add date'}">
+                                    ${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}
+                                </span>
+                                ${admonition !== null ? `<span class="admonition-text font-bold text-[0.75rem] text-[${admonition.color}] mt-2">${admonition.message}</span>` : ''}
+                            </div>
                         </div>
                         <p class="my-1.25 text-[0.85rem] text-[#666]">
                             ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
@@ -3111,6 +3111,19 @@ window.updateArticleField = (index, field, value) => {
         // Re-render to update the link icon
         renderArticles();
     } else if (field === 'title') {
+        const container = document.getElementById(`admonition-container-${index}`);
+        const admonition = getHeadlineLengthAdmonition(value);
+        const oldSpan = container.querySelector('.admonition-text');
+        if (oldSpan) {
+            oldSpan.remove();
+        }
+        if (admonition) {
+            const span = document.createElement('span');
+            span.className = `admonition-text font-bold text-[0.75rem] text-[${admonition.color}] mt-2`;
+            span.innerHTML = admonition.message;
+            container.appendChild(span);
+        }
+
         saveState();
         requestAnimationFrame(highlightLongTitles);
     } else {

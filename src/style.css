@@ -438,8 +438,24 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
   @apply text-center pt-1.5;
 }
 
-.col-cat input {
+.col-cat input.cat-rank-input {
   @apply w-full text-center py-1.75 px-1 border border-solid border-[#d8dee8] rounded-lg text-[0.8rem] font-semibold box-border bg-white;
+}
+
+.col-cat-pick {
+  @apply flex flex-col items-center gap-0.5;
+}
+
+.cat-use-label {
+  @apply flex items-center gap-0.5 text-[0.65rem] font-bold text-[#555] cursor-pointer m-0;
+}
+
+.cat-use-label input {
+  @apply m-0 cursor-pointer;
+}
+
+.header-sublabel {
+  @apply text-[0.6rem] font-semibold text-[#888] normal-case tracking-normal;
 }
 
 .col-keyword textarea {

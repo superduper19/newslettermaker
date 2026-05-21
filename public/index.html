@@ -138,8 +138,8 @@
               <button class="btn btn-secondary btn-sm" onclick="loadSession()">Load</button>
               <button class="btn btn-sm text-[#d32f2f] border-solid border-2 border-[#d32f2f] bg-transparent py-1.25 px-2.5 text-[0.8rem]" onclick="deleteSession()">Delete</button>
             </div>
-            <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load Week 1 and other saved sessions from Supabase" id="btn-refresh-state">Refresh from server</button>
-            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current articles and archive to the database">Push to server</button>
+            <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load workspace + merge all saved newsletters from Supabase into this browser" id="btn-refresh-state">Refresh from server</button>
+            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Merge every saved newsletter in this browser with Supabase (keeps server-only sessions too)">Push to server</button>
             <button class="btn btn-outline btn-sm" type="button" onclick="getLaterCoolFinds()" title="Bring back all Later Cool finds to the top of the list">Get Later Cool Finds</button>
             <div class="flex items-center gap-2 flex-wrap">
               <label for="article-view-excel-upload" class="btn btn-secondary btn-sm">Choose XLS</label>
@@ -205,15 +205,19 @@
           </div>
           <div class="col-cat header-sort" onclick="sortArticles('MED')">
             <div class="header-label">MED</div>
+            <div class="header-sublabel">Use · #</div>
           </div>
           <div class="col-cat header-sort" onclick="sortArticles('THC')">
             <div class="header-label">THC</div>
+            <div class="header-sublabel">Use · #</div>
           </div>
           <div class="col-cat header-sort" onclick="sortArticles('CBD')">
             <div class="header-label">CBD</div>
+            <div class="header-sublabel">Use · #</div>
           </div>
           <div class="col-cat header-sort" onclick="sortArticles('INV')">
             <div class="header-label">INV</div>
+            <div class="header-sublabel">Use · #</div>
           </div>
           <div class="col-keyword">
             <div class="header-label">Notes</div>
@@ -273,8 +277,8 @@
               <option value="oldnew">Old to New</option>
               <option value="newold">New to Old</option>
             </select>
-            <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load Week 1 and other saved sessions from Supabase">Refresh from server</button>
-            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current articles and archive to the database">Push to server</button>
+            <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load workspace + merge all saved newsletters from Supabase into this browser">Refresh from server</button>
+            <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Merge every saved newsletter in this browser with Supabase (keeps server-only sessions too)">Push to server</button>
             <button class="btn btn-secondary btn-sm" type="button" onclick="searchAllArticleImages()">Search All</button>
           </div>
         </div>
@@ -347,7 +351,7 @@
             <h2 class="font-bold">Text Editor</h2>
             <div class="flex gap-2.5 items-center flex-wrap">
               <button class="btn btn-primary btn-sm" onclick="saveSession()">Save</button>
-              <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Save current text, templates, and workspace to Supabase">Push to server</button>
+              <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Merge all saved newsletters in this browser with Supabase">Push to server</button>
             </div>
           </div>
           <p class="text-muted">Write prompts, import article links, generate summaries with AI.</p>

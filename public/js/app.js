@@ -120,15 +120,6 @@ const DEFAULT_SUMMARY_RULES = [
 function normalizeSummaryRules(value) {
     const text = String(value || '').trim();
     if (!text) return DEFAULT_SUMMARY_RULES;
-    if (
-        text.includes('# Newsletter Summary Rules') ||
-        text.includes('## SYSTEM PROMPT: Newsletter Summary Engine') ||
-        text.includes('## SOURCE RESTRICTIONS') ||
-        text.includes('## SUMMARY STRUCTURE') ||
-        text.includes('## OUTPUT FORMAT')
-    ) {
-        return DEFAULT_SUMMARY_RULES;
-    }
     return value;
 }
 
@@ -250,6 +241,47 @@ function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
     };
     lastGeneratedNewsletter = value.lastGeneratedNewsletter || null;
     persistWorkspaceLocal(buildWorkspaceState());
+}
+
+/**
+ * Merge server + browser saved sessions. Same name: keep whichever has newer savedAt.
+ * Returns counts for user-facing sync messages.
+ */
+function mergeSessionStores(serverSessions, localSessions) {
+    const server = serverSessions && typeof serverSessions === 'object' ? serverSessions : {};
+    const local = localSessions && typeof localSessions === 'object' ? localSessions : {};
+    const merged = { ...server };
+    let addedFromLocal = 0;
+    let updatedFromLocal = 0;
+    let serverOnly = 0;
+
+    Object.keys(server).forEach((k) => {
+        if (!(k in local)) serverOnly += 1;
+    });
+
+    Object.keys(local).forEach((k) => {
+        if (!(k in merged)) {
+            merged[k] = local[k];
+            addedFromLocal += 1;
+            return;
+        }
+        const localTime = new Date(local[k].savedAt || 0).getTime();
+        const serverTime = new Date(merged[k].savedAt || 0).getTime();
+        if (localTime >= serverTime) {
+            merged[k] = local[k];
+            if (localTime > serverTime) updatedFromLocal += 1;
+        }
+    });
+
+    return {
+        merged,
+        addedFromLocal,
+        updatedFromLocal,
+        serverOnly,
+        total: Object.keys(merged).length,
+        localCount: Object.keys(local).length,
+        serverCount: Object.keys(server).length,
+    };
 }
 
 function buildSessionsState(includeCurrentWorkspace = false) {
@@ -452,11 +484,8 @@ window.updateStateHintFromDiagnostic = async function () {
         if (sessRes.ok) {
             const { value } = await sessRes.json();
             if (value && typeof value === 'object') {
-                const local = JSON.parse(localStorage.getItem('newsletter_saved_sessions') || '{}');
-                const merged = { ...value };
-                Object.keys(local).forEach(k => {
-                    if (!(k in merged)) merged[k] = local[k];
-                });
+                const local = getSavedSessions();
+                const { merged } = mergeSessionStores(value, local);
                 localStorage.setItem('newsletter_saved_sessions', JSON.stringify(merged));
                 if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
                 if (hintEl) hideWithClass(hintEl);
@@ -538,6 +567,7 @@ function switchStep(stepNumber) {
         loadInspirationalLibrary();
     } else if (step === 5) {
         renderEditorView();
+        loadBasePromptFromServer();
     } else if (step === 6) {
         renderConfirmationView();
     }
@@ -645,12 +675,17 @@ window.renderImagesView = () => {
 
         const catInputs = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
             let rank = (article.ranks && article.ranks[cat]) || '';
-            return `<div class="img-col-cat">
+            const useChecked = isUseInNewsletter(article, cat);
+            return `<div class="img-col-cat col-cat-pick">
+                <label class="cat-use-label text-[0.65rem]" title="Use in summary & confirmation">
+                    <input type="checkbox" ${useChecked ? 'checked' : ''} onchange="updateUseInNewsletter(${originalIndex}, '${cat}', this.checked)">
+                    <span>Use</span>
+                </label>
                 <input
                     type="text"
                     value="${rank}"
                     oninput="updateCategoryRank(${originalIndex}, '${cat}', this.value)"
-                    class="w-full text-center h-8 py-1 px-px border border-[#ddd] rounded text-[0.8rem] font-semibold box-border">
+                    class="w-full text-center h-8 py-1 px-px border border-[#ddd] rounded text-[0.8rem] font-semibold box-border cat-rank-input">
             </div>`;
         }).join('');
 
@@ -1249,32 +1284,44 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function buildCategoryPrompt(category) {
+function ensureUseInNewsletter(article) {
+    if (!article.useInNewsletter || typeof article.useInNewsletter !== 'object') {
+        article.useInNewsletter = {};
+    }
+    return article.useInNewsletter;
+}
+
+/** Article is included when "Use" is checked for this category and rank # is set. */
+function isUseInNewsletter(article, category) {
+    const rank = String(getRankForSort(article, category) ?? '').trim();
+    if (!rank) return false;
+    const picks = ensureUseInNewsletter(article);
+    if (picks[category] === true) return true;
+    if (picks[category] === false) return false;
+    // Backward compat: unset + ranks 1–4 still count as picked
+    return isPrioritySummaryRank(rank);
+}
+
+function buildArticlesOnlyBlock(category) {
     const categoryArticles = getSummaryArticlesForCategory(category);
     if (categoryArticles.length === 0) {
-        return `CATEGORY: ${category}\nNo priority-ranked articles (1-4) currently selected for this category.`;
+        return '';
     }
-
-    const articleLines = categoryArticles.map((article, index) => {
+    return categoryArticles.map((article, index) => {
         const title = article.title || 'Untitled';
         const url = article.url || '';
-        return `${index + 1}. ${title}\n${url}`;
+        const rank = getRankForSort(article, category);
+        return `${index + 1}. [${rank}] ${title}\n${url}`;
     }).join('\n\n');
-
-    return [
-        `CATEGORY: ${category}`,
-        'Use only the priority-ranked article links below as the source set for this category summary.',
-        'Create a strong 6-7 line newsletter-ready summary for this category.',
-        '',
-        articleLines,
-    ].join('\n');
 }
 
 function mergePromptWithCategoryLinks(existingPrompt, category) {
-    const promptBlock = buildCategoryPrompt(category);
+    const promptBlock = buildArticlesOnlyBlock(category);
     const startMarker = `[[AUTO_CATEGORY_LINKS_${category}_START]]`;
     const endMarker = `[[AUTO_CATEGORY_LINKS_${category}_END]]`;
-    const wrappedBlock = `${startMarker}\n${promptBlock}\n${endMarker}`;
+    const wrappedBlock = promptBlock
+        ? `${startMarker}\n${promptBlock}\n${endMarker}`
+        : `${startMarker}\n(No articles selected — check Use + rank # in Article View.)\n${endMarker}`;
     const current = String(existingPrompt || '').trim();
     const markerPattern = new RegExp(`${startMarker}[\\s\\S]*?${endMarker}`, 'm');
     const brokenBlockPattern = new RegExp(`\\[\\[AUTO_CATEGORY_LINKS_${category}_[\\s\\S]*?(?=\\nhttps?:\\/\\/|\\n[A-Za-z0-9].*https?:\\/\\/|$)`, 'g');
@@ -1291,17 +1338,30 @@ function mergePromptWithCategoryLinks(existingPrompt, category) {
 }
 
 window.syncCategoryPrompt = (category) => {
+    syncSummaryArticlesFromPicks(category);
+};
+
+window.syncSummaryArticlesFromPicks = function syncSummaryArticlesFromPicks(category) {
     const content = newsletterContent[category] || (newsletterContent[category] = {
         intro: '',
         outro: '',
     });
-    const mergedPrompt = mergePromptWithCategoryLinks('', category);
-    content.prompt = mergedPrompt;
+    const block = buildArticlesOnlyBlock(category);
+    content.summaryArticlesText = block;
 
-    const promptEl = document.getElementById('editor-prompt');
-    if (promptEl && currentEditorTab === category) {
-        promptEl.value = mergedPrompt;
+    const articlesEl = document.getElementById('editor-summary-articles');
+    if (articlesEl && currentEditorTab === category) {
+        articlesEl.value = block;
     }
+    saveState();
+};
+
+window.updateSummaryArticlesText = (category, value) => {
+    const content = newsletterContent[category] || (newsletterContent[category] = {
+        intro: '',
+        outro: '',
+    });
+    content.summaryArticlesText = value;
     saveState();
 };
 
@@ -1330,11 +1390,10 @@ window.renderEditorContent = () => {
     if (!container) return;
 
     const content = newsletterContent[currentEditorTab];
-    const promptValue = mergePromptWithCategoryLinks(content.prompt || '', currentEditorTab);
-    if (content.prompt !== promptValue) {
-        content.prompt = promptValue;
-        saveState();
+    if (content.summaryArticlesText === undefined) {
+        content.summaryArticlesText = buildArticlesOnlyBlock(currentEditorTab) || '';
     }
+    const articlesTextValue = content.summaryArticlesText;
 
     const summaryRulesValue = normalizeSummaryRules(newsletterContent.summaryRules);
     const resultValue = content.result || '';
@@ -1370,13 +1429,14 @@ window.renderEditorContent = () => {
         <div class="grid grid-cols-[1fr_300px] gap-5 items-start">
             <div>
                 <div class="form-group">
-                    <label class="font-semibold">Prompt</label>
-                    <textarea id="editor-prompt" rows="8" class="form-control font-[monospace] text-[0.9rem] mt-2 p-2" oninput="updateNewsletterContent('${currentEditorTab}', 'prompt', this.value)">${promptValue}</textarea>
+                    <label class="font-semibold">Articles for ${currentEditorTab} summary</label>
+                    <p class="text-[0.8rem] text-[#777] mb-2">Only articles with <strong>Use</strong> checked and a rank number in Article View. Edit here or sync from picks.</p>
+                    <textarea id="editor-summary-articles" rows="10" class="form-control font-[monospace] text-[0.9rem] mt-1 p-2 bg-white border border-[#c8e6c9]" oninput="updateSummaryArticlesText('${currentEditorTab}', this.value)" placeholder="1. [1] Article title&#10;https://...">${escapeHtml(articlesTextValue)}</textarea>
                 </div>
 
                 <div class="flex items-center gap-2.5 mt-2 mb-4">
-                    <button class="btn btn-secondary btn-sm" onclick="syncCategoryPrompt('${currentEditorTab}')">Refresh Category Links</button>
-                    <span class="text-[0.8rem] text-[#777]">The prompt auto-loads all article links for ${currentEditorTab}.</span>
+                    <button class="btn btn-secondary btn-sm" onclick="syncSummaryArticlesFromPicks('${currentEditorTab}')">Sync from Article View picks</button>
+                    <span class="text-[0.8rem] text-[#777]">Rebuilds this list from checked Use + rank in Article View.</span>
                 </div>
 
                 <div class="flex items-center gap-4 mb-5 justify-between flex-wrap">
@@ -1400,10 +1460,32 @@ window.renderEditorContent = () => {
 
         <div>
             <div id="editor-articles-list" class="mb-4 text-[0.85rem]"></div>
-            <div class="form-group">
-                <label class="font-semibold">Summary Rules</label>
-                <textarea id="editor-summary-rules" rows="14" class="form-control text-[0.85rem] bg-[#fffde7] border-[#fbc02d] mt-2 p-2" oninput="updateSummaryRules(this.value)" placeholder="Persistent rules sent as system instructions to the AI...">${summaryRulesValue}</textarea>
-                <div class="text-[0.7rem] text-[#999] mt-1">These rules persist across saves and categories.</div>
+
+            <!-- Base Prompt (server-side, editable + saveable) -->
+            <div class="form-group mb-4 border border-blue-200 rounded-lg p-3 bg-blue-50">
+                <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+                    <label class="font-semibold text-blue-800">Base System Prompt <span class="text-[0.7rem] font-normal text-blue-500">(6–7 lines, editor role — sent to AI before rules)</span></label>
+                    <div class="flex items-center gap-2">
+                        <span id="base-prompt-status" class="text-[0.7rem] text-gray-400"></span>
+                        <button onclick="saveBasePrompt()" class="px-3 py-1 text-[0.75rem] bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold">Save</button>
+                        <button onclick="resetBasePrompt()" class="px-3 py-1 text-[0.75rem] bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Reset</button>
+                    </div>
+                </div>
+                <textarea id="editor-base-prompt" rows="6" class="form-control text-[0.85rem] font-mono mt-1 p-2 w-full border border-blue-200" placeholder="Loading..."></textarea>
+                <div class="text-[0.7rem] text-blue-400 mt-1">Saved to server — persists across restarts. Edit here and click Save.</div>
+            </div>
+
+            <!-- Summary Rules (also saveable to server file) -->
+            <div class="form-group border border-yellow-200 rounded-lg p-3 bg-[#fffde7]">
+                <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+                    <label class="font-semibold">Summary Rules <span class="text-[0.7rem] font-normal text-gray-500">(appended when "Use Summary Rules" is on)</span></label>
+                    <div class="flex items-center gap-2">
+                        <span id="rules-status" class="text-[0.7rem] text-gray-400"></span>
+                        <button onclick="saveRulesToServer()" class="px-3 py-1 text-[0.75rem] bg-yellow-600 text-white rounded hover:bg-yellow-700 font-semibold">Save to Server</button>
+                    </div>
+                </div>
+                <textarea id="editor-summary-rules" rows="14" class="form-control text-[0.85rem] border-[#fbc02d] mt-1 p-2 w-full" oninput="updateSummaryRules(this.value)" placeholder="Persistent rules sent as system instructions to the AI...">${summaryRulesValue}</textarea>
+                <div class="text-[0.7rem] text-[#999] mt-1">Also auto-saved locally with your session. Click "Save to Server" to persist permanently.</div>
             </div>
         </div>
 
@@ -1447,14 +1529,73 @@ window.renderEditorContent = () => {
                     ${url ? `<a href="${url}" target="_blank" class="text-[0.78rem] break-all">${url}</a>` : '<span class="text-muted">No URL</span>'}
                 </div>`;
             }).join('')
-            : '<span class="text-muted">No priority 1-4 articles for ' + currentEditorTab + '.</span>';
-        listEl.innerHTML = '<label class="font-semibold">Summary Source Articles for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Only articles marked 1, 2, 3, or 4 in Article View/Image View are used here for summary generation.</div>';
+            : '<span class="text-muted">No articles picked for ' + currentEditorTab + '.</span>';
+        listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Check <strong>Use</strong> under the category column and enter a rank number.</div>';
     }
 };
 
 window.updateSummaryRules = (value) => {
     newsletterContent.summaryRules = value || DEFAULT_SUMMARY_RULES;
     saveState();
+};
+
+// ── Base prompt & rules — server-side save/load ───────────────────────────────
+async function loadBasePromptFromServer() {
+    const el = document.getElementById('editor-base-prompt');
+    const status = document.getElementById('base-prompt-status');
+    if (!el) return;
+    try {
+        const res = await fetch('/api/articles/summary-base-prompt');
+        const data = await res.json();
+        el.value = data.prompt || '';
+        if (status) status.textContent = 'Loaded from server';
+    } catch (e) {
+        if (status) status.textContent = 'Could not load';
+    }
+}
+
+window.saveBasePrompt = async () => {
+    const el = document.getElementById('editor-base-prompt');
+    const status = document.getElementById('base-prompt-status');
+    if (!el) return;
+    try {
+        if (status) status.textContent = 'Saving…';
+        const res = await fetch('/api/articles/summary-base-prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: el.value }),
+        });
+        const data = await res.json();
+        if (status) status.textContent = data.ok ? '✓ Saved' : '✗ Error';
+    } catch (e) {
+        if (status) status.textContent = '✗ Save failed';
+    }
+};
+
+window.resetBasePrompt = async () => {
+    if (!confirm('Reset base prompt to the original default?')) return;
+    const defaultPrompt = `You are a professional newsletter editor. Create a newsletter-ready summary for the provided category articles only.\n\nWrite exactly 6 to 7 short lines total.\nEach line should be concise, natural, and publication-ready.\nOnly use the fetched article content and article metadata provided by the user.\nDo not use outside knowledge.\nDo not mention URLs in the output.\nFocus on the most important developments across the provided articles for the selected category.\nIf some links could not be accessed, briefly note that in one short line.`;
+    const el = document.getElementById('editor-base-prompt');
+    if (el) el.value = defaultPrompt;
+    await window.saveBasePrompt();
+};
+
+window.saveRulesToServer = async () => {
+    const el = document.getElementById('editor-summary-rules');
+    const status = document.getElementById('rules-status');
+    if (!el) return;
+    try {
+        if (status) status.textContent = 'Saving…';
+        const res = await fetch('/api/articles/summary-rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rules: el.value }),
+        });
+        const data = await res.json();
+        if (status) status.textContent = data.ok ? '✓ Saved to server' : '✗ Error';
+    } catch (e) {
+        if (status) status.textContent = '✗ Save failed';
+    }
 };
 
 window.updateTemplate = (category, value) => {
@@ -1531,15 +1672,16 @@ window.uploadAllTemplates = () => {
 };
 
 window.generateSummary = async (category) => {
-    const prompt = document.getElementById('editor-prompt').value;
+    const articlesEl = document.getElementById('editor-summary-articles');
+    const articlesText = articlesEl ? articlesEl.value.trim() : '';
     const rulesOnEl = document.getElementById(`rules-on-${category}`);
     const isUseRules = rulesOnEl ? rulesOnEl.checked : true;
     const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
     const categoryArticles = getSummaryArticlesForCategory(category);
     const btnText = document.getElementById(`gen-btn-text-${category}`);
 
-    if (!prompt) return alert('Please enter a prompt.');
-    if (categoryArticles.length === 0) return alert(`No priority-ranked articles (1-4) found for ${category}.`);
+    if (!articlesText) return alert('Add articles in the middle box, or click Sync from Article View picks.');
+    if (categoryArticles.length === 0) return alert(`No articles picked for ${category}. In Article View, check Use and enter a rank number for each article.`);
 
     btnText.textContent = 'Generating...';
 
@@ -1548,7 +1690,7 @@ window.generateSummary = async (category) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                prompt,
+                prompt: `Category: ${category}\n\nArticles to summarize:\n\n${articlesText}`,
                 useRules: isUseRules,
                 summaryRules,
                 category,
@@ -2966,16 +3108,26 @@ function renderArticles() {
                             ) ?? (article.categories && article.categories.includes(cat)
                                 ? 'Y' :
                                 '');
-                            // Same resolution as getRankForSort so display and sort match (incl. lowercase keys)
+                            const useChecked = isUseInNewsletter(article, cat);
+                            const useDisabled = disabledAttr;
 
-                            return `<div class="col-cat">
+                            return `<div class="col-cat col-cat-pick">
+                                <label class="cat-use-label ${disabledClass}" title="Include in summary & confirmation for ${cat}">
+                                    <input
+                                        type="checkbox"
+                                        ${useChecked ? 'checked' : ''}
+                                        ${useDisabled}
+                                        onchange="updateUseInNewsletter(${index}, '${cat}', this.checked)">
+                                    <span>Use</span>
+                                </label>
                                 <input
                                     type="text"
                                     value="${rank}"
                                     oninput="updateCategoryRank(${index}, '${cat}', this.value)"
-                                    class="${disabledClass}"
+                                    class="${disabledClass} cat-rank-input"
                                     ${disabledAttr}
-                                    placeholder="">
+                                    placeholder="#"
+                                    title="Rank / order for ${cat}">
                             </div>`;
                         }).join('');
                 const admonition = getHeadlineLengthAdmonition(article.title);
@@ -3184,31 +3336,39 @@ window.addArticleFromModal = () => {
     closeAddArticleModal();
 };
 
+window.updateUseInNewsletter = (index, cat, checked) => {
+    const article = articles[index];
+    ensureUseInNewsletter(article)[cat] = !!checked;
+    saveState();
+    updateStats();
+};
+
 window.updateCategoryRank = (index, cat, value) => {
     const article = articles[index];
     if (!article.ranks) article.ranks = {};
 
     const rank = value.trim();
+    const picks = ensureUseInNewsletter(article);
 
     if (!rank) {
-        // Remove from ranks
         delete article.ranks[cat];
-        // Remove from categories array if it exists
+        picks[cat] = false;
         if (article.categories && article.categories.includes(cat)) {
             article.categories = article.categories.filter(c => c !== cat);
         }
     } else {
-        // Add/Update rank
         article.ranks[cat] = rank;
-        // Add to categories array if not present
         if (!article.categories) article.categories = [];
         if (!article.categories.includes(cat)) {
             article.categories.push(cat);
         }
+        if (picks[cat] === undefined && isPrioritySummaryRank(rank)) {
+            picks[cat] = true;
+        }
     }
 
     saveState();
-    updateStats(); // Refresh stats
+    updateStats();
 };
 
 // Sort order for MED/THC/CBD/INV: lowest numbers first, then cool finds, then Y, YM, Maybe (M), No, then empty.
@@ -3339,13 +3499,12 @@ function isPrioritySummaryRank(rank) {
     return ['1', '2', '3', '4'].includes(value);
 }
 
-// Articles used for Text summaries: only explicit priority ranks 1-4.
+// Articles used for Text summaries: Use checked + rank # in Article View.
 function getSummaryArticlesForCategory(category) {
     return articles.filter(a => {
         if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
         if (a.selected === false) return false;
-        const rank = getRankForSort(a, category);
-        return isPrioritySummaryRank(rank);
+        return isUseInNewsletter(a, category);
     }).sort((a, b) => {
         const rA = rankToSortValue(getRankForSort(a, category));
         const rB = rankToSortValue(getRankForSort(b, category));
@@ -3354,14 +3513,13 @@ function getSummaryArticlesForCategory(category) {
     });
 }
 
-// Articles shown in Confirmation/final newsletter: broader ranked + selected article set.
+// Articles shown in Confirmation/final newsletter: Use checked + rank # (same picks as summary).
 function getArticlesForCategory(category) {
     return articles
         .filter(a => {
             if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
             if (a.selected === false) return false;
-            const rank = getRankForSort(a, category);
-            return rank !== '' && rank !== undefined;
+            return isUseInNewsletter(a, category);
         }).sort((a, b) => {
             const rA = rankToSortValue(getRankForSort(a, category));
             const rB = rankToSortValue(getRankForSort(b, category));
@@ -3589,7 +3747,30 @@ window.pushStateToServer = async function () {
     try {
         await convertLocalUploadUrlsForSharing();
         const workspace = buildWorkspaceState();
-        const sessions = buildSessionsState(true);
+        const localSessions = buildSessionsState(true);
+
+        let serverSessions = {};
+        try {
+            const sessRes = await fetch('/api/state?key=sessions');
+            if (sessRes.ok) {
+                const data = await sessRes.json();
+                if (data.value && typeof data.value === 'object') {
+                    serverSessions = data.value;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not load server sessions before merge:', e);
+        }
+
+        const {
+            merged: sessions,
+            addedFromLocal,
+            updatedFromLocal,
+            serverOnly,
+            total,
+            localCount,
+        } = mergeSessionStores(serverSessions, localSessions);
+
         const requests = [
             fetch('/api/state', {
                 method: 'POST',
@@ -3630,7 +3811,18 @@ window.pushStateToServer = async function () {
             currentSessionName = currentSessionName || document.getElementById('newsletter-name')?.value.trim() || '';
             populateSavedDropdown();
             const generatedNote = lastGeneratedNewsletter ? ', generated newsletter synced' : '';
-            alert('Pushed to server: ' + articles.length + ' articles, ' + archivedArticles.length + ' archived, ' + laterCoolArticles.length + ' later cool, ' + Object.keys(sessions).length + ' saved session(s)' + generatedNote + '.');
+            const sessionNames = Object.keys(sessions).sort().join(', ');
+            alert(
+                'Pushed to server.\n\n' +
+                'Workspace: ' + articles.length + ' articles, ' + archivedArticles.length + ' archived, ' +
+                laterCoolArticles.length + ' later cool' + generatedNote + '.\n\n' +
+                'Saved newsletters: ' + total + ' total on server.\n' +
+                'This browser had: ' + localCount + '\n' +
+                'New from this browser: ' + addedFromLocal + '\n' +
+                'Updated (newer save here): ' + updatedFromLocal + '\n' +
+                'Only on server (kept): ' + serverOnly + '\n\n' +
+                'Names: ' + sessionNames,
+            );
         } else {
             alert('Push failed: ' + failed.join('; '));
         }
@@ -3697,15 +3889,13 @@ window.refreshStateFromServer = async function () {
         if (sessRes.ok) {
             const { value } = await sessRes.json();
             if (value && typeof value === 'object') {
-                const local = JSON.parse(localStorage.getItem('newsletter_saved_sessions') || '{}');
-                const merged = { ...value };
-                Object.keys(local).forEach(k => {
-                    if (!(k in merged)) merged[k] = local[k];
-                });
+                const local = getSavedSessions();
+                const { merged, addedFromLocal, serverOnly, total } = mergeSessionStores(value, local);
                 localStorage.setItem('newsletter_saved_sessions', JSON.stringify(merged));
                 if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
-                const n = Object.keys(merged).length;
-                msg += n + ' saved session(s) (server + local).';
+                msg += total + ' saved session(s). ';
+                if (addedFromLocal) msg += addedFromLocal + ' added from this browser. ';
+                if (serverOnly) msg += serverOnly + ' only on server. ';
                 if (hintEl) hideWithClass(hintEl);
             }
         } else if (sessRes.status === 503) {

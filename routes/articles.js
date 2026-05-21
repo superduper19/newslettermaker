@@ -688,15 +688,15 @@ router.post('/summarize', async (req, res) => {
 
         console.log(`Generating summaries for ${category} with rules: ${useRules} (${useGemini ? 'Gemini' : 'Claude'})`);
 
-        let systemPrompt = `You are a professional newsletter editor. Create a newsletter-ready summary for the provided category articles only.
-
-Write exactly 6 to 7 short lines total.
-Each line should be concise, natural, and publication-ready.
-Only use the fetched article content and article metadata provided by the user.
-Do not use outside knowledge.
-Do not mention URLs in the output.
-Focus on the most important developments across the provided articles for the selected category.
-If some links could not be accessed, briefly note that in one short line.`;
+        // Load base prompt from config file (editable via UI) with hardcoded fallback
+        let systemPrompt;
+        try {
+            const promptFile = path.join(__dirname, '../config/summary_base_prompt.txt');
+            systemPrompt = fs.existsSync(promptFile) ? fs.readFileSync(promptFile, 'utf8').trim() : '';
+        } catch (_) { systemPrompt = ''; }
+        if (!systemPrompt) {
+            systemPrompt = `You are a professional newsletter editor. Create a newsletter-ready summary for the provided category articles only.\n\nWrite exactly 6 to 7 short lines total.\nEach line should be concise, natural, and publication-ready.\nOnly use the fetched article content and article metadata provided by the user.\nDo not use outside knowledge.\nDo not mention URLs in the output.\nFocus on the most important developments across the provided articles for the selected category.\nIf some links could not be accessed, briefly note that in one short line.`;
+        }
 
         if (useRules && summaryRules && summaryRules.trim()) {
             systemPrompt += `\n\nHere are the specific rules you MUST follow:\n${summaryRules}`;
@@ -875,6 +875,50 @@ router.get('/error-log/:logId', async (req, res) => {
     } catch (error) {
         console.error('Error reading AI parse log:', error);
         return res.status(500).json({ error: 'Failed to read log file' });
+    }
+});
+
+// ── Summary base prompt config ────────────────────────────────────────────────
+const BASE_PROMPT_PATH = path.join(__dirname, '../config/summary_base_prompt.txt');
+const SUMMARY_RULES_PATH = path.join(__dirname, '../logs/newsletter_summary_rules.md');
+
+router.get('/summary-base-prompt', (req, res) => {
+    try {
+        const text = fs.existsSync(BASE_PROMPT_PATH) ? fs.readFileSync(BASE_PROMPT_PATH, 'utf8') : '';
+        res.json({ prompt: text });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to read base prompt' });
+    }
+});
+
+router.post('/summary-base-prompt', express.json(), (req, res) => {
+    try {
+        const { prompt } = req.body;
+        if (typeof prompt !== 'string') return res.status(400).json({ error: 'prompt must be a string' });
+        fs.writeFileSync(BASE_PROMPT_PATH, prompt, 'utf8');
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save base prompt' });
+    }
+});
+
+router.get('/summary-rules', (req, res) => {
+    try {
+        const text = fs.existsSync(SUMMARY_RULES_PATH) ? fs.readFileSync(SUMMARY_RULES_PATH, 'utf8') : '';
+        res.json({ rules: text });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to read summary rules' });
+    }
+});
+
+router.post('/summary-rules', express.json(), (req, res) => {
+    try {
+        const { rules } = req.body;
+        if (typeof rules !== 'string') return res.status(400).json({ error: 'rules must be a string' });
+        fs.writeFileSync(SUMMARY_RULES_PATH, rules, 'utf8');
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save summary rules' });
     }
 });
 

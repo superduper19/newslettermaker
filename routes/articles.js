@@ -70,7 +70,7 @@ const verifyAndAnalyzeUrl = async (url) => {
     if (!url) return { isValid: false, content: '' };
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout (Vercel-friendly)
 
         const response = await fetch(url, {
             method: 'GET',
@@ -398,11 +398,44 @@ const MODEL_MAPPING = {
     'claude-sonnet-4-6': 'claude-sonnet-4-6',
     'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
     'gemini-flash-3-0': 'gemini-3-flash-preview',
-    'gemini-flash-3-1-pro': 'gemini-3.1-pro-preview' // Updated based on earlier fix, verifying...
+    'gemini-flash-3-1-pro': 'gemini-3.1-pro-preview',
 };
 
 // Helper to get API Model ID
 const getApiModelId = (userModel) => MODEL_MAPPING[userModel] || userModel || 'claude-opus-4-6';
+
+function resolveAiProvider(model) {
+    const apiModel = getApiModelId(model);
+    const isGemini = apiModel.toLowerCase().includes('gemini');
+    if (isGemini) {
+        if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+            return {
+                error: 'GEMINI_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
+            };
+        }
+    } else if (!process.env.ANTHROPIC_API_KEY) {
+        return {
+            error: 'ANTHROPIC_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
+        };
+    }
+    return { apiModel, isGemini };
+}
+
+async function mapWithConcurrency(items, limit, fn) {
+    const results = new Array(items.length);
+    let nextIndex = 0;
+    async function worker() {
+        while (nextIndex < items.length) {
+            const i = nextIndex++;
+            results[i] = await fn(items[i], i);
+        }
+    }
+    const workers = Math.min(limit, items.length);
+    await Promise.all(Array.from({ length: workers }, worker));
+    return results;
+}
+
+const ERROR_LOG_DIR = process.env.VERCEL ? '/tmp' : __dirname;
 
 // Helper to extract clean error message from AI providers
 function parseAIError(error) {
@@ -433,11 +466,20 @@ function parseAIError(error) {
 // POST /api/articles/search - AI Search & Filtering
 router.post('/search', async (req, res) => {
     try {
-        const { prompt, newsletterName, model } = req.body;
+        const { prompt, newsletterName, model } = req.body || {};
+        if (!prompt || !String(prompt).trim()) {
+            return res.status(400).json({ error: 'Please enter a search prompt.' });
+        }
+
+        const provider = resolveAiProvider(model);
+        if (provider.error) {
+            return res.status(503).json({ error: provider.error, configured: false });
+        }
+
         console.log(`Received search request: "${prompt}" for ${newsletterName} using model ${model}`);
 
         // Use mock data if requested (for testing without burning credits)
-        if (prompt.toLowerCase().includes('mock data')) {
+        if (String(prompt).toLowerCase().includes('mock data')) {
              console.log("Mock data requested.");
              return res.json({
                  success: true,
@@ -450,7 +492,7 @@ router.post('/search', async (req, res) => {
 
         console.log(`Searching articles with model ${model} for "${newsletterName}"`);
 
-        const apiModel = getApiModelId(model);
+        const { apiModel, isGemini } = provider;
 
         console.log(`Using model mapping: ${model} -> ${apiModel}`);
 
@@ -467,7 +509,7 @@ Each object in the array must have exactly these keys:
 Example format:
 [{"title":"...","url":"https://...","description":"...","date":"02/25/26"}]`;
 
-        if (apiModel.toLowerCase().includes('gemini')) {
+        if (isGemini) {
             try {
                 const geminiModel = genAI.getGenerativeModel({
                     model: apiModel,
@@ -480,28 +522,26 @@ Example format:
                 const response = await result.response;
                 content = response.text();
             } catch (geminiError) {
-                console.error("Gemini API Error:", geminiError);
+                console.error('Gemini API Error:', geminiError);
                 return res.status(500).json({ error: parseAIError(geminiError), details: geminiError.message });
             }
-
         } else {
             const message = await anthropic.messages.create({
                 model: apiModel,
                 max_tokens: 8000,
                 system: systemPrompt,
                 messages: [
-                    { role: "user", content: prompt },
+                    { role: 'user', content: prompt },
                 ],
                 tools: [
                     {
-                        type: "web_search_20250305",
-                        name: "web_search",
+                        type: 'web_search_20250305',
+                        name: 'web_search',
                         max_uses: 10,
                     },
                 ],
             });
 
-            // Combine all text blocks
             content = message.content
                 .filter(block => block.type === 'text')
                 .map(block => block.text)
@@ -516,10 +556,11 @@ Example format:
             console.error(`[${logId}] Failed to parse AI JSON response:`, content.substring(0, 500) + "...");
             // Write full content to file for debugging
             try {
-                require('fs').writeFileSync(`error_json_${logId}.log`, content);
-                console.error(`Full error content written to error_json_${logId}.log`);
+                const logPath = path.join(ERROR_LOG_DIR, `error_json_${logId}.log`);
+                fs.writeFileSync(logPath, content);
+                console.error(`Full error content written to ${logPath}`);
             } catch (fsErr) {
-                console.error("Failed to write error log file", fsErr);
+                console.error('Failed to write error log file', fsErr);
             }
 
             return res.status(500).json({
@@ -571,7 +612,7 @@ Example format:
             return cleaned;
         };
 
-        const results = await Promise.all(rawArticles.map(a => processArticle(a)));
+        const results = await mapWithConcurrency(rawArticles, 4, processArticle);
 
         // Filter out nulls (rejected articles)
         const validArticles = results.filter(a => a !== null);

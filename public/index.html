@@ -81,7 +81,7 @@
               <div class="controls-row newsletter-search-actions justify-end gap-2.5 items-center">
                 <span id="search-status" class="text-success font-medium hidden"></span>
                 <button id="btn-search-articles" class="btn btn-primary">Find Articles</button>
-                <button id="btn-clear-workspace" class="btn btn-secondary bg-[#6c757d]" onclick="clearWorkspace()">Clear All Articles</button>
+                <button id="btn-clear-workspace" class="btn btn-secondary bg-[#6c757d]" onclick="startNewWeek()" title="Clear articles, images, and generated preview for a new week">Start New Week</button>
                 <button id="btn-next-step-2" class="btn btn-outline hidden">Next: Review Articles</button>
               </div>
             </div>
@@ -137,6 +137,7 @@
               </select>
               <button class="btn btn-secondary btn-sm" onclick="loadSession()">Load</button>
               <button class="btn btn-sm text-[#d32f2f] border-solid border-2 border-[#d32f2f] bg-transparent py-1.25 px-2.5 text-[0.8rem]" onclick="deleteSession()">Delete</button>
+            <button class="btn btn-outline btn-sm text-[#d32f2f] border-[#d32f2f]" type="button" onclick="startNewWeek()" title="Clear all articles and image selections to start a new week">Start New Week</button>
             </div>
             <button class="btn btn-primary btn-sm" type="button" onclick="refreshStateFromServer()" title="Load workspace + merge all saved newsletters from Supabase into this browser" id="btn-refresh-state">Refresh from server</button>
             <button class="btn btn-outline btn-sm" type="button" onclick="pushStateToServer()" title="Merge every saved newsletter in this browser with Supabase (keeps server-only sessions too)">Push to server</button>

@@ -521,22 +521,73 @@ function saveState() {
     }, 800);
 }
 
-// Clear State
-window.clearWorkspace = () => {
-    if (confirm('Are you sure you want to clear all articles and start fresh? This cannot be undone.')) {
-        articles = [];
-        inspirationalImages = [];
-        newsletterContent = {
-            MED: { intro: '', outro: '' },
-            THC: { intro: '', outro: '' },
-            CBD: { intro: '', outro: '' },
-            INV: { intro: '', outro: '' },
-        };
-        saveState();
-        renderArticles();
-        switchStep(1);
+// Clear workspace for a new week (keeps templates, prompts, saved sessions)
+window.startNewWeek = async () => {
+    const msg =
+        'Start a new week?\n\n'
+        + 'This clears:\n'
+        + '• All articles (including archived and later cool)\n'
+        + '• All article image selections\n'
+        + '• Inspirational image selection\n'
+        + '• Generated newsletter preview\n\n'
+        + 'Saved sessions in the dropdown are NOT deleted.\n'
+        + 'Templates, summary rules, and prompts are kept.';
+    if (!confirm(msg)) return;
+
+    const nameInput = document.getElementById('newsletter-name');
+    if (nameInput) nameInput.value = '';
+    currentSessionName = '';
+
+    articles = [];
+    archivedArticles = [];
+    laterCoolArticles = [];
+    inspirationalImages = [];
+    confirmationInspirationalImage = '';
+    lastGeneratedNewsletter = null;
+    Object.keys(confirmationRenderedHtml).forEach((cat) => {
+        confirmationRenderedHtml[cat] = '';
+    });
+
+    const kept = newsletterContent || {};
+    newsletterContent = {
+        MED: kept.MED || { intro: '', outro: '', result: '' },
+        THC: kept.THC || { intro: '', outro: '', result: '' },
+        CBD: kept.CBD || { intro: '', outro: '', result: '' },
+        INV: kept.INV || { intro: '', outro: '', result: '' },
+        templates: kept.templates || { MED: '', THC: '', CBD: '', INV: '' },
+        summaryRules: normalizeSummaryRules(kept.summaryRules),
+        selectedGreeting: kept.selectedGreeting || DEFAULT_GREETING,
+        subjectPrompt: normalizeSubjectPrompt(kept.subjectPrompt),
+        generatedSubjects: kept.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
+        generatedHeadings: kept.generatedHeadings || { MED: '', THC: '', CBD: '', INV: '' },
+    };
+
+    saveState();
+    try {
+        await fetch('/api/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'workspace', value: buildWorkspaceState() }),
+        });
+    } catch (e) {
+        console.warn('Could not sync empty workspace to server', e);
     }
+
+    populateSavedDropdown();
+    renderArticles();
+    renderImagesView();
+    renderInspirationalView();
+
+    const searchStatus = document.getElementById('search-status');
+    const nextStep2Btn = document.getElementById('btn-next-step-2');
+    if (searchStatus) hideWithClass(searchStatus);
+    if (nextStep2Btn) hideWithClass(nextStep2Btn);
+
+    switchStep(1);
+    if (nameInput) nameInput.focus();
 };
+
+window.clearWorkspace = window.startNewWeek;
 
 // Navigation Logic
 const steps = document.querySelectorAll('.nav-steps .step');
@@ -4023,7 +4074,10 @@ async function searchMoreArticles() {
             body: JSON.stringify({ prompt, newsletterName, model }),
         });
 
-        const data = await response.json();
+        const data = await parseJsonResponse(
+            response,
+            'Search failed: server returned HTML instead of JSON (often a timeout or missing API key on Vercel). Check Vercel env vars and try again.',
+        );
 
         if (data.success && data.articles) {
             const existingUrls = new Set(articles.map(a => normalizeUrl(a.url)));
@@ -4212,7 +4266,10 @@ if (searchBtn) {
                 body: JSON.stringify({ prompt, newsletterName, model }),
             });
 
-            const data = await response.json();
+            const data = await parseJsonResponse(
+                response,
+                'Search failed: server returned HTML instead of JSON (often a timeout or missing API key on Vercel).',
+            );
 
             if (data.success) {
                 console.log("AI Search Results:", data.articles);

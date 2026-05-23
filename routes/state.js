@@ -50,6 +50,10 @@ router.get('/diagnostic', async (req, res) => {
         initError: supabaseInitError || null,
         dbError: dbError || null,
         sessionsCount,
+        hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+        hasGeminiKey: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
+        hasFreepikKey: !!process.env.FREEPIK_API_KEY,
+        hasGoDaddyFtp: !!(process.env.GODADDY_FTP_HOST && process.env.GODADDY_FTP_USER && process.env.GODADDY_FTP_PASS),
     });
 });
 

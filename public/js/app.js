@@ -521,17 +521,15 @@ function saveState() {
     }, 800);
 }
 
-// Clear workspace for a new week (keeps templates, prompts, saved sessions)
+// Clear workspace articles only (saved sessions are kept)
 window.startNewWeek = async () => {
     const msg =
-        'Start a new week?\n\n'
-        + 'This clears:\n'
-        + '• All articles (including archived and later cool)\n'
-        + '• All article image selections\n'
-        + '• Inspirational image selection\n'
-        + '• Generated newsletter preview\n\n'
-        + 'Saved sessions in the dropdown are NOT deleted.\n'
-        + 'Templates, summary rules, and prompts are kept.';
+        'Clear the current workspace?\n\n'
+        + 'This removes all articles from the working list (including archived in workspace).\n'
+        + 'It also clears image selections and generated preview.\n\n'
+        + 'Saved sessions in Load Saved are NOT deleted.\n'
+        + 'Templates, summary rules, and prompts are kept.\n\n'
+        + 'Tip: In Article View you can also check rows and use Remove checked.';
     if (!confirm(msg)) return;
 
     const nameInput = document.getElementById('newsletter-name');
@@ -3674,6 +3672,39 @@ function updateStats() {
     const footerEl = document.getElementById('article-stats-footer');
     if (footerEl) footerEl.innerHTML = statsHtml;
 }
+
+window.removeSelectedArticles = () => {
+    const count = articles.filter((a) => a.selected !== false).length;
+    if (!count) {
+        alert('No articles checked. Use the Select column checkboxes (All / None), then Remove checked.');
+        return;
+    }
+    if (!confirm(`Remove ${count} checked article(s) from this workspace?\n\nSaved sessions in the dropdown are not deleted.`)) {
+        return;
+    }
+    articles = articles.filter((a) => a.selected === false);
+    saveState();
+    renderArticles();
+    const activeStep = document.querySelector('.step.active');
+    if (activeStep && activeStep.getAttribute('data-step') === '3') {
+        renderImagesView();
+    }
+};
+
+window.archiveSelectedArticles = () => {
+    const toArchive = articles.filter((a) => a.selected !== false);
+    if (!toArchive.length) {
+        alert('No articles checked. Use the Select column checkboxes (All / None), then Archive checked.');
+        return;
+    }
+    if (!confirm(`Archive ${toArchive.length} checked article(s)?`)) {
+        return;
+    }
+    archivedArticles.push(...toArchive);
+    articles = articles.filter((a) => a.selected === false);
+    saveState();
+    renderArticles();
+};
 
 // Remove Article (no confirmation)
 window.removeArticle = (index) => {

@@ -251,9 +251,9 @@
               <span class="stat-item">Total: 0</span>
             </div>
           </div>
-          <p class="text-muted">Choose an image for each selected article.</p>
+          <p class="text-muted">Choose an image for each selected article. Freepik icons are copied to purablis.com automatically when selected.</p>
           <div class="mt-2.5 flex gap-2.5 flex-wrap">
-            <button class="btn btn-primary btn-sm" onclick="AllImagesToPurabpublishlis()">Publish Selected to purablis</button>
+            <button class="btn btn-primary btn-sm" onclick="publishAllImagesToPurablis()">Publish all to Purablis</button>
             <button class="btn btn-secondary btn-sm" onclick="downloadAllImagesZip()">Download All Images (ZIP)</button>
           </div>
         </div>
@@ -297,7 +297,7 @@
       <div class="card">
         <div class="card-header">
           <h2 class="font-bold">Inspirational Images</h2>
-          <p class="text-muted">Select inspirational images for the newsletter headers.</p>
+          <p class="text-muted">Select inspirational images for newsletter headers. Images are saved on purablis.com automatically.</p>
         </div>
         <div class="card-body">
           <div class="form-group">
@@ -308,18 +308,18 @@
                 accept="image/*"
                 id="insp-upload-input"
                 class="form-control flex-1 upload-input">
-              <button class="btn btn-primary" onclick="uploadInspirationalImage()" id="btn-insp-upload">Upload to Supabase</button>
+              <button class="btn btn-primary" onclick="uploadInspirationalImage()" id="btn-insp-upload">Upload to Purablis</button>
             </div>
             <div id="insp-upload-status" class="text-[0.8rem] text-[#888] mt-1"></div>
           </div>
 
           <div class="form-group mt-4">
-            <label>Or Save Image URL to Supabase</label>
+            <label>Or save image URL to Purablis</label>
             <div class="flex gap-2.5 mt-2">
               <input type="text" id="insp-url-input" placeholder="https://example.com/image.jpg" class="form-control flex-1">
               <button class="btn btn-secondary" onclick="addInspirationalUrl()" id="btn-insp-url-upload">Upload URL</button>
             </div>
-            <div class="text-[0.8rem] text-[#666] mt-1">This fetches the pasted image, stores it in Supabase Storage, and uses that public Supabase link in Confirmation.</div>
+            <div class="text-[0.8rem] text-[#666] mt-1">Fetches the pasted image, saves a copy on purablis.com, and uses that URL in Confirmation.</div>
           </div>
 
           <hr class="divider">

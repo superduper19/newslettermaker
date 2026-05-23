@@ -891,28 +891,36 @@ window.searchAllArticleImages = async () => {
     }
 };
 
-// Select Image
-window.selectImage = (index, url) => {
+// Select Image — saves a copy on purablis.com (Freepik URLs are not kept for send)
+window.selectImage = async (index, url) => {
     articles[index].image = url;
-    // When selecting a new image (from search or upload), treat it as the original source
     articles[index].originalImageUrl = url;
 
-    // If the URL is already a purablis URL, mark it as published
-    if (url && url.includes('purablis.com')) {
+    if (isPurablisUrl(url)) {
         articles[index].publishedImageUrl = url;
-    } else {
-        articles[index].publishedImageUrl = null;
+        saveState();
+        updateSelectedImageBox(index, url, false);
+        return;
     }
 
+    articles[index].publishedImageUrl = null;
     saveState();
-    // Update the "Big Image" box
-    const box = document.getElementById(`selected-img-${index}`);
-    if (box) {
-        box.innerHTML =
-            `<div class="selected-image-container">
-                <img src="${url}" class="img-fluid max-h-37.5" onerror="this.onerror=null;this.src='${articles[index].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
-                <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
-            </div>`;
+    updateSelectedImageBox(index, url, true);
+
+    try {
+        const published = await publishUrlToPurablis(url, 'article');
+        articles[index].image = published;
+        articles[index].publishedImageUrl = published;
+        saveState();
+        updateSelectedImageBox(index, published, false);
+    } catch (e) {
+        console.error('Publish to purablis failed:', e);
+        alert(
+            'Image selected, but could not save a copy on purablis.com. '
+            + 'Check FTP settings or use “Publish Selected to purablis” before sending.\n\n'
+            + (e.message || ''),
+        );
+        updateSelectedImageBox(index, url, false);
     }
 };
 
@@ -1050,7 +1058,7 @@ window.uploadInspirationalImage = async () => {
 
     btn.textContent = 'Uploading...';
     btn.disabled = true;
-    if (status) status.textContent = 'Uploading image to Supabase Storage...';
+    if (status) status.textContent = 'Uploading image to purablis.com...';
 
     const formData = new FormData();
     formData.append('image', input.files[0]);
@@ -1062,15 +1070,15 @@ window.uploadInspirationalImage = async () => {
         });
         const data = await parseJsonResponse(res, 'Upload route did not return JSON. Restart the app server and try again.');
         if (data.success && data.url) {
-            if (!isPublicHostedUrl(data.url)) {
-                throw new Error('Upload did not return a public Supabase URL.');
+            if (!isPurablisUrl(data.url)) {
+                throw new Error('Upload did not return a purablis.com URL.');
             }
             inspirationalImages = [data.url];
             confirmationInspirationalImage = data.url;
             saveState();
             await loadInspirationalLibrary();
             renderInspirationalView();
-            if (status) status.textContent = 'Uploaded to Supabase Storage and selected for the newsletter.';
+            if (status) status.textContent = 'Uploaded to purablis.com and selected for the newsletter.';
         } else {
             alert('Upload failed: ' + (data.error || 'Unknown error'));
             if (status) status.textContent = 'Upload failed.';
@@ -1080,7 +1088,7 @@ window.uploadInspirationalImage = async () => {
         alert('Upload failed: ' + (e.message || 'Unknown error'));
         if (status) status.textContent = 'Upload failed: ' + (e.message || 'Unknown error');
     } finally {
-        btn.textContent = 'Upload to Supabase';
+        btn.textContent = 'Upload to Purablis';
         btn.disabled = false;
         input.value = '';
     }
@@ -1097,7 +1105,7 @@ window.addInspirationalUrl = async () => {
         btn.disabled = true;
         btn.textContent = 'Uploading...';
     }
-    if (status) status.textContent = 'Fetching the pasted image and uploading it to Supabase Storage...';
+    if (status) status.textContent = 'Fetching the pasted image and uploading to purablis.com...';
 
     try {
         const res = await fetch('/api/images/publish-inspirational-url', {
@@ -1107,10 +1115,10 @@ window.addInspirationalUrl = async () => {
         });
         const data = await parseJsonResponse(res, 'URL upload route did not return JSON. Restart the app server and try again.');
         if (!res.ok || !data.success || !data.url) {
-            throw new Error(data.error || 'Failed to upload image URL to Supabase');
+            throw new Error(data.error || 'Failed to upload image URL to purablis.com');
         }
-        if (!isPublicHostedUrl(data.url)) {
-            throw new Error('Upload did not return a public Supabase URL.');
+        if (!isPurablisUrl(data.url)) {
+            throw new Error('Upload did not return a purablis.com URL.');
         }
 
         inspirationalImages = [data.url];
@@ -1120,7 +1128,7 @@ window.addInspirationalUrl = async () => {
         renderInspirationalView();
 
         if (input) input.value = '';
-        if (status) status.textContent = 'Uploaded to Supabase Storage and selected for the newsletter.';
+        if (status) status.textContent = 'Uploaded to purablis.com and selected for the newsletter.';
     } catch (e) {
         console.error(e);
         if (status) status.textContent = 'Upload failed: ' + (e.message || 'Unknown error');
@@ -1133,15 +1141,26 @@ window.addInspirationalUrl = async () => {
     }
 };
 
-window.selectInspirationalImage = (url) => {
-    if (!isPublicHostedUrl(url)) {
-        alert('Please select an inspirational image with a public Supabase URL.');
-        return;
+window.selectInspirationalImage = async (url) => {
+    const status = document.getElementById('insp-upload-status');
+    let finalUrl = url;
+    if (!isPurablisUrl(url)) {
+        if (status) status.textContent = 'Saving image copy on purablis.com...';
+        try {
+            finalUrl = await publishUrlToPurablis(url, 'inspirational');
+            await loadInspirationalLibrary();
+        } catch (e) {
+            console.error(e);
+            if (status) status.textContent = '';
+            alert('Could not save inspirational image on purablis.com: ' + (e.message || 'Unknown error'));
+            return;
+        }
     }
-    inspirationalImages = [url];
-    confirmationInspirationalImage = url;
+    inspirationalImages = [finalUrl];
+    confirmationInspirationalImage = finalUrl;
     saveState();
     renderInspirationalView();
+    if (status) status.textContent = isPurablisUrl(finalUrl) ? 'Inspirational image saved on purablis.com.' : '';
 };
 
 window.removeInspirationalImage = (index) => {
@@ -1919,6 +1938,40 @@ function isPublicHostedUrl(url) {
     }
 }
 
+function isPurablisUrl(url) {
+    return Boolean(url && String(url).includes('purablis.com'));
+}
+
+async function publishUrlToPurablis(url, target = 'article') {
+    let absolute = url;
+    if (absolute.startsWith('/') && !absolute.startsWith('//') && typeof window !== 'undefined') {
+        absolute = window.location.origin + absolute;
+    }
+    const res = await fetch('/api/images/publish-to-purablis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: absolute, target }),
+    });
+    const data = await res.json();
+    if (data.success && data.url) return data.url;
+    throw new Error(data.error || 'Publish failed');
+}
+
+function updateSelectedImageBox(index, url, publishing) {
+    const box = document.getElementById(`selected-img-${index}`);
+    if (!box) return;
+    const fallback = articles[index].originalImageUrl || '';
+    const badge = publishing
+        ? '<span class="badge-published" title="Saving to purablis…">…</span>'
+        : (isPurablisUrl(url) ? '<span class="badge-published" title="On purablis.com">P</span>' : '');
+    box.innerHTML =
+        `<div class="selected-image-container">
+            <img src="${url}" class="img-fluid max-h-37.5" onerror="this.onerror=null;this.src='${fallback}';this.parentElement.classList.add('img-fallback');">
+            <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
+            ${badge}
+        </div>`;
+}
+
 function getArticleImageUrl(article) {
     return getDownloadSafeAssetUrl(article.publishedImageUrl || article.image || article.originalImageUrl || article.uploadedImageUrl || '');
 }
@@ -2494,11 +2547,40 @@ function buildArticlesHtml(category) {
     `).join('');
 }
 
-window.generateNewsletters = () => {
+window.generateNewsletters = async () => {
     const newsletterName = document.getElementById('newsletter-name')?.value || 'Newsletter';
     const statusEl = document.getElementById('generate-status');
     const uploadBtn = document.getElementById('btn-upload-newsletters');
-    const inspirationalImg = inspirationalImages && inspirationalImages[0] ? inspirationalImages[0] : '';
+    if (statusEl) statusEl.textContent = 'Saving image copies on purablis.com…';
+    const publishResult = await ensureAllArticleImagesOnPurablis({ silent: true });
+    if (publishResult.fail > 0) {
+        const proceed = confirm(
+            `${publishResult.fail} image(s) could not be saved on purablis.com. `
+            + 'Newsletter HTML may still use Freepik or other external URLs.\n\nGenerate anyway?',
+        );
+        if (!proceed) {
+            if (statusEl) statusEl.textContent = 'Generation cancelled — fix images or FTP first.';
+            return;
+        }
+    }
+    let inspirationalImg = '';
+    try {
+        inspirationalImg = await ensureInspirationalImageOnPurablis();
+    } catch (e) {
+        console.error(e);
+        const proceed = confirm(
+            'Inspirational image could not be saved on purablis.com.\n\n'
+            + (e.message || 'Unknown error')
+            + '\n\nGenerate without it?',
+        );
+        if (!proceed) {
+            if (statusEl) statusEl.textContent = 'Generation cancelled — fix inspirational image or FTP.';
+            return;
+        }
+        inspirationalImg = inspirationalImages && inspirationalImages[0]
+            ? getDownloadSafeAssetUrl(inspirationalImages[0])
+            : '';
+    }
 
     const newsletters = {};
     const categories = ['MED', 'THC', 'CBD', 'INV'];
@@ -2590,119 +2672,96 @@ window.uploadNewslettersToServer = async () => {
     }
 };
 
-window.publishAllImagesToPurablis = async () => {
+async function ensureInspirationalImageOnPurablis() {
+    const raw = inspirationalImages && inspirationalImages[0]
+        ? getDownloadSafeAssetUrl(inspirationalImages[0])
+        : '';
+    if (!raw) return '';
+
+    if (isPurablisUrl(raw)) {
+        confirmationInspirationalImage = raw;
+        return raw;
+    }
+
+    const published = await publishUrlToPurablis(raw, 'inspirational');
+    inspirationalImages = [published];
+    confirmationInspirationalImage = published;
+    saveState();
+    await loadInspirationalLibrary();
+    return published;
+}
+
+async function ensureAllArticleImagesOnPurablis(options = {}) {
+    const { silent = false } = options;
     const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
-    // Filter: has image, publish flag not false, AND (not yet published OR published URL doesn't match current image)
-    // We want to ensure everything is on purablis.
     const withImages = relevant.filter(a => {
         const hasImage = a.image || a.originalImageUrl;
         const wantsPublish = a.publishImage !== false;
-        // Force re-verification/publishing if previous published URL is not reachable?
-        // For now, if we have a published URL, assume it's done unless user manually cleared it.
-        // But if verification logic was added, we might want to re-run.
-        // Let's just check if it's already published.
-        const isAlreadyPublished = a.publishedImageUrl && a.publishedImageUrl.includes('purablis.com');
+        const isAlreadyPublished = a.publishedImageUrl && isPurablisUrl(a.publishedImageUrl);
         const isBlob = (a.image && a.image.startsWith('blob:'));
-
-        // If it's a blob, we definitely need to publish.
-        // If it's a URL but not purablis, we need to publish.
-        // If it is purablis, we skip unless we want to force re-upload.
-
         return (hasImage && wantsPublish && !isAlreadyPublished) || isBlob;
     });
 
     if (withImages.length === 0) {
-        const hasAny = relevant.some(a => a.image);
-        // Check if any are actually published
-        const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && a.publishedImageUrl.includes('purablis.com')));
-
-        return alert(allPublished ? 'All images are already published to purablis.com.' : 'No images to publish. Select images for articles first.');
+        const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && isPurablisUrl(a.publishedImageUrl)));
+        if (!silent) {
+            alert(allPublished ? 'All images are already on purablis.com.' : 'No images to publish. Select images for articles first.');
+        }
+        return { ok: 0, fail: 0, errors: [], allPublished };
     }
 
-    const btn = document.querySelector('[onclick="publishAllImagesToPurablis()"]');
-    if (btn) btn.disabled = true;
-
-    let ok = 0, fail = 0;
+    let ok = 0;
+    let fail = 0;
     const errors = [];
     for (let i = 0; i < withImages.length; i++) {
         const a = withImages[i];
         const idx = articles.indexOf(a);
-
-        // Prefer original source, fall back to current image
-        let url = a.originalImageUrl || a.image;
-
-        if (!url) continue;
-
-        if (url.startsWith('/') && !url.startsWith('//') && typeof window !== 'undefined') {
-            url = window.location.origin + url;
-        }
-
+        const sourceUrl = a.originalImageUrl || a.image;
+        if (!sourceUrl) continue;
         try {
-            const res = await fetch('/api/images/publish-to-purablis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url }),
-            });
-            const data = await res.json();
-            if (data.success && data.url) {
-                // Verify the published URL works before updating the UI
-                let urlWorks = false;
-                try {
-                    await new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.onload = resolve;
-                        img.onerror = () => reject(new Error('Image failed to load'));
-                        img.src = data.url;
-                        setTimeout(() => reject(new Error('Timeout')), 5000);
-                    });
-                    urlWorks = true;
-                } catch (e) {
-                    console.warn(`Published URL unreachable: ${data.url}`, e);
-                }
-
-                // Update state regardless, but be careful with display
-                articles[idx].publishedImageUrl = data.url;
-
-                // 3. Ensure original is kept (if it wasn't set before, set it now to what we just used)
-                if (!articles[idx].originalImageUrl) {
-                    articles[idx].originalImageUrl = url;
-                }
-
-                if (urlWorks) {
-                    // Only switch display if it works
-                    articles[idx].image = data.url;
-                    ok++;
-
-                    const box = document.getElementById(`selected-img-${idx}`);
-                    if (box) {
-                        box.innerHTML = `<div class="selected-image-container"><img src="${data.url}" class="img-fluid max-h-[120px]" onerror="this.onerror=null;this.src='${articles[idx].originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');"><button class="btn-remove-image" onclick="removeImage(${idx})">×</button><span class="badge-published" title="Published">P</span></div>`;
-                    }
-                } else {
-                    fail++;
-                    errors.push((a.title || 'Article').slice(0, 30) + ': Uploaded, but URL unreachable.');
-                }
-                saveState();
-            } else {
-                fail++;
-                errors.push((a.title || 'Article').slice(0, 30) + ': ' + (data.error || 'Unknown error'));
-            }
+            const published = await publishUrlToPurablis(sourceUrl, 'article');
+            articles[idx].publishedImageUrl = published;
+            if (!articles[idx].originalImageUrl) articles[idx].originalImageUrl = sourceUrl;
+            articles[idx].image = published;
+            ok++;
+            updateSelectedImageBox(idx, published, false);
+            saveState();
         } catch (e) {
             fail++;
             errors.push((a.title || 'Article').slice(0, 30) + ': ' + (e.message || 'Network error'));
-            console.warn('Publish failed for', url, e);
+            console.warn('Publish failed for', sourceUrl, e);
         }
-        if (btn) btn.textContent = `Publishing ${i + 1}/${withImages.length}...`;
     }
+    return { ok, fail, errors, allPublished: fail === 0 && ok >= 0 };
+}
 
+window.publishAllImagesToPurablis = async () => {
+    const btn = document.querySelector('[onclick="publishAllImagesToPurablis()"]') || document.querySelector('[onclick="AllImagesToPurabpublishlis()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Publishing…';
+    }
+    const result = await ensureAllArticleImagesOnPurablis({ silent: true });
     if (btn) {
         btn.disabled = false;
         btn.textContent = 'Publish Selected to purablis';
     }
-    let msg = ok > 0 ? `Published ${ok} image(s) to purablis.com.` : '';
-    if (fail > 0) msg += (msg ? ' ' : '') + `${fail} failed.` + (errors.length ? '\n' + errors.slice(0, 3).join('\n') : '');
+    if (result.ok === 0 && result.fail === 0) {
+        const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
+        const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && isPurablisUrl(a.publishedImageUrl)));
+        alert(allPublished ? 'All images are already on purablis.com.' : 'No images to publish. Select images for articles first.');
+        return;
+    }
+    let msg = result.ok > 0 ? `Published ${result.ok} image(s) to purablis.com.` : '';
+    if (result.fail > 0) {
+        msg += (msg ? ' ' : '') + `${result.fail} failed.`;
+        if (result.errors.length) msg += '\n' + result.errors.slice(0, 3).join('\n');
+    }
     if (!msg) msg = 'No images were published.';
     alert(msg);
 };
+
+window.AllImagesToPurabpublishlis = window.publishAllImagesToPurablis;
 
 window.downloadAllImagesZip = async () => {
     const withImages =

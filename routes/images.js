@@ -37,6 +37,23 @@ function getRemotePath() {
     return { remoteDir: ftpPath, publicUrlBase: publicBase };
 }
 
+function getInspirationalRemotePath() {
+    const article = getRemotePath();
+    // Default: same folder as article icons (News-roundup/images/) with insp- filenames.
+    // Override with GODADDY_INSPIRATIONAL_* when a dedicated inspirational/ folder exists in cPanel.
+    const ftpPath = (process.env.GODADDY_INSPIRATIONAL_FTP_PATH || article.remoteDir || 'images').replace(/^\/+/, '');
+    const publicBase = (
+        process.env.GODADDY_INSPIRATIONAL_PUBLIC_BASE_URL
+        || article.publicUrlBase
+        || 'https://purablis.com/News-roundup/images'
+    ).replace(/\/+$/, '');
+    return { remoteDir: ftpPath, publicUrlBase: publicBase };
+}
+
+function getRemotePathForTarget(target) {
+    return target === 'inspirational' ? getInspirationalRemotePath() : getRemotePath();
+}
+
 function getFtpConfig() {
     return {
         host: process.env.GODADDY_FTP_HOST,
@@ -100,9 +117,9 @@ function resolveUploadsPathFromUrl(url) {
     return { filePath, filename };
 }
 
-async function listInspirationalLibrary() {
+async function listInspirationalLibraryFromFtp() {
     const ftp = getFtpConfig();
-    const { remoteDir, publicUrlBase } = getRemotePath();
+    const { remoteDir, publicUrlBase } = getInspirationalRemotePath();
 
     if (ftp.host && ftp.user && ftp.password && publicUrlBase) {
         const { Client } = require('basic-ftp');
@@ -144,6 +161,90 @@ async function listInspirationalLibrary() {
             source: 'inline',
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function listInspirationalLibrary() {
+    return listInspirationalLibraryFromFtp();
+}
+
+async function accessFtpClient() {
+    const ftp = getFtpConfig();
+    if (!ftp.host || !ftp.user || !ftp.password) {
+        throw new Error('GoDaddy FTP not configured');
+    }
+    const { Client } = require('basic-ftp');
+    const client = new Client();
+    client.ftp.verbose = false;
+    await client.access({
+        host: ftp.host,
+        port: ftp.port,
+        user: ftp.user,
+        password: ftp.password,
+        secure: true,
+        secureOptions: { rejectUnauthorized: false },
+    });
+    return client;
+}
+
+async function uploadLocalFileToPurablis(localPath, filename, target = 'article') {
+    const { remoteDir, publicUrlBase } = getRemotePathForTarget(target);
+    if (!publicUrlBase) {
+        throw new Error('GODADDY_PUBLIC_BASE_URL is not configured');
+    }
+    const client = await accessFtpClient();
+    try {
+        await client.ensureDir(remoteDir);
+        await client.uploadFrom(localPath, filename);
+        console.log(`FTP upload OK (${target}): ${remoteDir}/${filename}`);
+        return `${publicUrlBase}/${filename}`;
+    } finally {
+        client.close();
+    }
+}
+
+async function resolveUrlToLocalFile(url, target = 'article') {
+    const value = String(url || '').trim();
+    const namePrefix = target === 'inspirational' ? 'insp-' : (value.includes('freepik') ? 'freepik-' : '');
+    const uploadsMatch = value.match(/\/uploads\/([^?#]+)/);
+    if (value.startsWith('/uploads/') || uploadsMatch) {
+        const filename = uploadsMatch ? uploadsMatch[1] : value.replace('/uploads/', '');
+        const localPath = path.join(uploadDir, filename);
+        if (!fs.existsSync(localPath)) {
+            throw new Error(`Local file not found: ${localPath}`);
+        }
+        return { localPath, filename };
+    }
+    if (!/^https?:\/\//i.test(value)) {
+        throw new Error('Unsupported URL: must be /uploads/... or http(s)://');
+    }
+    const fetch = (await import('node-fetch')).default;
+    const resp = await fetch(value, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsletterMaker/1.0)' },
+    });
+    if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.status}`);
+    const buf = await resp.buffer();
+    const urlObj = new URL(value);
+    let pathname = urlObj.pathname;
+    try {
+        pathname = decodeURIComponent(pathname);
+    } catch (e) {
+        // ignore malformed URI
+    }
+    const ext = path.extname(pathname) || '.png';
+    const base = path.basename(pathname, ext).replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filename = (base && base.length > 2)
+        ? `${namePrefix}${base}${ext}`
+        : `${namePrefix}publish-${Date.now()}${ext}`;
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    const localPath = path.join(uploadDir, filename);
+    fs.writeFileSync(localPath, buf);
+    return { localPath, filename };
+}
+
+async function publishImageUrlToPurablis(url, target = 'article') {
+    const { localPath, filename } = await resolveUrlToLocalFile(url, target);
+    const publicUrl = await uploadLocalFileToPurablis(localPath, filename, target);
+    return { success: true, url: publicUrl, published: true, filename, provider: 'purablis' };
 }
 
 function normalizeLibraryImages(images) {
@@ -276,16 +377,25 @@ async function listSupabaseInspirationalLibrary() {
 // GET /api/images/inspirational-library - list previously uploaded inspirational images
 router.get('/inspirational-library', async (req, res) => {
     try {
-        let images = await getInspirationalLibraryFromDb();
-        if (images === null) {
-            images = await listSupabaseInspirationalLibrary();
+        let images = [];
+        try {
+            const fromDb = await getInspirationalLibraryFromDb();
+            if (fromDb) images = fromDb;
+        } catch (dbErr) {
+            console.warn('Inspirational library DB read failed:', dbErr.message);
         }
-        if (images === null) {
-            images = await listInspirationalLibrary();
+        try {
+            const fromFtp = await listInspirationalLibraryFromFtp();
+            images = normalizeLibraryImages([...images, ...(fromFtp || [])]);
+        } catch (ftpErr) {
+            console.warn('Inspirational library FTP list failed:', ftpErr.message);
+        }
+        if (!images.length) {
             try {
-                await saveInspirationalLibraryToDb(images);
-            } catch (dbErr) {
-                console.warn('Could not seed inspirational library in DB:', dbErr.message);
+                const legacy = await listSupabaseInspirationalLibrary();
+                if (legacy && legacy.length) images = legacy;
+            } catch (e) {
+                console.warn('Legacy Supabase inspirational list failed:', e.message);
             }
         }
         res.json({ success: true, images });
@@ -309,26 +419,18 @@ router.delete('/inspirational-library', async (req, res) => {
         }
 
         const ftp = getFtpConfig();
-        const { remoteDir, publicUrlBase } = getRemotePath();
+        const paths = [getRemotePath(), getInspirationalRemotePath()];
 
-        if (ftp.host && ftp.user && ftp.password && publicUrlBase && url.startsWith(`${publicUrlBase}/`)) {
-            const expectedPrefix = `${publicUrlBase}/`;
-
-            const { Client } = require('basic-ftp');
-            const client = new Client();
-            client.ftp.verbose = false;
-            try {
-                await client.access({
-                    host: ftp.host,
-                    port: ftp.port,
-                    user: ftp.user,
-                    password: ftp.password,
-                    secure: true,
-                    secureOptions: { rejectUnauthorized: false },
-                });
-                await client.remove(`${remoteDir}/${filename}`);
-            } finally {
-                client.close();
+        if (ftp.host && ftp.user && ftp.password) {
+            for (const { remoteDir, publicUrlBase } of paths) {
+                if (!publicUrlBase || !url.startsWith(`${publicUrlBase}/`)) continue;
+                const client = await accessFtpClient();
+                try {
+                    await client.remove(`${remoteDir}/${filename}`);
+                } finally {
+                    client.close();
+                }
+                break;
             }
         }
 
@@ -459,33 +561,12 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
             return res.json({ success: true, url: inlineUrl, fallbackUrl: localUrl, published: false, storedInline: true });
         }
 
-        const { Client } = require('basic-ftp');
-        const client = new Client();
-        client.ftp.verbose = true;
-
-        const { remoteDir, publicUrlBase } = getRemotePath();
         try {
-            await client.access({
-                host: ftpHost,
-                port: ftpPort,
-                user: ftpUser,
-                password: ftpPass,
-                secure: true,
-                secureOptions: { rejectUnauthorized: false },
-            });
-
-            await client.ensureDir(remoteDir);
-            await client.uploadFrom(localPath, filename);
-            console.log(`FTP upload OK (article): ${remoteDir}/${filename}`);
-
-            const publicUrl = publicUrlBase ? `${publicUrlBase}/${filename}` : localUrl;
-
+            const publicUrl = await uploadLocalFileToPurablis(localPath, filename, 'article');
             res.json({ success: true, url: publicUrl, published: true });
         } catch (ftpErr) {
             console.error('FTP upload failed:', ftpErr.message);
             res.json({ success: true, url: inlineUrl, fallbackUrl: localUrl, published: false, ftpError: ftpErr.message, storedInline: true });
-        } finally {
-            client.close();
         }
     } catch (error) {
         console.error('Article Image Upload Error:', error);
@@ -493,89 +574,35 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
     }
 });
 
-// POST /api/images/publish-to-purablis - Publish an image URL to GoDaddy FTP (for /uploads/ or external URLs)
+// POST /api/images/publish-to-purablis - Publish an image URL to GoDaddy FTP (Freepik, uploads, etc.)
+// Body: { url, target?: 'article' | 'inspirational' }
 router.post('/publish-to-purablis', async (req, res) => {
     try {
-        let { url } = req.body;
+        let { url, target } = req.body || {};
         if (!url || typeof url !== 'string') {
             return res.status(400).json({ error: 'Missing url' });
         }
         url = url.trim();
-
-        const ftpHost = process.env.GODADDY_FTP_HOST;
-        const ftpUser = process.env.GODADDY_FTP_USER;
-        const ftpPass = process.env.GODADDY_FTP_PASS;
-        const ftpPort = parseInt(process.env.GODADDY_FTP_PORT || '21');
-
-        if (!ftpHost || !ftpUser || !ftpPass) {
-            return res.status(503).json({ error: 'GoDaddy FTP not configured', configured: false });
-        }
-
-        let localPath = null;
-        let filename = null;
-
-        // Normalize: if full URL contains /uploads/, treat as local file
-        const uploadsMatch = url.match(/\/uploads\/([^?#]+)/);
-        if (url.startsWith('/uploads/') || uploadsMatch) {
-            filename = uploadsMatch ? uploadsMatch[1] : url.replace('/uploads/', '');
-            localPath = path.join('/tmp/uploads', filename);
-            if (!fs.existsSync(localPath)) {
-                return res.status(404).json({ error: 'Local file not found', path: localPath });
-            }
-        } else if (url.startsWith('http://') || url.startsWith('https://')) {
-            const fetch = (await import('node-fetch')).default;
-            const resp = await fetch(url, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsletterMaker/1.0)' }
-            });
-            if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.status}`);
-            const buf = await resp.buffer();
-            const urlObj = new URL(url);
-            let pathname = urlObj.pathname;
-            try {
-                pathname = decodeURIComponent(pathname);
-            } catch (e) {
-                // ignore malformed URI
-            }
-            const ext = path.extname(pathname) || '.png';
-            // Extract basename and sanitize
-            const base = path.basename(pathname, ext).replace(/[^a-zA-Z0-9.-]/g, '_');
-            // If base is empty or generic, use timestamp
-            filename = (base && base.length > 2) ? `${base}${ext}` : `publish-${Date.now()}${ext}`;
-
-            localPath = path.join(uploadDir, filename);
-            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-            fs.writeFileSync(localPath, buf);
-        } else {
-            return res.status(400).json({ error: 'Unsupported URL: must be /uploads/... or http(s)://' });
-        }
-
-        const { Client } = require('basic-ftp');
-        const client = new Client();
-        client.ftp.verbose = false;
+        const uploadTarget = target === 'inspirational' ? 'inspirational' : 'article';
 
         try {
-            await client.access({
-                host: ftpHost,
-                port: ftpPort,
-                user: ftpUser,
-                password: ftpPass,
-                secure: true,
-                secureOptions: { rejectUnauthorized: false },
-            });
-
-            const { remoteDir, publicUrlBase } = getRemotePath();
-            await client.ensureDir(remoteDir);
-            await client.uploadFrom(localPath, filename);
-            console.log(`FTP upload OK (publish): ${remoteDir}/${filename}`);
-
-            const publicUrl = publicUrlBase ? `${publicUrlBase}/${filename}` : `/uploads/${filename}`;
-
-            res.json({ success: true, url: publicUrl, published: true });
+            const result = await publishImageUrlToPurablis(url, uploadTarget);
+            if (uploadTarget === 'inspirational') {
+                try {
+                    const existing = await getInspirationalLibraryFromDb();
+                    const next = normalizeLibraryImages([
+                        ...(existing || []),
+                        { name: result.filename, url: result.url, source: 'purablis' },
+                    ]);
+                    await saveInspirationalLibraryToDb(next);
+                } catch (dbErr) {
+                    console.warn('Failed to save inspirational publish in DB:', dbErr.message);
+                }
+            }
+            res.json(result);
         } catch (ftpErr) {
             console.error('FTP publish failed:', ftpErr.message);
             res.json({ success: false, error: ftpErr.message });
-        } finally {
-            client.close();
         }
     } catch (error) {
         console.error('Publish to purablis error:', error);
@@ -583,7 +610,7 @@ router.post('/publish-to-purablis', async (req, res) => {
     }
 });
 
-// POST /api/images/publish-inspirational-url - fetch external image URL, upload to Supabase Storage, save public URL in inspirational library
+// POST /api/images/publish-inspirational-url - fetch external URL, upload to purablis.com via FTP
 router.post('/publish-inspirational-url', async (req, res) => {
     try {
         let { url } = req.body || {};
@@ -595,52 +622,26 @@ router.post('/publish-inspirational-url', async (req, res) => {
             return res.status(400).json({ error: 'URL must start with http:// or https://' });
         }
 
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsletterMaker/1.0)' }
-        });
-        if (!response.ok) {
-            return res.status(400).json({ error: `Could not fetch image URL (${response.status})` });
-        }
-
-        const contentType = response.headers.get('content-type') || 'application/octet-stream';
-        if (!contentType.startsWith('image/')) {
-            return res.status(400).json({ error: `URL did not return an image (${contentType})` });
-        }
-
-        const buf = await response.buffer();
-        const urlObj = new URL(url);
-        let pathname = urlObj.pathname;
-        try {
-            pathname = decodeURIComponent(pathname);
-        } catch (e) {}
-        const ext = path.extname(pathname) || ({
-            'image/jpeg': '.jpg',
-            'image/png': '.png',
-            'image/gif': '.gif',
-            'image/webp': '.webp',
-            'image/svg+xml': '.svg',
-        }[contentType.toLowerCase()] || '.png');
-        const base = path.basename(pathname, path.extname(pathname)).replace(/[^a-zA-Z0-9.-]/g, '_');
-        const filename = (base && base.length > 2 ? base : `insp-${Date.now()}`) + ext;
-        const uploaded = await uploadInspirationalBufferToSupabase(buf, filename, contentType);
-        const publicUrl = uploaded.publicUrl;
+        const result = await publishImageUrlToPurablis(url, 'inspirational');
         try {
             const existing = await getInspirationalLibraryFromDb();
-            const next = normalizeLibraryImages([...(existing || []), { name: uploaded.filename, url: publicUrl, source: 'supabase' }]);
+            const next = normalizeLibraryImages([
+                ...(existing || []),
+                { name: result.filename, url: result.url, source: 'purablis' },
+            ]);
             await saveInspirationalLibraryToDb(next);
         } catch (dbErr) {
             console.warn('Failed to save inspirational URL publish in DB:', dbErr.message);
         }
 
-        res.json({ success: true, url: publicUrl, published: true, filename: uploaded.filename, provider: 'supabase' });
+        res.json({ ...result, provider: 'purablis' });
     } catch (error) {
         console.error('Publish inspirational URL error:', error);
         res.status(500).json({ error: error.message || 'Failed to publish inspirational image URL' });
     }
 });
 
-// POST /api/images/upload-inspirational - Upload image to Supabase Storage, return public URL
+// POST /api/images/upload-inspirational - Upload image to purablis.com via FTP
 router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), async (req, res) => {
     try {
         if (!req.file) {
@@ -648,23 +649,29 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
         }
 
         const originalName = String(req.file.originalname || `insp-${Date.now()}.png`);
-        const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const safeName = `insp-${originalName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
         const buffer = req.file.buffer;
         if (!buffer || !buffer.length) {
             return res.status(400).json({ error: 'Uploaded file buffer was empty' });
         }
 
-        const uploaded = await uploadInspirationalBufferToSupabase(buffer, safeName, req.file.mimetype || getMimeTypeFromName(safeName));
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const localPath = path.join(uploadDir, safeName);
+        fs.writeFileSync(localPath, buffer);
+
+        const publicUrl = await uploadLocalFileToPurablis(localPath, safeName, 'inspirational');
         try {
             const existing = await getInspirationalLibraryFromDb();
-            const next = normalizeLibraryImages([...(existing || []), { name: uploaded.filename, url: uploaded.publicUrl, source: 'supabase' }]);
+            const next = normalizeLibraryImages([
+                ...(existing || []),
+                { name: safeName, url: publicUrl, source: 'purablis' },
+            ]);
             await saveInspirationalLibraryToDb(next);
         } catch (dbErr) {
             console.warn('Failed to save inspirational upload in DB:', dbErr.message);
         }
 
-        res.json({ success: true, url: uploaded.publicUrl, published: true, provider: 'supabase', filename: uploaded.filename });
-
+        res.json({ success: true, url: publicUrl, published: true, provider: 'purablis', filename: safeName });
     } catch (error) {
         console.error('Inspirational Upload Error:', error);
         res.status(500).json({ error: error.message || 'Internal Server Error' });

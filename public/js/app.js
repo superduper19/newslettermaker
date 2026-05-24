@@ -183,6 +183,34 @@ function buildWorkspaceState() {
         inspirationalLibraryImages,
         newsletterContent,
         lastGeneratedNewsletter,
+        aiQuery: getAiQuery(),
+    };
+}
+
+function getAiQuery() {
+    const step2 = document.getElementById('step2-query');
+    const step1 = document.getElementById('ai-prompt');
+    const v2 = step2 && step2.value.trim();
+    const v1 = step1 && step1.value.trim();
+    return v2 || v1 || '';
+}
+
+function setAiQuery(value) {
+    const v = String(value || '');
+    const step2 = document.getElementById('step2-query');
+    const step1 = document.getElementById('ai-prompt');
+    if (step2) step2.value = v;
+    if (step1) step1.value = v;
+}
+
+function buildSessionPayload() {
+    return {
+        articles: JSON.parse(JSON.stringify(articles)),
+        archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
+        inspirationalImages: [...inspirationalImages],
+        newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
+        aiQuery: getAiQuery(),
+        savedAt: new Date().toISOString(),
     };
 }
 
@@ -240,6 +268,9 @@ function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
         generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
     };
     lastGeneratedNewsletter = value.lastGeneratedNewsletter || null;
+    if (typeof value.aiQuery === 'string') {
+        setAiQuery(value.aiQuery);
+    }
     persistWorkspaceLocal(buildWorkspaceState());
 }
 
@@ -290,13 +321,7 @@ function buildSessionsState(includeCurrentWorkspace = false) {
         const nameEl = document.getElementById('newsletter-name');
         const name = currentSessionName || (nameEl ? nameEl.value.trim() : '');
         if (name) {
-            sessions[name] = {
-                articles: JSON.parse(JSON.stringify(articles)),
-                archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
-                inspirationalImages: [...inspirationalImages],
-                newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
-                savedAt: new Date().toISOString(),
-            };
+            sessions[name] = buildSessionPayload();
         }
     }
     return sessions;
@@ -724,11 +749,10 @@ window.renderImagesView = () => {
 
         const catInputs = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
             let rank = (article.ranks && article.ranks[cat]) || '';
-            const useChecked = isUseInNewsletter(article, cat);
+            const useChecked = isCategoryCheckboxChecked(article, cat);
             return `<div class="img-col-cat col-cat-pick">
-                <label class="cat-use-label text-[0.65rem]" title="Use in summary & confirmation">
+                <label class="cat-use-label text-[0.65rem]" title="Include in ${cat} newsletter">
                     <input type="checkbox" ${useChecked ? 'checked' : ''} onchange="updateUseInNewsletter(${originalIndex}, '${cat}', this.checked)">
-                    <span>Use</span>
                 </label>
                 <input
                     type="text"
@@ -1359,15 +1383,14 @@ function ensureUseInNewsletter(article) {
     return article.useInNewsletter;
 }
 
-/** Article is included when "Use" is checked for this category and rank # is set. */
+/** Article is included in a category newsletter when it has a rank (or legacy category assignment). */
 function isUseInNewsletter(article, category) {
-    const rank = String(getRankForSort(article, category) ?? '').trim();
-    if (!rank) return false;
-    const picks = ensureUseInNewsletter(article);
-    if (picks[category] === true) return true;
-    if (picks[category] === false) return false;
-    // Backward compat: unset + ranks 1–4 still count as picked
-    return isPrioritySummaryRank(rank);
+    return !!String(getRankForSort(article, category) ?? '').trim();
+}
+
+function isCategoryCheckboxChecked(article, category) {
+    if (isUseInNewsletter(article, category)) return true;
+    return ensureUseInNewsletter(article)[category] === true;
 }
 
 function buildArticlesOnlyBlock(category) {
@@ -1389,7 +1412,7 @@ function mergePromptWithCategoryLinks(existingPrompt, category) {
     const endMarker = `[[AUTO_CATEGORY_LINKS_${category}_END]]`;
     const wrappedBlock = promptBlock
         ? `${startMarker}\n${promptBlock}\n${endMarker}`
-        : `${startMarker}\n(No articles selected — check Use + rank # in Article View.)\n${endMarker}`;
+        : `${startMarker}\n(No articles selected — assign rank # in Article View.)\n${endMarker}`;
     const current = String(existingPrompt || '').trim();
     const markerPattern = new RegExp(`${startMarker}[\\s\\S]*?${endMarker}`, 'm');
     const brokenBlockPattern = new RegExp(`\\[\\[AUTO_CATEGORY_LINKS_${category}_[\\s\\S]*?(?=\\nhttps?:\\/\\/|\\n[A-Za-z0-9].*https?:\\/\\/|$)`, 'g');
@@ -1498,13 +1521,13 @@ window.renderEditorContent = () => {
             <div>
                 <div class="form-group">
                     <label class="font-semibold">Articles for ${currentEditorTab} summary</label>
-                    <p class="text-[0.8rem] text-[#777] mb-2">Only articles with <strong>Use</strong> checked and a rank number in Article View. Edit here or sync from picks.</p>
+                    <p class="text-[0.8rem] text-[#777] mb-2">Only articles with a rank number in Article View. Edit here or sync from picks.</p>
                     <textarea id="editor-summary-articles" rows="10" class="form-control font-[monospace] text-[0.9rem] mt-1 p-2 bg-white border border-[#c8e6c9]" oninput="updateSummaryArticlesText('${currentEditorTab}', this.value)" placeholder="1. [1] Article title&#10;https://...">${escapeHtml(articlesTextValue)}</textarea>
                 </div>
 
                 <div class="flex items-center gap-2.5 mt-2 mb-4">
                     <button class="btn btn-secondary btn-sm" onclick="syncSummaryArticlesFromPicks('${currentEditorTab}')">Sync from Article View picks</button>
-                    <span class="text-[0.8rem] text-[#777]">Rebuilds this list from checked Use + rank in Article View.</span>
+                    <span class="text-[0.8rem] text-[#777]">Rebuilds this list from rank # assignments in Article View.</span>
                 </div>
 
                 <div class="flex items-center gap-4 mb-5 justify-between flex-wrap">
@@ -1598,7 +1621,7 @@ window.renderEditorContent = () => {
                 </div>`;
             }).join('')
             : '<span class="text-muted">No articles picked for ' + currentEditorTab + '.</span>';
-        listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Check <strong>Use</strong> under the category column and enter a rank number.</div>';
+        listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Enter a rank number in the category column in Article View.</div>';
     }
 };
 
@@ -1749,7 +1772,7 @@ window.generateSummary = async (category) => {
     const btnText = document.getElementById(`gen-btn-text-${category}`);
 
     if (!articlesText) return alert('Add articles in the middle box, or click Sync from Article View picks.');
-    if (categoryArticles.length === 0) return alert(`No articles picked for ${category}. In Article View, check Use and enter a rank number for each article.`);
+    if (categoryArticles.length === 0) return alert(`No articles picked for ${category}. In Article View, enter a rank number for each article.`);
 
     btnText.textContent = 'Generating...';
 
@@ -3023,13 +3046,7 @@ function assignImportedArticles(importedArticles) {
 function upsertImportedSession(name) {
     if (!name) return;
     const sessions = getSavedSessions();
-    sessions[name] = {
-        articles: JSON.parse(JSON.stringify(articles)),
-        archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
-        inspirationalImages: [...inspirationalImages],
-        newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
-        savedAt: new Date().toISOString(),
-    };
+    sessions[name] = buildSessionPayload();
     saveSavedSessions(sessions);
     currentSessionName = name;
     populateSavedDropdown();
@@ -3216,17 +3233,16 @@ function renderArticles() {
                             ) ?? (article.categories && article.categories.includes(cat)
                                 ? 'Y' :
                                 '');
-                            const useChecked = isUseInNewsletter(article, cat);
+                            const useChecked = isCategoryCheckboxChecked(article, cat);
                             const useDisabled = disabledAttr;
 
                             return `<div class="col-cat col-cat-pick">
-                                <label class="cat-use-label ${disabledClass}" title="Include in summary & confirmation for ${cat}">
+                                <label class="cat-use-label ${disabledClass}" title="Include in ${cat} newsletter">
                                     <input
                                         type="checkbox"
                                         ${useChecked ? 'checked' : ''}
                                         ${useDisabled}
                                         onchange="updateUseInNewsletter(${index}, '${cat}', this.checked)">
-                                    <span>Use</span>
                                 </label>
                                 <input
                                     type="text"
@@ -3446,8 +3462,14 @@ window.addArticleFromModal = () => {
 
 window.updateUseInNewsletter = (index, cat, checked) => {
     const article = articles[index];
-    ensureUseInNewsletter(article)[cat] = !!checked;
+    const picks = ensureUseInNewsletter(article);
+    picks[cat] = !!checked;
+    if (!checked) {
+        if (article.ranks) delete article.ranks[cat];
+        if (article.categories) article.categories = article.categories.filter(c => c !== cat);
+    }
     saveState();
+    renderArticles();
     updateStats();
 };
 
@@ -3470,9 +3492,7 @@ window.updateCategoryRank = (index, cat, value) => {
         if (!article.categories.includes(cat)) {
             article.categories.push(cat);
         }
-        if (picks[cat] === undefined && isPrioritySummaryRank(rank)) {
-            picks[cat] = true;
-        }
+        picks[cat] = true;
     }
 
     saveState();
@@ -3649,12 +3669,12 @@ function updateStats() {
     const statsEl = document.getElementById('article-stats');
     if (!statsEl) return;
 
-    const counts = getSelectedRankCounts();
     let selectedCount = 0;
-
     articles.forEach(a => {
         if (a.selected !== false) selectedCount++;
     });
+
+    const counts = getSelectedRankCounts();
 
     const sessionLabel = currentSessionName
         ? `<span class="stat-item bg-[#e8eaf6] text-[#283593] font-semibold">${currentSessionName}</span>`
@@ -3664,10 +3684,10 @@ function updateStats() {
         `${sessionLabel}
         <span class="stat-item" title="Total articles in list">Total: ${articles.length}</span>
         <span class="stat-item bg-[#e0f7fa] text-[#006064]" title="Articles checked in the Select column">Selected: ${selectedCount}</span>
-        <span class="stat-item bg-[#e3f2fd] text-[#0d47a1]">MED: ${counts.MED}</span>
-        <span class="stat-item bg-[#e8f5e9] text-[#1b5e20]">THC: ${counts.THC}</span>
-        <span class="stat-item bg-[#fff3e0] text-[#e65100]">CBD: ${counts.CBD}</span>
-        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>`;
+        <span class="stat-item bg-[#e3f2fd] text-[#0d47a1]" title="Articles with rank # in MED">MED: ${counts.MED}</span>
+        <span class="stat-item bg-[#e8f5e9] text-[#1b5e20]" title="Articles with rank # in THC">THC: ${counts.THC}</span>
+        <span class="stat-item bg-[#fff3e0] text-[#e65100]" title="Articles with rank # in CBD">CBD: ${counts.CBD}</span>
+        <span class="stat-item bg-[#f3e5f5] text-[#4a148c]" title="Articles with rank # in INV">INV: ${counts.INV}</span>`;
     statsEl.innerHTML = statsHtml;
     const footerEl = document.getElementById('article-stats-footer');
     if (footerEl) footerEl.innerHTML = statsHtml;
@@ -3752,13 +3772,7 @@ window.saveSession = () => {
     if (!name) return alert('Please enter a newsletter name on the first page.');
 
     const sessions = getSavedSessions();
-    sessions[name] = {
-        articles: JSON.parse(JSON.stringify(articles)),
-        archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
-        inspirationalImages: [...inspirationalImages],
-        newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
-        savedAt: new Date().toISOString(),
-    };
+    sessions[name] = buildSessionPayload();
     saveSavedSessions(sessions);
     currentSessionName = name;
     populateSavedDropdown();
@@ -3800,6 +3814,9 @@ window.loadSession = () => {
 
     document.getElementById('newsletter-name').value = name;
     currentSessionName = name;
+    if (typeof session.aiQuery === 'string') {
+        setAiQuery(session.aiQuery);
+    }
     saveState();
     renderArticles();
     const activeStep = document.querySelector('.step.active');
@@ -4089,6 +4106,10 @@ async function searchMoreArticles() {
     const prompt = document.getElementById('step2-query').value.trim();
     if (!prompt) return alert('Please enter a search query.');
 
+    saveRecentPrompt(prompt);
+    setAiQuery(prompt);
+    saveState();
+
     const btn = document.getElementById('btn-step2-query');
     const status = document.getElementById('step2-query-status');
     const model = document.getElementById('ai-model').value;
@@ -4210,11 +4231,13 @@ async function modifyExistingArticles() {
 // Recent Prompts Logic
 function loadRecentPrompts() {
     const prompts = JSON.parse(localStorage.getItem('recentPrompts') || '[]');
-    const container = document.getElementById('recent-prompts');
-    if (!container) return;
+    ['recent-prompts', 'recent-prompts-step2'].forEach((containerId) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    container.innerHTML = '';
-    if (prompts.length > 0) {
+        container.innerHTML = '';
+        if (prompts.length === 0) return;
+
         const label = document.createElement('span');
         label.textContent = 'Recent: ';
         label.style.fontWeight = '600';
@@ -4228,11 +4251,12 @@ function loadRecentPrompts() {
             span.style.textDecoration = 'underline';
             span.style.marginRight = '10px';
             span.onclick = () => {
-                document.getElementById('ai-prompt').value = p;
+                setAiQuery(p);
+                saveState();
             };
             container.appendChild(span);
         });
-    }
+    });
 }
 
 function saveRecentPrompt(prompt) {
@@ -4249,6 +4273,21 @@ function saveRecentPrompt(prompt) {
 
 loadRecentPrompts();
 populateSavedDropdown();
+
+let aiQuerySyncTimeout = null;
+function syncAiQueryFromInput(sourceEl) {
+    const value = sourceEl ? sourceEl.value : '';
+    setAiQuery(value);
+    if (aiQuerySyncTimeout) clearTimeout(aiQuerySyncTimeout);
+    aiQuerySyncTimeout = setTimeout(() => saveState(), 600);
+}
+
+['ai-prompt', 'step2-query'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', () => syncAiQueryFromInput(el));
+    }
+});
 
 // "Find Articles" Button Logic
 const searchBtn = document.getElementById('btn-search-articles');
@@ -4282,6 +4321,7 @@ if (searchBtn) {
         }
 
         saveRecentPrompt(prompt);
+        setAiQuery(prompt);
         currentSessionName = '';
 
         console.log("Initiating AI Search...", { newsletterName, prompt, model });

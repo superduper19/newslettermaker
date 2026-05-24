@@ -1376,6 +1376,35 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+const ELIGIBLE_CATEGORY_STATUSES = ['Y', 'YM', 'COOL FINDS', 'LATER COOL'];
+
+function normalizeArticleStatus(status) {
+    const s = String(status ?? '').trim().toUpperCase();
+    if (!s) return 'Y';
+    if (s === 'N') return 'NO';
+    return s;
+}
+
+function articleHasCategory(article, cat) {
+    if (!Array.isArray(article.categories)) return false;
+    const key = String(cat).trim().toUpperCase();
+    return article.categories.some(c => String(c).trim().toUpperCase() === key);
+}
+
+function normalizeArticleDefaults(article) {
+    if (!article || typeof article !== 'object') return;
+    if (!article.status) article.status = 'Y';
+    if (!article.categories) article.categories = article.category ? [article.category] : [];
+    if (article.selected === undefined) article.selected = true;
+    if (!article.ranks || typeof article.ranks !== 'object') article.ranks = {};
+}
+
+function isArticleEligibleForCategoryPicks(article) {
+    normalizeArticleDefaults(article);
+    if (article.selected === false) return false;
+    return ELIGIBLE_CATEGORY_STATUSES.includes(normalizeArticleStatus(article.status));
+}
+
 function ensureUseInNewsletter(article) {
     if (!article.useInNewsletter || typeof article.useInNewsletter !== 'object') {
         article.useInNewsletter = {};
@@ -3227,12 +3256,7 @@ function renderArticles() {
                 const categoryInputs =
                     ['MED', 'THC', 'CBD', 'INV']
                         .map(cat => {
-                            let rank = (
-                                article.ranks &&
-                                (article.ranks[cat] ?? article.ranks[cat.toLowerCase()])
-                            ) ?? (article.categories && article.categories.includes(cat)
-                                ? 'Y' :
-                                '');
+                            let rank = getRankForSort(article, cat);
                             const useChecked = isCategoryCheckboxChecked(article, cat);
                             const useDisabled = disabledAttr;
 
@@ -3462,11 +3486,27 @@ window.addArticleFromModal = () => {
 
 window.updateUseInNewsletter = (index, cat, checked) => {
     const article = articles[index];
+    normalizeArticleDefaults(article);
     const picks = ensureUseInNewsletter(article);
     picks[cat] = !!checked;
-    if (!checked) {
-        if (article.ranks) delete article.ranks[cat];
-        if (article.categories) article.categories = article.categories.filter(c => c !== cat);
+    const key = String(cat).trim().toUpperCase();
+    if (checked) {
+        if (!String(article.ranks[key] ?? article.ranks[cat] ?? '').trim()) {
+            article.ranks[key] = 'Y';
+        }
+        if (!articleHasCategory(article, key)) {
+            article.categories.push(key);
+        }
+    } else {
+        if (article.ranks) {
+            delete article.ranks[key];
+            delete article.ranks[cat];
+        }
+        if (article.categories) {
+            article.categories = article.categories.filter(
+                c => String(c).trim().toUpperCase() !== key,
+            );
+        }
     }
     saveState();
     renderArticles();
@@ -3475,28 +3515,36 @@ window.updateUseInNewsletter = (index, cat, checked) => {
 
 window.updateCategoryRank = (index, cat, value) => {
     const article = articles[index];
+    normalizeArticleDefaults(article);
     if (!article.ranks) article.ranks = {};
 
     const rank = value.trim();
     const picks = ensureUseInNewsletter(article);
+    const key = String(cat).trim().toUpperCase();
 
     if (!rank) {
+        delete article.ranks[key];
         delete article.ranks[cat];
+        picks[key] = false;
         picks[cat] = false;
-        if (article.categories && article.categories.includes(cat)) {
-            article.categories = article.categories.filter(c => c !== cat);
+        if (article.categories) {
+            article.categories = article.categories.filter(
+                c => String(c).trim().toUpperCase() !== key,
+            );
         }
     } else {
-        article.ranks[cat] = rank;
+        article.ranks[key] = rank;
         if (!article.categories) article.categories = [];
-        if (!article.categories.includes(cat)) {
-            article.categories.push(cat);
+        if (!articleHasCategory(article, key)) {
+            article.categories.push(key);
         }
+        picks[key] = true;
         picks[cat] = true;
     }
 
     saveState();
     updateStats();
+    renderArticles();
 };
 
 // Sort order for MED/THC/CBD/INV: lowest numbers first, then cool finds, then Y, YM, Maybe (M), No, then empty.
@@ -3522,14 +3570,17 @@ function rankToSortValue(rank) {
     return 999;
 }
 
-// Effective rank for sorting: ranks[cat] or categories.includes(cat)->'Y'. Keep numbers as-is so 1,2,3 sort first.
+// Effective rank: stored #, legacy category, or category checkbox pick.
 function getRankForSort(article, cat) {
-    if (!article.ranks) {
-        if (article.categories && article.categories.includes(cat)) return 'Y';
-        return '';
-    }
-    let r = article.ranks[cat] ?? article.ranks[cat.toLowerCase()] ?? '';
-    if (!r && article.categories && article.categories.includes(cat)) r = 'Y';
+    normalizeArticleDefaults(article);
+    const key = String(cat).trim().toUpperCase();
+    let r = String(
+        article.ranks[key] ?? article.ranks[cat] ?? article.ranks[key.toLowerCase()] ?? '',
+    ).trim();
+    if (!r && articleHasCategory(article, key)) r = 'Y';
+    const picks = ensureUseInNewsletter(article);
+    if (!r && picks[key] === true) r = 'Y';
+    if (!r && picks[cat] === true) r = 'Y';
     return r;
 }
 
@@ -3630,8 +3681,7 @@ function isPrioritySummaryRank(rank) {
 // Articles used for Text summaries: Use checked + rank # in Article View.
 function getSummaryArticlesForCategory(category) {
     return articles.filter(a => {
-        if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
-        if (a.selected === false) return false;
+        if (!isArticleEligibleForCategoryPicks(a)) return false;
         return isUseInNewsletter(a, category);
     }).sort((a, b) => {
         const rA = rankToSortValue(getRankForSort(a, category));
@@ -3645,8 +3695,7 @@ function getSummaryArticlesForCategory(category) {
 function getArticlesForCategory(category) {
     return articles
         .filter(a => {
-            if (!['Y', 'YM', 'COOL FINDS', 'LATER COOL'].includes(a.status)) return false;
-            if (a.selected === false) return false;
+            if (!isArticleEligibleForCategoryPicks(a)) return false;
             return isUseInNewsletter(a, category);
         }).sort((a, b) => {
             const rA = rankToSortValue(getRankForSort(a, category));
@@ -3668,6 +3717,8 @@ function getSelectedRankCounts() {
 function updateStats() {
     const statsEl = document.getElementById('article-stats');
     if (!statsEl) return;
+
+    articles.forEach(normalizeArticleDefaults);
 
     let selectedCount = 0;
     articles.forEach(a => {

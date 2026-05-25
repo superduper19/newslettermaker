@@ -399,6 +399,7 @@ const MODEL_MAPPING = {
     'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
     'gemini-flash-3-0': 'gemini-3-flash-preview',
     'gemini-flash-3-1-pro': 'gemini-3.1-pro-preview',
+    'gemini-flash-3-5': 'gemini-3.5-flash',
 };
 
 // Helper to get API Model ID
@@ -480,6 +481,16 @@ function parseAIError(error) {
     return message;
 }
 
+function buildAiErrorResponse(error) {
+    const message = parseAIError(error);
+    const body = { error: message, details: error.message };
+    if (/credit balance is too low/i.test(message)) {
+        body.errorCode = 'anthropic_credits_low';
+        body.error = 'Anthropic (Claude) API credits are too low. Add credits at https://console.anthropic.com/settings/billing or switch to a Gemini model in the AI Model dropdown.';
+    }
+    return body;
+}
+
 // POST /api/articles/search - AI Search & Filtering
 router.post('/search', async (req, res) => {
     try {
@@ -540,7 +551,7 @@ Example format:
                 content = response.text();
             } catch (geminiError) {
                 console.error('Gemini API Error:', geminiError);
-                return res.status(500).json({ error: parseAIError(geminiError), details: geminiError.message });
+                return res.status(500).json(buildAiErrorResponse(geminiError));
             }
         } else {
             const message = await anthropic.messages.create({
@@ -650,8 +661,7 @@ Example format:
     } catch (error) {
         console.error('Error with AI Search:', error);
         // Propagate specific API errors (like credit balance)
-        const errorMessage = parseAIError(error);
-        res.status(500).json({ error: errorMessage, details: error });
+        res.status(500).json(buildAiErrorResponse(error));
     }
 });
 
@@ -726,7 +736,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 content = response.text();
             } catch (geminiError) {
                 console.error('Gemini API Error:', geminiError);
-                return res.status(500).json({ error: parseAIError(geminiError), details: geminiError.message });
+                return res.status(500).json(buildAiErrorResponse(geminiError));
             }
         } else {
             try {
@@ -746,7 +756,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 }
             } catch (anthropicError) {
                 console.error('Anthropic API Error:', anthropicError);
-                return res.status(500).json({ error: parseAIError(anthropicError), details: anthropicError.message });
+                return res.status(500).json(buildAiErrorResponse(anthropicError));
             }
         }
 
@@ -808,7 +818,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
 
     } catch (error) {
         console.error('Error modifying articles:', error);
-        res.status(500).json({ error: parseAIError(error), details: error.message });
+        res.status(500).json(buildAiErrorResponse(error));
     }
 });
 

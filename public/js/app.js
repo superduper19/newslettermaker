@@ -396,29 +396,68 @@ async function parseJsonResponse(res, fallbackMessage) {
     throw new Error(fallbackMessage || 'Server did not return JSON.');
 }
 
+const ANTHROPIC_CREDITS_LOW_CODE = 'anthropic_credits_low';
+const ANTHROPIC_CREDITS_USER_MESSAGE =
+    'Anthropic (Claude) API credits are too low.\n\n'
+    + '• Add credits: https://console.anthropic.com/settings/billing\n'
+    + '• Or switch the AI Model dropdown to Gemini (e.g. Gemini 3.5 Flash)';
+
+function isAnthropicCreditError(message) {
+    return /credit balance is too low/i.test(String(message || ''));
+}
+
+function isAnthropicCreditsApiResponse(data) {
+    return data?.errorCode === ANTHROPIC_CREDITS_LOW_CODE
+        || isAnthropicCreditError(data?.error)
+        || isAnthropicCreditError(data?.details);
+}
+
+function setAiCreditWarningVisible(visible) {
+    const el = document.getElementById('ai-credit-warning');
+    if (!el) return;
+    if (visible) {
+        showWithClass(el, 'block');
+    } else {
+        hideWithClass(el);
+    }
+}
+
+function showAiFailureAlert(context, dataOrMessage) {
+    const data = typeof dataOrMessage === 'string' ? { error: dataOrMessage } : (dataOrMessage || {});
+    if (isAnthropicCreditsApiResponse(data)) {
+        setAiCreditWarningVisible(true);
+    }
+    const msg = isAnthropicCreditsApiResponse(data)
+        ? ANTHROPIC_CREDITS_USER_MESSAGE
+        : (extractApiErrorMessage(data) || 'Unknown error');
+    alert(`${context}\n\n${msg}`);
+}
+
 function extractApiErrorMessage(data) {
+    if (isAnthropicCreditsApiResponse(data)) {
+        return ANTHROPIC_CREDITS_USER_MESSAGE;
+    }
     const primary = String(data?.error || '').trim();
     if (primary && !/^failed to /i.test(primary)) {
         return primary;
     }
     const details = String(data?.details || '').trim();
     if (!details) return primary;
-    if (/credit balance is too low/i.test(details)) {
-        return 'Your Anthropic API credit balance is too low. Add credits at console.anthropic.com, or switch the AI Model dropdown to Gemini Flash 3.1 Pro.';
+    if (isAnthropicCreditError(details)) {
+        return ANTHROPIC_CREDITS_USER_MESSAGE;
     }
     const jsonStart = details.indexOf('{');
     if (jsonStart >= 0) {
         try {
             const parsed = JSON.parse(details.slice(jsonStart));
             const nested = parsed?.error?.message;
-            if (nested) return nested;
+            if (nested) {
+                if (isAnthropicCreditError(nested)) return ANTHROPIC_CREDITS_USER_MESSAGE;
+                return nested;
+            }
         } catch (_) { /* ignore */ }
     }
     return primary || details;
-}
-
-function isAnthropicCreditError(message) {
-    return /credit balance is too low/i.test(String(message || ''));
 }
 
 async function getAiClarificationFromError(data) {
@@ -4230,11 +4269,15 @@ async function searchMoreArticles() {
         } else {
             const clarification = await getAiClarificationFromError(data);
             const details = clarification || String(data.details || '').trim();
-            alert('Search Error: ' + (details || data.error || 'Unknown error'));
+            showAiFailureAlert('Search failed', data);
         }
     } catch (err) {
         console.error(err);
-        alert('Search failed. See console for details.');
+        if (isAnthropicCreditError(err.message)) {
+            showAiFailureAlert('Search failed — Claude credits', { error: err.message });
+        } else {
+            alert('Search failed. See console for details.');
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = 'Find Articles';
@@ -4284,20 +4327,8 @@ async function callModifyArticlesBatchOnce(prompt, batchArticles, model) {
     return data.articles;
 }
 
-const GEMINI_FALLBACK_MODEL = 'gemini-flash-3-1-pro';
-
 async function callModifyArticlesBatch(prompt, batchArticles, model) {
-    try {
-        const articles = await callModifyArticlesBatchOnce(prompt, batchArticles, model);
-        return { articles, usedFallback: false };
-    } catch (err) {
-        const msg = err.message || '';
-        const canFallback = !String(model || '').includes('gemini') && isAnthropicCreditError(msg);
-        if (!canFallback) throw err;
-        console.warn('Anthropic credits low — retrying batch with', GEMINI_FALLBACK_MODEL);
-        const articles = await callModifyArticlesBatchOnce(prompt, batchArticles, GEMINI_FALLBACK_MODEL);
-        return { articles, usedFallback: true };
-    }
+    return callModifyArticlesBatchOnce(prompt, batchArticles, model);
 }
 
 async function modifyExistingArticles() {
@@ -4330,7 +4361,6 @@ async function modifyExistingArticles() {
     }
 
     let modifiedTotal = 0;
-    let usedGeminiFallback = false;
 
     try {
         for (let b = 0; b < batches.length; b++) {
@@ -4353,9 +4383,7 @@ async function modifyExistingArticles() {
                 date: article.date || '',
             }));
 
-            const batchResult = await callModifyArticlesBatch(prompt, payload, model);
-            if (batchResult.usedFallback) usedGeminiFallback = true;
-            const results = batchResult.articles;
+            const results = await callModifyArticlesBatch(prompt, payload, model);
 
             const count = Math.min(results.length, batch.length);
             for (let i = 0; i < count; i++) {
@@ -4374,16 +4402,18 @@ async function modifyExistingArticles() {
         saveRecentPrompt(prompt);
         saveState();
         renderArticles();
+        setAiCreditWarningVisible(false);
         if (status) {
-            const fallbackNote = usedGeminiFallback
-                ? ' (used Gemini — Anthropic credits were low)'
-                : '';
-            status.textContent = `Modified ${modifiedTotal} article(s) in ${batches.length} batch(es). Rankings and status were kept.${fallbackNote}`;
+            status.textContent = `Modified ${modifiedTotal} article(s) in ${batches.length} batch(es). Rankings and status were kept.`;
             showWithClass(status, 'block');
         }
     } catch (err) {
         console.error(err);
-        alert('Modify failed: ' + (err.message || 'See browser console for details.'));
+        if (isAnthropicCreditError(err.message)) {
+            showAiFailureAlert('Modify failed — Claude credits', { error: err.message });
+        } else {
+            alert('Modify failed: ' + (err.message || 'See browser console for details.'));
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = 'Apply Changes';
@@ -4522,12 +4552,16 @@ if (searchBtn) {
                 // Show specific error message from backend (e.g. "Credit balance too low")
                 const clarification = await getAiClarificationFromError(data);
                 const details = clarification || String(data.details || '').trim();
-                alert("Search Error:\n" + (details || data.error || 'Unknown error'));
+                showAiFailureAlert('Search failed', data);
                 if (data.details) console.error("Error Details:", data.details);
             }
         } catch (err) {
             console.error("Network/Parsing Error:", err);
-            alert("Search failed. Please check your connection and try again.\nSee console for details.");
+            if (isAnthropicCreditError(err.message)) {
+                showAiFailureAlert('Search failed — Claude credits', { error: err.message });
+            } else {
+                alert("Search failed. Please check your connection and try again.\nSee console for details.");
+            }
         } finally {
             searchBtn.disabled = false;
             searchBtn.textContent = "Find Articles";

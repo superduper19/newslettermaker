@@ -797,8 +797,7 @@ window.renderImagesView = () => {
         const originalIndex = articles.indexOf(article);
 
         if (!article.imageSearchQuery) {
-            const words = article.title.split(' ').filter(w => w.length > 3);
-            article.imageSearchQuery = words.slice(0, 2).join(' ');
+            article.imageSearchQuery = buildDefaultImageSearchQuery(article.title);
         }
 
         const selectedImageHtml =
@@ -933,6 +932,31 @@ function updateImageViewStats() {
         <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>`;
 }
 
+function buildDefaultImageSearchQuery(title) {
+    const raw = String(title || '').trim();
+    const lower = raw.toLowerCase();
+    const themed = [
+        { match: 'marijuana', term: 'cannabis' },
+        { match: 'cannabis', term: 'cannabis' },
+        { match: 'hemp', term: 'hemp' },
+        { match: 'cbd', term: 'cbd' },
+        { match: 'psilocybin', term: 'psilocybin' },
+        { match: 'psychedelic', term: 'psychedelic' },
+        { match: 'opioid', term: 'opioid' },
+        { match: 'veto', term: 'veto' },
+        { match: 'governor', term: 'government' },
+        { match: 'pharma', term: 'pharmacy' },
+        { match: 'hospital', term: 'hospital' },
+    ];
+    for (const { match, term } of themed) {
+        if (lower.includes(match)) return term;
+    }
+    const words = raw.split(/\s+/).filter((w) => w.length > 2);
+    if (words.length === 0) return 'cannabis';
+    words.sort((a, b) => b.length - a.length);
+    return words[0];
+}
+
 // Search Images
 window.searchArticleImages = async (index) => {
     const article = articles[index];
@@ -955,9 +979,16 @@ window.searchArticleImages = async (index) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query, page }),
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
-        if (data.success && data.images.length > 0) {
+        if (!res.ok || data.error) {
+            const msg = data.error || `Search failed (HTTP ${res.status})`;
+            const hint = data.searchTerm ? ` Tried keyword: "${data.searchTerm}".` : '';
+            grid.innerHTML = `<div class="grid-placeholder text-[#c62828]">${msg}${hint}</div>`;
+            return;
+        }
+
+        if (data.success && data.images && data.images.length > 0) {
             grid.innerHTML = '';
             const displayImages = data.images.slice(0, 8);
 
@@ -965,6 +996,7 @@ window.searchArticleImages = async (index) => {
                 const imgEl = document.createElement('img');
                 imgEl.src = img.preview;
                 imgEl.className = 'mini-grid-item';
+                imgEl.alt = img.title || '';
                 imgEl.onclick = () => selectImage(index, img.download);
                 grid.appendChild(imgEl);
             });
@@ -972,17 +1004,21 @@ window.searchArticleImages = async (index) => {
             const navDiv = document.createElement('div');
             navDiv.className = 'img-page-nav';
             const currentPage = article.imagePage || 1;
+            const termNote = data.searchTerm && data.searchTerm !== query
+                ? ` <span class="text-[0.75rem] text-[#888]">(${data.searchTerm})</span>`
+                : '';
             navDiv.innerHTML =
                 `<button class="btn btn-sm btn-outline" ${currentPage <= 1 ? 'disabled' : ''} onclick="changeImagePage(${index}, -1)" title="Previous">&larr;</button>
-                <span class="text-[0.8rem] text-[#555]">Page ${currentPage}</span>
+                <span class="text-[0.8rem] text-[#555]">Page ${currentPage}${termNote}</span>
                 <button class="btn btn-sm btn-outline" onclick="changeImagePage(${index}, 1)" title="Next">&rarr;</button>`;
             grid.appendChild(navDiv);
         } else {
-            grid.innerHTML = '<div class="grid-placeholder">No images found.</div>';
+            const tried = data.searchTerm ? ` for "${data.searchTerm}"` : '';
+            grid.innerHTML = `<div class="grid-placeholder">No icons found${tried}. Try a simpler keyword (e.g. cannabis, hemp, veto).</div>`;
         }
     } catch (e) {
         console.error(e);
-        grid.innerHTML = '<div class="grid-placeholder">Error searching.</div>';
+        grid.innerHTML = `<div class="grid-placeholder text-[#c62828]">Error searching: ${e.message || 'network error'}</div>`;
     }
 };
 
@@ -1008,8 +1044,7 @@ window.searchAllArticleImages = async () => {
         for (const index of relevantIndexes) {
             const article = articles[index];
             if (!article.imageSearchQuery) {
-                const words = (article.title || '').split(' ').filter(w => w.length > 3);
-                article.imageSearchQuery = words.slice(0, 2).join(' ');
+                article.imageSearchQuery = buildDefaultImageSearchQuery(article.title);
             }
 
             await searchArticleImages(index);
@@ -1100,15 +1135,26 @@ window.uploadArticleImage = async (index, input) => {
         });
         const data = await res.json();
         if (data.success) {
-            // selectImage will set image and originalImageUrl to the returned URL
-            // If published=true, data.url is the public URL. If false, it's local.
-            selectImage(index, data.url);
+            const imageUrl = data.url || data.fallbackUrl;
+            articles[index].image = imageUrl;
+            articles[index].originalImageUrl = imageUrl;
+            articles[index].publishedImageUrl = data.published ? imageUrl : null;
+            saveState();
+            updateSelectedImageBox(index, imageUrl, !data.published);
 
             if (data.published) {
-                articles[index].publishedImageUrl = data.url;
-                saveState();
                 if (label) label.textContent = 'Uploaded (purablis)';
-            } else if (data.ftpError && label) label.textContent = 'Local only';
+            } else if (data.storedInline && String(imageUrl).startsWith('data:')) {
+                if (label) label.textContent = 'Saved (inline)';
+            } else if (data.ftpError) {
+                if (label) label.textContent = 'Saved locally';
+                alert(
+                    'Image saved on this computer. FTP to purablis.com failed — newsletter send may need Publish Selected.\n\n'
+                    + (data.ftpError || ''),
+                );
+            } else {
+                if (label) label.textContent = 'Uploaded';
+            }
         } else {
             alert('Upload failed: ' + (data.error || 'Unknown error'));
         }

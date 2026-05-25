@@ -3,13 +3,15 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 // Freepik API Configuration
 const FREEPIK_ICONS_URL = 'https://api.freepik.com/v1/icons';
 const API_KEY = process.env.FREEPIK_API_KEY;
+const FREEPIK_SEARCH_TIMEOUT_MS = 15000;
 
-// Multer disk storage for local image uploads
-const uploadDir = '/tmp/uploads';
+// Multer disk storage for local image uploads (Windows-safe temp dir)
+const uploadDir = path.join(os.tmpdir(), 'newsletter-uploads');
 const diskStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (!fs.existsSync(uploadDir)) {
@@ -18,9 +20,8 @@ const diskStorage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Sanitize filename to be safe but preserve original name
         const originalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-        cb(null, originalName);
+        cb(null, `upload-${Date.now()}-${originalName}`);
     }
 });
 const uploadMiddleware = multer({ storage: diskStorage, limits: { fileSize: 10 * 1024 * 1024 } });
@@ -456,6 +457,74 @@ router.delete('/inspirational-library', async (req, res) => {
     }
 });
 
+/** One strong keyword — multi-word Freepik icon searches often time out. */
+function buildIconSearchTerm(query) {
+    const raw = String(query || '').trim();
+    const lower = raw.toLowerCase();
+    const themed = [
+        { match: 'marijuana', term: 'cannabis' },
+        { match: 'cannabis', term: 'cannabis' },
+        { match: 'hemp', term: 'hemp' },
+        { match: 'cbd', term: 'cbd' },
+        { match: 'psilocybin', term: 'psilocybin' },
+        { match: 'psychedelic', term: 'psychedelic' },
+        { match: 'opioid', term: 'opioid' },
+        { match: 'veto', term: 'veto' },
+        { match: 'governor', term: 'government' },
+        { match: 'pharma', term: 'pharmacy' },
+        { match: 'hospital', term: 'hospital' },
+    ];
+    for (const { match, term } of themed) {
+        if (lower.includes(match)) return term;
+    }
+    const words = raw.split(/\s+/).filter((w) => w.length > 2);
+    if (words.length === 0) return 'cannabis';
+    words.sort((a, b) => b.length - a.length);
+    return words[0].toLowerCase();
+}
+
+async function fetchFreepikIcons(searchTerm, page) {
+    if (!API_KEY) {
+        return { error: 'FREEPIK_API_KEY is not configured on the server.', status: 503 };
+    }
+    const fetch = (await import('node-fetch')).default;
+    const url = `${FREEPIK_ICONS_URL}?locale=en-US&page=${page}&limit=9&term=${encodeURIComponent(searchTerm)}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FREEPIK_SEARCH_TIMEOUT_MS);
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-Freepik-API-Key': API_KEY,
+                'Accept-Language': 'en-US',
+            },
+            signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Freepik/Flaticon API Error:', response.status, errorText);
+            return { error: 'Image search failed', details: errorText, status: response.status };
+        }
+        const data = await response.json();
+        const items = Array.isArray(data?.data) ? data.data : [];
+        const images = items
+            .map((item) => ({
+                id: item.id,
+                title: item.name || 'Icon',
+                preview: item.thumbnails && item.thumbnails[0] ? item.thumbnails[0].url : '',
+                download: item.thumbnails && item.thumbnails[0] ? item.thumbnails[0].url : '',
+            }))
+            .filter((img) => img.preview);
+        return { images };
+    } catch (error) {
+        clearTimeout(timer);
+        if (error.name === 'AbortError') {
+            return { error: 'Freepik search timed out. Try a shorter keyword.', status: 504 };
+        }
+        throw error;
+    }
+}
+
 router.post('/search', async (req, res) => {
     try {
         const { query, page = 1 } = req.body;
@@ -464,47 +533,39 @@ router.post('/search', async (req, res) => {
             return res.status(400).json({ error: 'Search query is required' });
         }
 
-        console.log(`Searching Flaticon (Freepik API) for: "${query}" (Page ${page})`);
+        const searchTerm = buildIconSearchTerm(query);
+        console.log(`Searching Flaticon (Freepik API) for: "${searchTerm}" (from "${query}", page ${page})`);
 
-        // Dynamic import for fetch (ESM)
-        const fetch = (await import('node-fetch')).default;
-
-        // Searching for ICONS specifically (Flaticon)
-        const url = `${FREEPIK_ICONS_URL}?locale=en-US&page=${page}&limit=9&term=${encodeURIComponent(query)}`;
-
-        const response = await fetch(url, {
-            headers: {
-                'X-Freepik-API-Key': API_KEY,
-                'Accept-Language': 'en-US',
+        let result = await fetchFreepikIcons(searchTerm, page);
+        let usedFallback = false;
+        if (result.error && result.status === 504 && searchTerm !== 'cannabis') {
+            console.warn(`Freepik timed out for "${searchTerm}", retrying with "cannabis"`);
+            const fallback = await fetchFreepikIcons('cannabis', page);
+            if (!fallback.error && fallback.images.length > 0) {
+                result = fallback;
+                usedFallback = true;
             }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Freepik/Flaticon API Error:', response.status, errorText);
-            return res.status(response.status).json({ error: 'Image search failed', details: errorText });
         }
-
-        const data = await response.json();
-
-        // Transform data (Icons structure)
-        const images = data.data.map(item => ({
-            id: item.id,
-            title: item.name || 'Icon',
-            // Icons have 'thumbnails' array. Usually index 0 is best for preview.
-            preview: item.thumbnails && item.thumbnails[0] ? item.thumbnails[0].url : '',
-            download: item.thumbnails && item.thumbnails[0] ? item.thumbnails[0].url : '',
-        }));
+        if (result.error) {
+            return res.status(result.status || 500).json({
+                error: result.error,
+                details: result.details,
+                searchTerm,
+            });
+        }
 
         res.json({
             success: true,
             page,
-            images,
+            images: result.images.slice(0, 9),
+            searchTerm: usedFallback ? 'cannabis' : searchTerm,
+            originalQuery: query,
+            usedFallback,
         });
 
     } catch (error) {
         console.error('Image Search Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: error.message || 'Image search failed' });
     }
 });
 

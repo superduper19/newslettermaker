@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +16,12 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const uploadsDir = path.join(os.tmpdir(), 'newsletter-uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 const articlesRoutes = require('./routes/articles');
 const imagesRoutes = require('./routes/images');

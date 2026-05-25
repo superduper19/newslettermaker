@@ -396,11 +396,34 @@ async function parseJsonResponse(res, fallbackMessage) {
     throw new Error(fallbackMessage || 'Server did not return JSON.');
 }
 
-async function getAiClarificationFromError(data) {
-    const directDetails = String(data?.details || '').trim();
-    if (directDetails) {
-        return directDetails;
+function extractApiErrorMessage(data) {
+    const primary = String(data?.error || '').trim();
+    if (primary && !/^failed to /i.test(primary)) {
+        return primary;
     }
+    const details = String(data?.details || '').trim();
+    if (!details) return primary;
+    if (/credit balance is too low/i.test(details)) {
+        return 'Your Anthropic API credit balance is too low. Add credits at console.anthropic.com, or switch the AI Model dropdown to Gemini Flash 3.1 Pro.';
+    }
+    const jsonStart = details.indexOf('{');
+    if (jsonStart >= 0) {
+        try {
+            const parsed = JSON.parse(details.slice(jsonStart));
+            const nested = parsed?.error?.message;
+            if (nested) return nested;
+        } catch (_) { /* ignore */ }
+    }
+    return primary || details;
+}
+
+function isAnthropicCreditError(message) {
+    return /credit balance is too low/i.test(String(message || ''));
+}
+
+async function getAiClarificationFromError(data) {
+    const parsed = extractApiErrorMessage(data);
+    if (parsed) return parsed;
 
     const errorText = String(data?.error || '').trim();
     const logMatch = errorText.match(/Log ID:\s*(\d+)/i);
@@ -4233,7 +4256,7 @@ function isTitleFocusedModifyPrompt(prompt) {
     return p.includes('title') && !p.includes('description') && !p.includes('summary');
 }
 
-async function callModifyArticlesBatch(prompt, batchArticles, model) {
+async function callModifyArticlesBatchOnce(prompt, batchArticles, model) {
     const response = await fetch('/api/articles/modify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4251,18 +4274,30 @@ async function callModifyArticlesBatch(prompt, batchArticles, model) {
     );
 
     if (!response.ok) {
-        const clarification = await getAiClarificationFromError(data);
-        const details = clarification || String(data.details || '').trim();
-        throw new Error(details || data.error || `HTTP ${response.status}`);
+        throw new Error(extractApiErrorMessage(data) || `HTTP ${response.status}`);
     }
 
     if (!data.success || !Array.isArray(data.articles)) {
-        const clarification = await getAiClarificationFromError(data);
-        const details = clarification || String(data.details || '').trim();
-        throw new Error(details || data.error || 'Modify did not return articles');
+        throw new Error(extractApiErrorMessage(data) || 'Modify did not return articles');
     }
 
     return data.articles;
+}
+
+const GEMINI_FALLBACK_MODEL = 'gemini-flash-3-1-pro';
+
+async function callModifyArticlesBatch(prompt, batchArticles, model) {
+    try {
+        const articles = await callModifyArticlesBatchOnce(prompt, batchArticles, model);
+        return { articles, usedFallback: false };
+    } catch (err) {
+        const msg = err.message || '';
+        const canFallback = !String(model || '').includes('gemini') && isAnthropicCreditError(msg);
+        if (!canFallback) throw err;
+        console.warn('Anthropic credits low — retrying batch with', GEMINI_FALLBACK_MODEL);
+        const articles = await callModifyArticlesBatchOnce(prompt, batchArticles, GEMINI_FALLBACK_MODEL);
+        return { articles, usedFallback: true };
+    }
 }
 
 async function modifyExistingArticles() {
@@ -4295,6 +4330,7 @@ async function modifyExistingArticles() {
     }
 
     let modifiedTotal = 0;
+    let usedGeminiFallback = false;
 
     try {
         for (let b = 0; b < batches.length; b++) {
@@ -4317,7 +4353,9 @@ async function modifyExistingArticles() {
                 date: article.date || '',
             }));
 
-            const results = await callModifyArticlesBatch(prompt, payload, model);
+            const batchResult = await callModifyArticlesBatch(prompt, payload, model);
+            if (batchResult.usedFallback) usedGeminiFallback = true;
+            const results = batchResult.articles;
 
             const count = Math.min(results.length, batch.length);
             for (let i = 0; i < count; i++) {
@@ -4337,7 +4375,10 @@ async function modifyExistingArticles() {
         saveState();
         renderArticles();
         if (status) {
-            status.textContent = `Modified ${modifiedTotal} article(s) in ${batches.length} batch(es). Rankings and status were kept.`;
+            const fallbackNote = usedGeminiFallback
+                ? ' (used Gemini — Anthropic credits were low)'
+                : '';
+            status.textContent = `Modified ${modifiedTotal} article(s) in ${batches.length} batch(es). Rankings and status were kept.${fallbackNote}`;
             showWithClass(status, 'block');
         }
     } catch (err) {

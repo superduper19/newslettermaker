@@ -393,8 +393,10 @@ const extractJSON = (text) => {
 
 // Shared Model Mapping
 const MODEL_MAPPING = {
+    'claude-opus-4-7': 'claude-opus-4-7',
+    'claude-opus-4-7-extended': 'claude-opus-4-7',
     'claude-opus-4-6': 'claude-opus-4-6',
-    'claude-opus-4-6-extended': 'claude-opus-4-6', // Maps to same base model
+    'claude-opus-4-6-extended': 'claude-opus-4-6',
     'claude-sonnet-4-6': 'claude-sonnet-4-6',
     'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
     'gemini-flash-3-0': 'gemini-3-flash-preview',
@@ -403,7 +405,44 @@ const MODEL_MAPPING = {
 };
 
 // Helper to get API Model ID
-const getApiModelId = (userModel) => MODEL_MAPPING[userModel] || userModel || 'claude-opus-4-6';
+const getApiModelId = (userModel) => MODEL_MAPPING[userModel] || userModel || 'claude-opus-4-7';
+
+function isExtendedModel(userModel) {
+    return String(userModel || '').includes('-extended');
+}
+
+/** Anthropic article-search limits (override via .env). */
+function getAnthropicSearchConfig(userModel) {
+    const apiModel = getApiModelId(userModel);
+    const extended = isExtendedModel(userModel);
+    const maxWebUses = parseInt(
+        process.env[extended ? 'ARTICLE_SEARCH_MAX_WEB_USES_EXTENDED' : 'ARTICLE_SEARCH_MAX_WEB_USES']
+            || (extended ? '20' : '10'),
+        10,
+    );
+    const maxTokens = parseInt(
+        process.env[extended ? 'ARTICLE_SEARCH_MAX_TOKENS_EXTENDED' : 'ARTICLE_SEARCH_MAX_TOKENS']
+            || (extended ? '16000' : '8000'),
+        10,
+    );
+    const useDynamicWebSearch = /opus-4-[67]|sonnet-4-6/.test(apiModel);
+    const request = {
+        model: apiModel,
+        max_tokens: maxTokens,
+        tools: [{
+            type: useDynamicWebSearch ? 'web_search_20260209' : 'web_search_20250305',
+            name: 'web_search',
+            max_uses: maxWebUses,
+        }],
+    };
+    if (extended && /opus-4-[67]|sonnet-4-6/.test(apiModel)) {
+        request.thinking = { type: 'adaptive' };
+        request.output_config = {
+            effort: apiModel.includes('opus-4-7') ? 'xhigh' : 'high',
+        };
+    }
+    return request;
+}
 
 function getAnthropicTextContent(message) {
     if (!message || !Array.isArray(message.content)) return '';
@@ -554,19 +593,17 @@ Example format:
                 return res.status(500).json(buildAiErrorResponse(geminiError));
             }
         } else {
+            const searchConfig = getAnthropicSearchConfig(model);
+            console.log(
+                `Anthropic search profile: model=${searchConfig.model}, max_tokens=${searchConfig.max_tokens}, `
+                + `web_search=${searchConfig.tools[0].type}, max_uses=${searchConfig.tools[0].max_uses}, `
+                + `extended=${isExtendedModel(model)}`,
+            );
             const message = await anthropic.messages.create({
-                model: apiModel,
-                max_tokens: 8000,
+                ...searchConfig,
                 system: systemPrompt,
                 messages: [
                     { role: 'user', content: prompt },
-                ],
-                tools: [
-                    {
-                        type: 'web_search_20250305',
-                        name: 'web_search',
-                        max_uses: 10,
-                    },
                 ],
             });
 

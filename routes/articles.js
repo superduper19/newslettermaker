@@ -404,6 +404,23 @@ const MODEL_MAPPING = {
 // Helper to get API Model ID
 const getApiModelId = (userModel) => MODEL_MAPPING[userModel] || userModel || 'claude-opus-4-6';
 
+function getAnthropicTextContent(message) {
+    if (!message || !Array.isArray(message.content)) return '';
+    return message.content
+        .filter((block) => block.type === 'text')
+        .map((block) => block.text)
+        .join('\n');
+}
+
+function sanitizeArticlesForModify(articles) {
+    return (articles || []).map((a) => ({
+        title: a.title || '',
+        description: a.description || '',
+        url: a.url || '',
+        date: a.date || '',
+    }));
+}
+
 function resolveAiProvider(model) {
     const apiModel = getApiModelId(model);
     const isGemini = apiModel.toLowerCase().includes('gemini');
@@ -641,66 +658,118 @@ Example format:
 // POST /api/articles/modify - Handle AI Article Modification
 router.post('/modify', async (req, res) => {
     try {
-        const { prompt, articles, model } = req.body;
+        const { prompt, articles, model } = req.body || {};
 
-        if (!prompt || !articles || articles.length === 0) {
-            return res.status(400).json({ error: 'Prompt and articles are required' });
+        if (!prompt || !String(prompt).trim()) {
+            return res.status(400).json({ error: 'Please enter a modification instruction.' });
+        }
+        if (!Array.isArray(articles) || articles.length === 0) {
+            return res.status(400).json({ error: 'Select at least one article (Select column) to modify.' });
         }
 
-        console.log(`Modifying ${articles.length} articles with instruction: "${prompt}" using model: ${model}`);
+        const provider = resolveAiProvider(model);
+        if (provider.error) {
+            return res.status(503).json({ error: provider.error, configured: false });
+        }
 
-        const apiModel = getApiModelId(model);
-        console.log(`Using model mapping: ${model} -> ${apiModel}`);
+        const inputArticles = sanitizeArticlesForModify(articles);
+        const { apiModel, isGemini } = provider;
 
-        const systemPrompt = `You are a professional editor for a newsletter. Modify the provided articles based on the user's instructions. Return the modified list as a JSON array. Each object must have: "title", "description", "url", "date". Maintain original order. Output only the JSON array — no markdown, no explanation.`;
+        console.log(`Modifying ${inputArticles.length} articles with instruction: "${prompt}" using model: ${model} -> ${apiModel}`);
 
-        const userMessage = `Instruction: ${prompt}\n\nArticles:\n${JSON.stringify(articles.map(a => ({ title: a.title, description: a.description, url: a.url, date: a.date || '' })), null, 2)}`;
+        const systemPrompt = `You are a professional editor for a newsletter. Modify the provided articles based on the user's instructions.
+
+Return ONLY a valid JSON array with the same number of items in the same order as the input.
+Each object must have exactly these keys: "title", "description", "url", "date".
+Do not add or remove articles. No markdown, no code fences, no commentary.`;
+
+        const userMessage = `Instruction: ${String(prompt).trim()}\n\nArticles:\n${JSON.stringify(inputArticles, null, 2)}`;
 
         let content = '';
 
-        if (apiModel.toLowerCase().includes('gemini')) {
-             try {
+        if (isGemini) {
+            try {
                 const geminiModel = genAI.getGenerativeModel({ model: apiModel });
                 const result = await geminiModel.generateContent(`${systemPrompt}\n\n${userMessage}`);
                 const response = await result.response;
                 content = response.text();
             } catch (geminiError) {
-                console.error("Gemini API Error:", geminiError);
-                return res.status(500).json({ error: "Gemini Modify failed", details: geminiError.message });
+                console.error('Gemini API Error:', geminiError);
+                return res.status(500).json({ error: parseAIError(geminiError), details: geminiError.message });
             }
         } else {
-            const message = await anthropic.messages.create({
-                model: apiModel,
-                max_tokens: 8000,
-                system: systemPrompt,
-                messages: [
-                    { role: "user", content: userMessage },
-                ],
-            });
-            content = message.content[0].text;
+            try {
+                const message = await anthropic.messages.create({
+                    model: apiModel,
+                    max_tokens: 8000,
+                    system: systemPrompt,
+                    messages: [
+                        { role: 'user', content: userMessage },
+                    ],
+                });
+                content = getAnthropicTextContent(message);
+                if (!content.trim()) {
+                    return res.status(500).json({
+                        error: 'AI returned an empty response. Try again or use a different model.',
+                    });
+                }
+            } catch (anthropicError) {
+                console.error('Anthropic API Error:', anthropicError);
+                return res.status(500).json({ error: parseAIError(anthropicError), details: anthropicError.message });
+            }
         }
 
         let modifiedArticles = [];
         try {
             modifiedArticles = extractJSON(content);
+            if (!Array.isArray(modifiedArticles)) {
+                modifiedArticles = modifiedArticles ? [modifiedArticles] : [];
+            }
         } catch (e) {
-            console.error("Failed to parse AI JSON response:", content);
+            console.error('Failed to parse AI JSON response:', content);
+            const logId = Date.now();
+            try {
+                const logPath = path.join(ERROR_LOG_DIR, `error_log_${logId}.txt`);
+                fs.writeFileSync(logPath, String(content || ''));
+            } catch (fsErr) {
+                console.error('Failed to write error log file', fsErr);
+            }
             return res.status(500).json({
-                error: "AI needs more detail before it can continue.",
-                details: String(content || '').trim(),
+                error: 'AI needs more detail before it can continue.',
+                details: String(content || '').trim().slice(0, 2000),
+                logId,
             });
+        }
+
+        if (modifiedArticles.length !== inputArticles.length) {
+            console.warn(
+                `Modify count mismatch: sent ${inputArticles.length}, got ${modifiedArticles.length}. Aligning by index.`,
+            );
+            if (modifiedArticles.length > inputArticles.length) {
+                modifiedArticles = modifiedArticles.slice(0, inputArticles.length);
+            } else {
+                while (modifiedArticles.length < inputArticles.length) {
+                    const i = modifiedArticles.length;
+                    modifiedArticles.push({ ...inputArticles[i] });
+                }
+            }
         }
 
         console.log(`Successfully modified ${modifiedArticles.length} articles.`);
 
         res.json({
             success: true,
-            articles: modifiedArticles,
+            articles: modifiedArticles.map((a, i) => ({
+                title: a.title != null ? String(a.title) : inputArticles[i].title,
+                description: a.description != null ? String(a.description) : inputArticles[i].description,
+                url: a.url != null ? String(a.url) : inputArticles[i].url,
+                date: a.date != null ? String(a.date) : inputArticles[i].date,
+            })),
         });
 
     } catch (error) {
         console.error('Error modifying articles:', error);
-        res.status(500).json({ error: 'Failed to modify articles' });
+        res.status(500).json({ error: parseAIError(error), details: error.message });
     }
 });
 

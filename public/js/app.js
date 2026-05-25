@@ -4229,12 +4229,24 @@ async function modifyExistingArticles() {
     const prompt = document.getElementById('step2-query').value.trim();
     if (!prompt) return alert('Please enter a modification instruction.');
 
-    const selectedIndices = articles.map((a, i) => a.selected ? i : -1).filter(i => i !== -1);
-    if (selectedIndices.length === 0) return alert('No articles selected. Check the boxes on articles you want to modify.');
+    const selectedIndices = articles
+        .map((a, i) => (a.selected !== false ? i : -1))
+        .filter((i) => i !== -1);
+    if (selectedIndices.length === 0) {
+        return alert('No articles selected. Check the Select column (All/None), then try again.');
+    }
 
-    const selectedArticles = selectedIndices.map(i => articles[i]);
+    if (selectedIndices.length > 20) {
+        if (!confirm(`Modify ${selectedIndices.length} articles at once? This may time out. Continue?`)) {
+            return;
+        }
+    }
+
+    const selectedArticles = selectedIndices.map((i) => articles[i]);
     const btn = document.getElementById('btn-step2-query');
     const status = document.getElementById('step2-query-status');
+    const modelEl = document.getElementById('ai-model');
+    const model = modelEl ? modelEl.value : 'claude-sonnet-4-6';
 
     btn.disabled = true;
     btn.textContent = 'Modifying...';
@@ -4246,34 +4258,52 @@ async function modifyExistingArticles() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 prompt,
-                articles: selectedArticles,
-                model: document.getElementById('ai-model').value,
+                articles: selectedArticles.map((a) => ({
+                    title: a.title,
+                    description: a.description,
+                    url: a.url,
+                    date: a.date || '',
+                })),
+                model,
             }),
         });
 
-        const data = await response.json();
-        if (data.success) {
-            data.articles.forEach((modArticle, i) => {
+        const data = await parseJsonResponse(
+            response,
+            'Modify failed: server returned HTML instead of JSON (often a timeout on Vercel). Try fewer articles or Claude Sonnet.',
+        );
+
+        if (!response.ok) {
+            const clarification = await getAiClarificationFromError(data);
+            const details = clarification || String(data.details || '').trim();
+            alert('Modify error: ' + (details || data.error || `HTTP ${response.status}`));
+            return;
+        }
+
+        if (data.success && Array.isArray(data.articles)) {
+            const count = Math.min(data.articles.length, selectedIndices.length);
+            for (let i = 0; i < count; i++) {
                 const originalIndex = selectedIndices[i];
-                if (articles[originalIndex]) {
-                    if (modArticle.title) articles[originalIndex].title = modArticle.title;
-                    if (modArticle.description) articles[originalIndex].description = modArticle.description;
-                    if (modArticle.url) articles[originalIndex].url = modArticle.url;
-                    if (modArticle.date) articles[originalIndex].date = modArticle.date;
-                }
-            });
+                const original = articles[originalIndex];
+                const modArticle = data.articles[i];
+                if (!original || !modArticle) continue;
+                if (modArticle.title != null) original.title = modArticle.title;
+                if (modArticle.description != null) original.description = modArticle.description;
+                if (modArticle.url) original.url = modArticle.url;
+                if (modArticle.date != null) original.date = modArticle.date;
+            }
             saveState();
             renderArticles();
-            status.textContent = `Modified ${data.articles.length} articles.`;
+            status.textContent = `Modified ${count} article(s). Rankings and status were kept.`;
             showWithClass(status, 'block');
         } else {
             const clarification = await getAiClarificationFromError(data);
             const details = clarification || String(data.details || '').trim();
-            alert('Error: ' + (details || data.error || 'Unknown error'));
+            alert('Modify error: ' + (details || data.error || 'Unknown error'));
         }
     } catch (err) {
         console.error(err);
-        alert('Modification failed.');
+        alert('Modify failed: ' + (err.message || 'See browser console for details.'));
     } finally {
         btn.disabled = false;
         btn.textContent = 'Apply Changes';

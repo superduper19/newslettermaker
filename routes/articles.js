@@ -655,10 +655,17 @@ Example format:
     }
 });
 
+const MODIFY_MAX_PER_REQUEST = 12;
+
+function isTitleFocusedModifyPrompt(prompt) {
+    const p = String(prompt || '').toLowerCase();
+    return p.includes('title') && !p.includes('description') && !p.includes('summary');
+}
+
 // POST /api/articles/modify - Handle AI Article Modification
 router.post('/modify', async (req, res) => {
     try {
-        const { prompt, articles, model } = req.body || {};
+        const { prompt, articles, model, titleOnly } = req.body || {};
 
         if (!prompt || !String(prompt).trim()) {
             return res.status(400).json({ error: 'Please enter a modification instruction.' });
@@ -666,18 +673,42 @@ router.post('/modify', async (req, res) => {
         if (!Array.isArray(articles) || articles.length === 0) {
             return res.status(400).json({ error: 'Select at least one article (Select column) to modify.' });
         }
+        if (articles.length > MODIFY_MAX_PER_REQUEST) {
+            return res.status(400).json({
+                error: `Too many articles in one request (${articles.length}). The app sends 8 at a time automatically.`,
+            });
+        }
 
         const provider = resolveAiProvider(model);
         if (provider.error) {
             return res.status(503).json({ error: provider.error, configured: false });
         }
 
-        const inputArticles = sanitizeArticlesForModify(articles);
+        const titleFocused = titleOnly === true
+            || (titleOnly !== false && isTitleFocusedModifyPrompt(prompt));
+
+        const inputArticles = titleFocused
+            ? articles.map((a, i) => ({
+                _batchIndex: i,
+                title: a.title || '',
+            }))
+            : sanitizeArticlesForModify(articles);
+
         const { apiModel, isGemini } = provider;
+        const maxTokens = Math.min(16000, 800 + inputArticles.length * (titleFocused ? 120 : 400));
 
-        console.log(`Modifying ${inputArticles.length} articles with instruction: "${prompt}" using model: ${model} -> ${apiModel}`);
+        console.log(
+            `Modifying ${inputArticles.length} articles (${titleFocused ? 'titles only' : 'full'}) `
+            + `tokens~${maxTokens} model: ${model} -> ${apiModel}`,
+        );
 
-        const systemPrompt = `You are a professional editor for a newsletter. Modify the provided articles based on the user's instructions.
+        const systemPrompt = titleFocused
+            ? `You are a professional newsletter editor. Modify ONLY article titles per the user's instructions.
+
+Return ONLY a valid JSON array with the same number of items in the same order.
+Each object: {"title":"..."} only. Keep URLs and descriptions unchanged (do not include them).
+No markdown, no code fences, no commentary.`
+            : `You are a professional editor for a newsletter. Modify the provided articles based on the user's instructions.
 
 Return ONLY a valid JSON array with the same number of items in the same order as the input.
 Each object must have exactly these keys: "title", "description", "url", "date".
@@ -701,7 +732,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
             try {
                 const message = await anthropic.messages.create({
                     model: apiModel,
-                    max_tokens: 8000,
+                    max_tokens: maxTokens,
                     system: systemPrompt,
                     messages: [
                         { role: 'user', content: userMessage },
@@ -710,7 +741,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 content = getAnthropicTextContent(message);
                 if (!content.trim()) {
                     return res.status(500).json({
-                        error: 'AI returned an empty response. Try again or use a different model.',
+                        error: 'AI returned an empty response. Try again or use Claude Sonnet.',
                     });
                 }
             } catch (anthropicError) {
@@ -735,7 +766,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 console.error('Failed to write error log file', fsErr);
             }
             return res.status(500).json({
-                error: 'AI needs more detail before it can continue.',
+                error: 'AI could not return valid JSON. Try a shorter instruction or fewer articles.',
                 details: String(content || '').trim().slice(0, 2000),
                 logId,
             });
@@ -750,20 +781,28 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
             } else {
                 while (modifiedArticles.length < inputArticles.length) {
                     const i = modifiedArticles.length;
-                    modifiedArticles.push({ ...inputArticles[i] });
+                    modifiedArticles.push(titleFocused ? { title: inputArticles[i].title } : { ...inputArticles[i] });
                 }
             }
         }
+
+        const sourceArticles = sanitizeArticlesForModify(articles);
 
         console.log(`Successfully modified ${modifiedArticles.length} articles.`);
 
         res.json({
             success: true,
             articles: modifiedArticles.map((a, i) => ({
-                title: a.title != null ? String(a.title) : inputArticles[i].title,
-                description: a.description != null ? String(a.description) : inputArticles[i].description,
-                url: a.url != null ? String(a.url) : inputArticles[i].url,
-                date: a.date != null ? String(a.date) : inputArticles[i].date,
+                title: a.title != null ? String(a.title) : (titleFocused ? sourceArticles[i].title : inputArticles[i].title),
+                description: titleFocused
+                    ? sourceArticles[i].description
+                    : (a.description != null ? String(a.description) : sourceArticles[i].description),
+                url: titleFocused
+                    ? sourceArticles[i].url
+                    : (a.url != null ? String(a.url) : sourceArticles[i].url),
+                date: titleFocused
+                    ? sourceArticles[i].date
+                    : (a.date != null ? String(a.date) : sourceArticles[i].date),
             })),
         });
 

@@ -4225,6 +4225,46 @@ function normalizeUrl(url) {
 
 // --- MODIFY EXISTING ARTICLES ---
 
+const MODIFY_BATCH_SIZE = 8;
+const MODIFY_MAX_PER_REQUEST = 12;
+
+function isTitleFocusedModifyPrompt(prompt) {
+    const p = String(prompt || '').toLowerCase();
+    return p.includes('title') && !p.includes('description') && !p.includes('summary');
+}
+
+async function callModifyArticlesBatch(prompt, batchArticles, model) {
+    const response = await fetch('/api/articles/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            prompt,
+            articles: batchArticles,
+            model,
+            titleOnly: isTitleFocusedModifyPrompt(prompt),
+        }),
+    });
+
+    const data = await parseJsonResponse(
+        response,
+        'Modify failed: server returned HTML instead of JSON (often a timeout). Try fewer articles per batch or Claude Sonnet.',
+    );
+
+    if (!response.ok) {
+        const clarification = await getAiClarificationFromError(data);
+        const details = clarification || String(data.details || '').trim();
+        throw new Error(details || data.error || `HTTP ${response.status}`);
+    }
+
+    if (!data.success || !Array.isArray(data.articles)) {
+        const clarification = await getAiClarificationFromError(data);
+        const details = clarification || String(data.details || '').trim();
+        throw new Error(details || data.error || 'Modify did not return articles');
+    }
+
+    return data.articles;
+}
+
 async function modifyExistingArticles() {
     const prompt = document.getElementById('step2-query').value.trim();
     if (!prompt) return alert('Please enter a modification instruction.');
@@ -4236,70 +4276,69 @@ async function modifyExistingArticles() {
         return alert('No articles selected. Check the Select column (All/None), then try again.');
     }
 
-    if (selectedIndices.length > 20) {
-        if (!confirm(`Modify ${selectedIndices.length} articles at once? This may time out. Continue?`)) {
-            return;
-        }
-    }
+    const selectedArticles = selectedIndices.map((i) => ({
+        index: i,
+        article: articles[i],
+    }));
 
-    const selectedArticles = selectedIndices.map((i) => articles[i]);
     const btn = document.getElementById('btn-step2-query');
     const status = document.getElementById('step2-query-status');
     const modelEl = document.getElementById('ai-model');
     const model = modelEl ? modelEl.value : 'claude-sonnet-4-6';
 
     btn.disabled = true;
-    btn.textContent = 'Modifying...';
     hideWithClass(status);
 
+    const batches = [];
+    for (let i = 0; i < selectedArticles.length; i += MODIFY_BATCH_SIZE) {
+        batches.push(selectedArticles.slice(i, i + MODIFY_BATCH_SIZE));
+    }
+
+    let modifiedTotal = 0;
+
     try {
-        const response = await fetch('/api/articles/modify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt,
-                articles: selectedArticles.map((a) => ({
-                    title: a.title,
-                    description: a.description,
-                    url: a.url,
-                    date: a.date || '',
-                })),
-                model,
-            }),
-        });
+        for (let b = 0; b < batches.length; b++) {
+            const batch = batches[b];
+            btn.textContent = batches.length > 1
+                ? `Modifying ${b + 1}/${batches.length}...`
+                : 'Modifying...';
+            if (status) {
+                status.textContent = batches.length > 1
+                    ? `Processing batch ${b + 1} of ${batches.length} (${batch.length} articles)...`
+                    : 'Modifying...';
+                showWithClass(status, 'block');
+            }
 
-        const data = await parseJsonResponse(
-            response,
-            'Modify failed: server returned HTML instead of JSON (often a timeout on Vercel). Try fewer articles or Claude Sonnet.',
-        );
+            const payload = batch.map(({ index, article }) => ({
+                _index: index,
+                title: article.title,
+                description: article.description,
+                url: article.url,
+                date: article.date || '',
+            }));
 
-        if (!response.ok) {
-            const clarification = await getAiClarificationFromError(data);
-            const details = clarification || String(data.details || '').trim();
-            alert('Modify error: ' + (details || data.error || `HTTP ${response.status}`));
-            return;
-        }
+            const results = await callModifyArticlesBatch(prompt, payload, model);
 
-        if (data.success && Array.isArray(data.articles)) {
-            const count = Math.min(data.articles.length, selectedIndices.length);
+            const count = Math.min(results.length, batch.length);
             for (let i = 0; i < count; i++) {
-                const originalIndex = selectedIndices[i];
+                const originalIndex = batch[i].index;
                 const original = articles[originalIndex];
-                const modArticle = data.articles[i];
+                const modArticle = results[i];
                 if (!original || !modArticle) continue;
                 if (modArticle.title != null) original.title = modArticle.title;
                 if (modArticle.description != null) original.description = modArticle.description;
                 if (modArticle.url) original.url = modArticle.url;
                 if (modArticle.date != null) original.date = modArticle.date;
+                modifiedTotal++;
             }
-            saveState();
-            renderArticles();
-            status.textContent = `Modified ${count} article(s). Rankings and status were kept.`;
+        }
+
+        saveRecentPrompt(prompt);
+        saveState();
+        renderArticles();
+        if (status) {
+            status.textContent = `Modified ${modifiedTotal} article(s) in ${batches.length} batch(es). Rankings and status were kept.`;
             showWithClass(status, 'block');
-        } else {
-            const clarification = await getAiClarificationFromError(data);
-            const details = clarification || String(data.details || '').trim();
-            alert('Modify error: ' + (details || data.error || 'Unknown error'));
         }
     } catch (err) {
         console.error(err);

@@ -186,6 +186,17 @@
             <option value="oldnew">Old to New</option>
             <option value="newold">New to Old</option>
           </select>
+          <div class="flex items-center gap-2 flex-wrap ml-auto" id="category-pick-order-row" title="Comma-separated rank numbers from each column — order for subject lines and template">
+            <span class="text-[0.75rem] text-[#666] whitespace-nowrap hidden lg:inline">Subject / template order:</span>
+            <label class="text-[0.75rem] font-semibold text-[#0d47a1]">MED</label>
+            <input type="text" id="pick-order-MED" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('MED', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#1b5e20]">THC</label>
+            <input type="text" id="pick-order-THC" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('THC', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#e65100]">CBD</label>
+            <input type="text" id="pick-order-CBD" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('CBD', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#4a148c]">INV</label>
+            <input type="text" id="pick-order-INV" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('INV', this.value)">
+          </div>
         </div>
         <!-- Articles Table Header -->
         <div class="articles-table-header">

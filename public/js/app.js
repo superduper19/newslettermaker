@@ -142,6 +142,7 @@ let newsletterContent = {
     selectedGreeting: DEFAULT_GREETING,
     subjectPrompt: DEFAULT_SUBJECT_PROMPT,
     generatedSubjects: { MED: '', THC: '', CBD: '', INV: '' },
+    categoryPickOrder: { MED: '', THC: '', CBD: '', INV: '' },
 };
 let currentEditorTab = 'MED';
 let currentConfirmationTab = 'MED';
@@ -266,6 +267,7 @@ function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
         selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
         subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
         generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
+        categoryPickOrder: nc.categoryPickOrder || { MED: '', THC: '', CBD: '', INV: '' },
     };
     lastGeneratedNewsletter = value.lastGeneratedNewsletter || null;
     if (typeof value.aiQuery === 'string') {
@@ -583,6 +585,7 @@ window.startNewWeek = async () => {
         subjectPrompt: normalizeSubjectPrompt(kept.subjectPrompt),
         generatedSubjects: kept.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
         generatedHeadings: kept.generatedHeadings || { MED: '', THC: '', CBD: '', INV: '' },
+        categoryPickOrder: kept.categoryPickOrder || { MED: '', THC: '', CBD: '', INV: '' },
     };
 
     saveState();
@@ -748,17 +751,15 @@ window.renderImagesView = () => {
         const gridId = `grid-${originalIndex}`;
 
         const catInputs = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
-            let rank = (article.ranks && article.ranks[cat]) || '';
-            const useChecked = isCategoryCheckboxChecked(article, cat);
-            return `<div class="img-col-cat col-cat-pick">
-                <label class="cat-use-label text-[0.65rem]" title="Include in ${cat} newsletter">
-                    <input type="checkbox" ${useChecked ? 'checked' : ''} onchange="updateUseInNewsletter(${originalIndex}, '${cat}', this.checked)">
-                </label>
+            const rank = getRankForSort(article, cat);
+            return `<div class="img-col-cat">
                 <input
                     type="text"
                     value="${rank}"
                     oninput="updateCategoryRank(${originalIndex}, '${cat}', this.value)"
-                    class="w-full text-center h-8 py-1 px-px border border-[#ddd] rounded text-[0.8rem] font-semibold box-border cat-rank-input">
+                    class="w-full text-center h-8 py-1 px-px border border-[#ddd] rounded text-[0.8rem] font-semibold box-border cat-rank-input"
+                    placeholder="#"
+                    title="Rank for ${cat}">
             </div>`;
         }).join('');
 
@@ -1397,7 +1398,43 @@ function normalizeArticleDefaults(article) {
     if (!article.categories) article.categories = article.category ? [article.category] : [];
     if (article.selected === undefined) article.selected = true;
     if (!article.ranks || typeof article.ranks !== 'object') article.ranks = {};
+    // Legacy: checkbox picks without rank → keep as Y in column data
+    ['MED', 'THC', 'CBD', 'INV'].forEach((cat) => {
+        const key = String(cat).trim().toUpperCase();
+        const rank = String(article.ranks[key] ?? article.ranks[cat] ?? '').trim();
+        if (!rank && article.useInNewsletter && article.useInNewsletter[key] === true) {
+            article.ranks[key] = 'Y';
+            if (!articleHasCategory(article, key)) article.categories.push(key);
+        }
+    });
 }
+
+function ensureCategoryPickOrder() {
+    if (!newsletterContent.categoryPickOrder || typeof newsletterContent.categoryPickOrder !== 'object') {
+        newsletterContent.categoryPickOrder = { MED: '', THC: '', CBD: '', INV: '' };
+    }
+    return newsletterContent.categoryPickOrder;
+}
+
+function parseCategoryPickOrder(category) {
+    const raw = String(ensureCategoryPickOrder()[category] || '').trim();
+    if (!raw) return [];
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function syncCategoryPickOrderInputs() {
+    const picks = ensureCategoryPickOrder();
+    ['MED', 'THC', 'CBD', 'INV'].forEach((cat) => {
+        const el = document.getElementById(`pick-order-${cat}`);
+        if (el) el.value = picks[cat] || '';
+    });
+}
+
+window.updateCategoryPickOrder = (category, value) => {
+    ensureCategoryPickOrder()[category] = value;
+    saveState();
+    updateStats();
+};
 
 function isArticleEligibleForCategoryPicks(article) {
     normalizeArticleDefaults(article);
@@ -1412,18 +1449,49 @@ function ensureUseInNewsletter(article) {
     return article.useInNewsletter;
 }
 
-/** Article is included in a category newsletter when it has a rank (or legacy category assignment). */
+/** Article is included when the category column has a value (number, Y, YM, etc.). */
 function isUseInNewsletter(article, category) {
     return !!String(getRankForSort(article, category) ?? '').trim();
 }
 
-function isCategoryCheckboxChecked(article, category) {
-    if (isUseInNewsletter(article, category)) return true;
-    return ensureUseInNewsletter(article)[category] === true;
+function getArticlesForCategory(category) {
+    return articles
+        .filter(a => {
+            if (!isArticleEligibleForCategoryPicks(a)) return false;
+            return isUseInNewsletter(a, category);
+        }).sort((a, b) => {
+            const rA = rankToSortValue(getRankForSort(a, category));
+            const rB = rankToSortValue(getRankForSort(b, category));
+            if (rA !== rB) return rA - rB;
+            return (a.title || '').localeCompare(b.title || '');
+        });
+}
+
+/** Order for subjects, template, and Text tab — uses top pick-order boxes when set. */
+function getArticlesByPickOrder(category) {
+    const eligible = getArticlesForCategory(category);
+    const orderKeys = parseCategoryPickOrder(category);
+    if (orderKeys.length === 0) return eligible;
+
+    const result = [];
+    const used = new Set();
+    orderKeys.forEach((key) => {
+        const keyNorm = key.toUpperCase();
+        const match = eligible.find((a) => {
+            const r = String(getRankForSort(a, category)).trim().toUpperCase();
+            return r === keyNorm;
+        });
+        if (!match) return;
+        const id = match.url || match.title || String(match.id);
+        if (used.has(id)) return;
+        used.add(id);
+        result.push(match);
+    });
+    return result;
 }
 
 function buildArticlesOnlyBlock(category) {
-    const categoryArticles = getSummaryArticlesForCategory(category);
+    const categoryArticles = getArticlesByPickOrder(category);
     if (categoryArticles.length === 0) {
         return '';
     }
@@ -1441,7 +1509,7 @@ function mergePromptWithCategoryLinks(existingPrompt, category) {
     const endMarker = `[[AUTO_CATEGORY_LINKS_${category}_END]]`;
     const wrappedBlock = promptBlock
         ? `${startMarker}\n${promptBlock}\n${endMarker}`
-        : `${startMarker}\n(No articles selected — assign rank # in Article View.)\n${endMarker}`;
+        : `${startMarker}\n(No articles selected — enter rank in MED/THC/CBD/INV columns and pick-order boxes on Article View.)\n${endMarker}`;
     const current = String(existingPrompt || '').trim();
     const markerPattern = new RegExp(`${startMarker}[\\s\\S]*?${endMarker}`, 'm');
     const brokenBlockPattern = new RegExp(`\\[\\[AUTO_CATEGORY_LINKS_${category}_[\\s\\S]*?(?=\\nhttps?:\\/\\/|\\n[A-Za-z0-9].*https?:\\/\\/|$)`, 'g');
@@ -1650,7 +1718,7 @@ window.renderEditorContent = () => {
                 </div>`;
             }).join('')
             : '<span class="text-muted">No articles picked for ' + currentEditorTab + '.</span>';
-        listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Enter a rank number in the category column in Article View.</div>';
+        listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Uses pick-order box and rank values in the ' + currentEditorTab + ' column.</div>';
     }
 };
 
@@ -1946,7 +2014,7 @@ function renderConfirmationView() {
             <div class="flex justify-between items-start gap-4 flex-wrap mb-3">
                 <div>
                     <div class="text-[1rem] font-bold mb-1">Subject Generator</div>
-                    <div class="text-[0.82rem] text-[#666]">Uses the top 3 priority articles for each category and generates clicky email subjects with emojis.</div>
+                    <div class="text-[0.82rem] text-[#666]">Uses articles listed in the pick-order boxes on Article View (comma-separated rank numbers from each column).</div>
                 </div>
                 <div class="flex gap-2.5 flex-wrap">
                     <button id="btn-generate-subjects" class="btn btn-primary btn-sm" onclick="generateAllSubjects()"><span id="btn-generate-subjects-text">Generate Subjects</span></button>
@@ -1984,9 +2052,9 @@ function getSelectedOrGeneratedSummary(category) {
 }
 
 function getSubjectArticlesForCategory(category) {
-    return getSummaryArticlesForCategory(category)
-        .filter(a => ['Y', 'YM'].includes(a.status))
-        .slice(0, 3);
+    return getArticlesByPickOrder(category).filter(a =>
+        ['Y', 'YM'].includes(normalizeArticleStatus(a.status)),
+    );
 }
 
 const TEMPLATE_FIXED_CONTENT = {
@@ -2005,8 +2073,8 @@ function isIncludedInConfirmation(article) {
 }
 
 function getMainArticlesForCategory(category) {
-    return getArticlesForCategory(category).filter(a =>
-        ['Y', 'YM'].includes(a.status) &&
+    return getArticlesByPickOrder(category).filter(a =>
+        ['Y', 'YM'].includes(normalizeArticleStatus(a.status)) &&
         isIncludedInConfirmation(a),
     );
 }
@@ -2505,7 +2573,7 @@ window.generateAllSubjects = async () => {
 
     const hasAnyArticles = categories.some((category) => categoryArticles[category].length > 0);
     if (!hasAnyArticles) {
-        return alert('No top priority articles (1, 2, 3) are available yet for subject generation.');
+        return alert('No articles for subject lines. Enter numbers in the MED/THC/CBD/INV columns and list them in the pick-order boxes (e.g. 1,2,3).');
     }
 
     const prompt = normalizeSubjectPrompt(newsletterContent.subjectPrompt);
@@ -2632,7 +2700,7 @@ window.exportNewsletter = () => {
 
 function buildArticlesHtml(category) {
     const seenUrls = new Set();
-    const relevant = getArticlesForCategory(category).filter(a => {
+    const relevant = getArticlesByPickOrder(category).filter(a => {
         if (a.url && seenUrls.has(a.url)) return false;
         if (a.url) seenUrls.add(a.url);
         return true;
@@ -3256,18 +3324,8 @@ function renderArticles() {
                 const categoryInputs =
                     ['MED', 'THC', 'CBD', 'INV']
                         .map(cat => {
-                            let rank = getRankForSort(article, cat);
-                            const useChecked = isCategoryCheckboxChecked(article, cat);
-                            const useDisabled = disabledAttr;
-
-                            return `<div class="col-cat col-cat-pick">
-                                <label class="cat-use-label ${disabledClass}" title="Include in ${cat} newsletter">
-                                    <input
-                                        type="checkbox"
-                                        ${useChecked ? 'checked' : ''}
-                                        ${useDisabled}
-                                        onchange="updateUseInNewsletter(${index}, '${cat}', this.checked)">
-                                </label>
+                            const rank = getRankForSort(article, cat);
+                            return `<div class="col-cat">
                                 <input
                                     type="text"
                                     value="${rank}"
@@ -3275,7 +3333,7 @@ function renderArticles() {
                                     class="${disabledClass} cat-rank-input"
                                     ${disabledAttr}
                                     placeholder="#"
-                                    title="Rank / order for ${cat}">
+                                    title="Rank for ${cat} (number, Y, YM)">
                             </div>`;
                         }).join('');
                 const admonition = getHeadlineLengthAdmonition(article.title);
@@ -3371,6 +3429,7 @@ function renderArticles() {
 
     updateStats();
     highlightLongTitles();
+    syncCategoryPickOrderInputs();
 }
 
 function highlightLongTitles() {
@@ -3484,49 +3543,17 @@ window.addArticleFromModal = () => {
     closeAddArticleModal();
 };
 
-window.updateUseInNewsletter = (index, cat, checked) => {
-    const article = articles[index];
-    normalizeArticleDefaults(article);
-    const picks = ensureUseInNewsletter(article);
-    picks[cat] = !!checked;
-    const key = String(cat).trim().toUpperCase();
-    if (checked) {
-        if (!String(article.ranks[key] ?? article.ranks[cat] ?? '').trim()) {
-            article.ranks[key] = 'Y';
-        }
-        if (!articleHasCategory(article, key)) {
-            article.categories.push(key);
-        }
-    } else {
-        if (article.ranks) {
-            delete article.ranks[key];
-            delete article.ranks[cat];
-        }
-        if (article.categories) {
-            article.categories = article.categories.filter(
-                c => String(c).trim().toUpperCase() !== key,
-            );
-        }
-    }
-    saveState();
-    renderArticles();
-    updateStats();
-};
-
 window.updateCategoryRank = (index, cat, value) => {
     const article = articles[index];
     normalizeArticleDefaults(article);
     if (!article.ranks) article.ranks = {};
 
     const rank = value.trim();
-    const picks = ensureUseInNewsletter(article);
     const key = String(cat).trim().toUpperCase();
 
     if (!rank) {
         delete article.ranks[key];
         delete article.ranks[cat];
-        picks[key] = false;
-        picks[cat] = false;
         if (article.categories) {
             article.categories = article.categories.filter(
                 c => String(c).trim().toUpperCase() !== key,
@@ -3538,8 +3565,6 @@ window.updateCategoryRank = (index, cat, value) => {
         if (!articleHasCategory(article, key)) {
             article.categories.push(key);
         }
-        picks[key] = true;
-        picks[cat] = true;
     }
 
     saveState();
@@ -3578,9 +3603,6 @@ function getRankForSort(article, cat) {
         article.ranks[key] ?? article.ranks[cat] ?? article.ranks[key.toLowerCase()] ?? '',
     ).trim();
     if (!r && articleHasCategory(article, key)) r = 'Y';
-    const picks = ensureUseInNewsletter(article);
-    if (!r && picks[key] === true) r = 'Y';
-    if (!r && picks[cat] === true) r = 'Y';
     return r;
 }
 
@@ -3678,31 +3700,9 @@ function isPrioritySummaryRank(rank) {
     return ['1', '2', '3', '4'].includes(value);
 }
 
-// Articles used for Text summaries: Use checked + rank # in Article View.
+// Articles used for Text summaries (respects pick-order boxes when set).
 function getSummaryArticlesForCategory(category) {
-    return articles.filter(a => {
-        if (!isArticleEligibleForCategoryPicks(a)) return false;
-        return isUseInNewsletter(a, category);
-    }).sort((a, b) => {
-        const rA = rankToSortValue(getRankForSort(a, category));
-        const rB = rankToSortValue(getRankForSort(b, category));
-        if (rA !== rB) return rA - rB;
-        return (a.title || '').localeCompare(b.title || '');
-    });
-}
-
-// Articles shown in Confirmation/final newsletter: Use checked + rank # (same picks as summary).
-function getArticlesForCategory(category) {
-    return articles
-        .filter(a => {
-            if (!isArticleEligibleForCategoryPicks(a)) return false;
-            return isUseInNewsletter(a, category);
-        }).sort((a, b) => {
-            const rA = rankToSortValue(getRankForSort(a, category));
-            const rB = rankToSortValue(getRankForSort(b, category));
-            if (rA !== rB) return rA - rB;
-            return (a.title || '').localeCompare(b.title || '');
-        });
+    return getArticlesByPickOrder(category);
 }
 
 function getSelectedRankCounts() {
@@ -3861,6 +3861,7 @@ window.loadSession = () => {
         selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
         subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
         generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
+        categoryPickOrder: nc.categoryPickOrder || { MED: '', THC: '', CBD: '', INV: '' },
     };
 
     document.getElementById('newsletter-name').value = name;

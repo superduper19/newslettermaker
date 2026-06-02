@@ -1,0 +1,2491 @@
+{
+  "meta": {
+    "name": "E2E Purablis Test Week14",
+    "generatedAt": "2026-05-22T06:55:06.865Z",
+    "e2e": true
+  },
+  "newsletters": {
+    "MED": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test Week14 - MED</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>A pharmacist is turning to cannabis compounds as a potential weapon against antibiotic-resistant superbugs after big pharma largely abandoned the fight against antimicrobial resistance. Purdue Pharma was sentenced and ordered to pay $5.5 billion in criminal penalties for illegally marketing OxyContin, deceiving federal regulators, and paying kickbacks to doctors, with a judge ordering the company chairman to apologize directly to victims in court. Despite the corporate conviction, Sackler family members and company executives avoid any prison time or individual charges, drawing sharp criticism from families who lost loved ones to the opioid crisis. One article on coffee's effects on the gut-brain axis and mental health could not be fully accessed.</div><table><tr><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\"><img src=\"https://purablis.com/News-roundup/images/freepik-4866690.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\">Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.</a></td></tr></table>\n<table><tr><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\"><img src=\"https://purablis.com/News-roundup/images/freepik-12405078.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\">Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case</a></td></tr></table>\n<table><tr><td><a href=\"https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges\"><img src=\"https://purablis.com/News-roundup/images/freepik-5671229.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges\">Purdue Pharma Sentenced in Criminal Opioid Case While Company Leaders Avoid Charges</a></td></tr></table>\n<table><tr><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\"><img src=\"https://purablis.com/News-roundup/images/freepik-17353901.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\">Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai</a></td></tr></table></body></html>",
+      "resultText": "A pharmacist is turning to cannabis compounds as a potential weapon against antibiotic-resistant superbugs after big pharma largely abandoned the fight against antimicrobial resistance. Purdue Pharma was sentenced and ordered to pay $5.5 billion in criminal penalties for illegally marketing OxyContin, deceiving federal regulators, and paying kickbacks to doctors, with a judge ordering the company chairman to apologize directly to victims in court. Despite the corporate conviction, Sackler family members and company executives avoid any prison time or individual charges, drawing sharp criticism from families who lost loved ones to the opioid crisis. One article on coffee's effects on the gut-brain axis and mental health could not be fully accessed.",
+      "articles": [
+        {
+          "id": 12,
+          "url": "https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-4866690.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "2",
+            "MED": "1",
+            "THC": "Y"
+          },
+          "title": "Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.",
+          "status": "Y",
+          "addedAt": "2026-05-04T05:48:35.789Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "superbug flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4866/4866690.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4866690.png"
+        },
+        {
+          "id": 44,
+          "url": "https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-12405078.png",
+          "notes": "y",
+          "ranks": {
+            "CBD": "1",
+            "INV": "Y",
+            "MED": "2"
+          },
+          "title": "Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Purdue Pharma, the OxyContin manufacturer, was sentenced in federal court on April 28, 2026, and ordered to pay $5.5 billion in criminal penalties for its role in fueling the opioid epidemic. The company will cease operations and transfer assets to Knoa Pharma LLC.",
+          "publishImage": true,
+          "imageSearchQuery": "death flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/12405/12405078.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-12405078.png"
+        },
+        {
+          "id": 45,
+          "url": "https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-5671229.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "3"
+          },
+          "title": "Purdue Pharma Sentenced in Criminal Opioid Case While Company Leaders Avoid Charges",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "Purdue Pharma will pay the DOJ $225 million in a criminal settlement while Sackler family members contribute billions in a bankruptcy deal, but the company's owners and executives avoid prison time despite the company's role in the opioid crisis.",
+          "publishImage": true,
+          "imageSearchQuery": "fines",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5671/5671229.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5671229.png"
+        },
+        {
+          "id": 11,
+          "url": "https://apjjf.org/Peter-Dale-Scott/3340/article",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-17353901.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:57:29.126Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "corruption",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17353/17353901.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17353901.png"
+        },
+        {
+          "id": 15,
+          "url": "https://www.youtube.com/watch?v=Aq5Ua6wuYLw",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-14456294.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:59:42.723Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "poppy flower",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14456/14456294.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14456294.png"
+        },
+        {
+          "id": 36,
+          "url": "https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more",
+          "date": "04/29/26",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "notes": "yup",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "Y",
+            "THC": "YM"
+          },
+          "title": "Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "GBH radio interview with Dr. Peter Grinspoon exploring ibogaine's potential for treating opioid addiction and PTSD in veterans, its risks including cardiac arrhythmias, and the implications of Trump's executive order accelerating psychedelic research.",
+          "publishImage": true,
+          "imageSearchQuery": "Iboga",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+        },
+        {
+          "id": 21,
+          "url": "https://www.psychiatrictimes.com/view/fda-fast-tracks-psychedelic-therapies-for-depression-ptsd-and-alcohol-use-disorder",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-3832969.png",
+          "notes": "from 24th",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "FDA Fast-Tracks Psychedelic Therapies for Depression, PTSD, and Alcohol Use Disorder",
+          "status": "YM",
+          "addedAt": "2026-05-03T04:24:28.098Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Fast-Track flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3832/3832969.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3832969.png"
+        },
+        {
+          "id": 53,
+          "url": "https://lynnwebstermd.substack.com/p/the-opioid-crisis-is-driven-by-demand",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-6159698.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "What Drives the Opioid Crisis?",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "Dr. Lynn Webster argues that while fentanyl's potency has made America's overdose crisis far more lethal, supply alone cannot explain why demand persists — pain, despair, mental illness, and failed policy must be addressed to stem the crisis.",
+          "publishImage": true,
+          "imageSearchQuery": "crisis",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6159/6159698.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6159698.png"
+        },
+        {
+          "id": 33,
+          "url": "https://www.medscape.com/viewarticle/race-first-psychedelic-approval-whos-leading-2026a1000e0n",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-14673307.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "3",
+            "MED": "Y"
+          },
+          "title": "In the Race to the First Psychedelic Approval, Who's Leading?",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Medscape examines which psychedelic compounds are closest to FDA approval, with Compass Pathways' COMP360 psilocybin furthest along. FDA Commissioner Makary expects a decision by late summer or fall 2026, with therapies required in supervised clinical settings.",
+          "publishImage": true,
+          "imageSearchQuery": "Race First flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14673/14673307.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14673307.png"
+        },
+        {
+          "id": 4,
+          "url": "https://www.medicalnewstoday.com/articles/coffee-gut-brain-axis-mental-health-brain-health",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-6006625.png",
+          "notes": "",
+          "ranks": {
+            "MED": "4"
+          },
+          "title": "All Coffee, Even Decaf, Can Improve Mood and Brain Health, Study Finds",
+          "status": "YM",
+          "addedAt": "2026-05-04T07:35:02.875Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Coffee flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6006/6006625.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6006625.png"
+        },
+        {
+          "id": 26,
+          "url": "https://mgmagazine.com/policy-regulation/federal-policy/cannabis-schedule-iii-impact-280e-analysis/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-9793501.png",
+          "notes": "",
+          "ranks": {
+            "INV": "5",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Schedule III Cannabis Rescheduling: 280E Tax Impact & Analysis",
+          "status": "YM",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED"
+          ],
+          "description": "An in-depth analysis of how the April 23 DOJ order reclassifying state-licensed medical cannabis to Schedule III affects 280E tax obligations. The article clarifies that relief applies to medical operators but leaves the adult-use sector in limbo pending further proceedings.",
+          "publishImage": true,
+          "imageSearchQuery": "tax flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/9793/9793501.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-9793501.png"
+        },
+        {
+          "id": 47,
+          "url": "https://brainhealthinstitute.rutgers.edu/2026/04/29/opioid-crisis-hits-hardest-in-new-jerseys-most-vulnerable-communities/",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-14463734.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "MED": "YM"
+          },
+          "title": "Opioid Crisis Hits Hardest in New Jersey's Most Vulnerable Communities",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 1,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "A new Rutgers study reveals that the opioid epidemic is disproportionately impacting New Jersey's most socially vulnerable communities, with higher overdose rates and wider disparities in healthcare access persisting across counties.",
+          "publishImage": true,
+          "imageSearchQuery": "new jersey",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14463/14463734.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14463734.png"
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "THC": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test Week14 - THC</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>State-licensed medical cannabis operators face a hard June 22, 2026 deadline to file for DEA Schedule III registration or lose protected operating continuity, with the rescheduling also eliminating the Section 280E tax burden and potentially dropping effective tax rates from around 70-80% down to 20-30%. California cannabis vendors are publicly naming the state's lowest-rated operators on a so-called \"shit list,\" though full details of the article were not accessible. Advocates argue that federal rescheduling now makes it illegal to deny medical cannabis patients housing, employment, healthcare or VA services, since agencies can no longer hide behind the old Schedule I \"no accepted medical use\" justification to discriminate.</div><table><tr><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\"><img src=\"https://purablis.com/News-roundup/images/freepik-4866690.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\">Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.</a></td></tr></table>\n<table><tr><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\"><img src=\"https://purablis.com/News-roundup/images/freepik-17353901.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\">Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai</a></td></tr></table>\n<table><tr><td><a href=\"https://www.youtube.com/watch?v=Aq5Ua6wuYLw\"><img src=\"https://purablis.com/News-roundup/images/freepik-14456294.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.youtube.com/watch?v=Aq5Ua6wuYLw\">Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001</a></td></tr></table>\n<table><tr><td><a href=\"https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more\"><img src=\"https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more\">Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More</a></td></tr></table></body></html>",
+      "resultText": "State-licensed medical cannabis operators face a hard June 22, 2026 deadline to file for DEA Schedule III registration or lose protected operating continuity, with the rescheduling also eliminating the Section 280E tax burden and potentially dropping effective tax rates from around 70-80% down to 20-30%. California cannabis vendors are publicly naming the state's lowest-rated operators on a so-called \"shit list,\" though full details of the article were not accessible. Advocates argue that federal rescheduling now makes it illegal to deny medical cannabis patients housing, employment, healthcare or VA services, since agencies can no longer hide behind the old Schedule I \"no accepted medical use\" justification to discriminate.",
+      "articles": [
+        {
+          "id": 12,
+          "url": "https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-4866690.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "2",
+            "MED": "1",
+            "THC": "Y"
+          },
+          "title": "Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.",
+          "status": "Y",
+          "addedAt": "2026-05-04T05:48:35.789Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "superbug flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4866/4866690.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4866690.png"
+        },
+        {
+          "id": 11,
+          "url": "https://apjjf.org/Peter-Dale-Scott/3340/article",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-17353901.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:57:29.126Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "corruption",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17353/17353901.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17353901.png"
+        },
+        {
+          "id": 15,
+          "url": "https://www.youtube.com/watch?v=Aq5Ua6wuYLw",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-14456294.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:59:42.723Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "poppy flower",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14456/14456294.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14456294.png"
+        },
+        {
+          "id": 36,
+          "url": "https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more",
+          "date": "04/29/26",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "notes": "yup",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "Y",
+            "THC": "YM"
+          },
+          "title": "Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "GBH radio interview with Dr. Peter Grinspoon exploring ibogaine's potential for treating opioid addiction and PTSD in veterans, its risks including cardiac arrhythmias, and the implications of Trump's executive order accelerating psychedelic research.",
+          "publishImage": true,
+          "imageSearchQuery": "Iboga",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+        },
+        {
+          "id": 26,
+          "url": "https://mgmagazine.com/policy-regulation/federal-policy/cannabis-schedule-iii-impact-280e-analysis/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-9793501.png",
+          "notes": "",
+          "ranks": {
+            "INV": "5",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Schedule III Cannabis Rescheduling: 280E Tax Impact & Analysis",
+          "status": "YM",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED"
+          ],
+          "description": "An in-depth analysis of how the April 23 DOJ order reclassifying state-licensed medical cannabis to Schedule III affects 280E tax obligations. The article clarifies that relief applies to medical operators but leaves the adult-use sector in limbo pending further proceedings.",
+          "publishImage": true,
+          "imageSearchQuery": "tax flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/9793/9793501.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-9793501.png"
+        },
+        {
+          "id": 29,
+          "url": "https://healthdataconsortium.org/medical-marijuana-schedule-iii-patient-impact-2026/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-542793.png",
+          "notes": "",
+          "ranks": {
+            "THC": "1"
+          },
+          "title": "What Medical Cannabis Operators Must Do Now",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "A practical guide for state medical cannabis license holders detailing the 60-day DEA registration deadline of June 22, 2026, how to file for Schedule III registration, and what the rescheduling means for patients and operators.",
+          "publishImage": true,
+          "imageSearchQuery": "operations flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/542/542793.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-542793.png"
+        },
+        {
+          "id": 13,
+          "url": "https://hightimes.com/business/the-cannabis-shit-list-where-vendors-are-naming-californias-lowest-rated-operators/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-4201697.png",
+          "notes": "",
+          "ranks": {
+            "THC": "2"
+          },
+          "title": "The Cannabis 'Shit List': Where Vendors Are Naming California's Lowest-Rated Operators",
+          "status": "Y",
+          "addedAt": "2026-05-04T05:46:31.854Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "shit flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4201/4201697.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4201697.png"
+        },
+        {
+          "id": 6,
+          "url": "https://www.marijuanamoment.net/federal-marijuana-reschedulhttps://www.marijuanamoment.net/federal-marijuana-rescheduling-will-end-discrimination-in-housing-healthcare-and-employment-for-medical-cannabis-patients-op-ed/ing-will-end-discrimination-in-housing-healthcare-and-employment-for-medical-cannabis-patients-op-ed/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-3586405.png",
+          "notes": "",
+          "ranks": {
+            "THC": "3"
+          },
+          "title": "Cannabis Rescheduling Will End Discrimination in Housing, Healthcare and Employment",
+          "status": "Y",
+          "addedAt": "2026-05-04T06:28:45.480Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "THC"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "housing discrimination",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3586/3586405.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3586405.png"
+        },
+        {
+          "id": 28,
+          "url": "https://www.cannabisregulations.ai/cannabis-and-hemp-regulations-compliance-ai-blog/cannabis-280e-schedule-iii-tax-playbook-2026",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-568410.png",
+          "notes": "",
+          "ranks": {
+            "INV": "4",
+            "THC": "Y"
+          },
+          "title": "Cannabis 280E After Schedule III: The 2026 Operator and CPA Tax Playbook",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 6,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A detailed tax guide for cannabis operators and CPAs navigating the post-rescheduling landscape, covering how to handle 280E relief for medical vs. adult-use operations, amended returns, and transition rules following the April 23 DOJ order.",
+          "publishImage": true,
+          "imageSearchQuery": "cpa flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/568/568410.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-568410.png"
+        },
+        {
+          "id": 31,
+          "url": "https://gisuser.com/2026/04/cannabis-industry-stats-2025-2026-growth-trends-market-size-key-insights/",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-5776947.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis Industry Stats 2025–2026: Growth Trends, Market Size & Key Insights",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A comprehensive look at cannabis industry data for 2025-2026, reporting that revenue is expected to reach $47 billion. North America accounts for over 83% of global revenue, with growth driven by regulatory refinement rather than new legalization.",
+          "publishImage": true,
+          "imageSearchQuery": "industry trend",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5776/5776947.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5776947.png"
+        },
+        {
+          "id": 27,
+          "url": "https://foleyhoag.com/news-and-insights/publications/alerts-and-updates/2026/april/cannabis-rescheduling-doj-treasury-and-dea-updates-since-the-april-23-order/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-7312763.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis Rescheduling: DOJ, Treasury, and DEA Updates Since the April 23 Order",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "Legal analysis from Foley Hoag covering post-rescheduling developments, including the DEA registration portal opening April 29, Treasury/IRS guidance on 280E tax relief, and the formal Federal Register publication date of April 28, 2026 for the rescheduling order.",
+          "publishImage": true,
+          "imageSearchQuery": "drug rescheduling",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/7312/7312763.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-7312763.png"
+        },
+        {
+          "id": 7,
+          "url": "https://archive.is/NAI7A",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-6970490.png",
+          "notes": "",
+          "ranks": {
+            "THC": "Y"
+          },
+          "title": "An L.A. Man Recruited Thieves and Used Drones to Steal Cannabis and Luxury Goods",
+          "status": "YM",
+          "addedAt": "2026-05-04T06:23:27.126Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 5,
+          "categories": [
+            "THC"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "kawaii theif",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6970/6970490.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6970490.png"
+        },
+        {
+          "id": 25,
+          "url": "https://marijuana.net/cannabis-reform-momentum-2026-legalization-lags/",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-17504409.png",
+          "notes": "",
+          "ranks": {
+            "THC": "Y"
+          },
+          "title": "Cannabis Reform Momentum Builds in 2026, But Full Legalization Still Lags",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 3,
+          "categories": [
+            "THC"
+          ],
+          "description": "An analysis of the uneven progress of cannabis reform in 2026, covering federal policy shifts, state-level legislation, and evolving hemp regulations, noting that medical cannabis, hemp products, and adult-use cannabis are increasingly treated as distinct regulatory categories.",
+          "publishImage": true,
+          "imageSearchQuery": "reform",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17504/17504409.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17504409.png"
+        },
+        {
+          "id": 30,
+          "url": "https://www.wecannca.com/federal-cannabis-rescheduling-cannabis-operators/",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-16989999.png",
+          "notes": "",
+          "ranks": {
+            "THC": "Y"
+          },
+          "title": "Federal Cannabis Rescheduling Is Here: What It Means for Cannabis Operators",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "WeCann breaks down the April 22 DOJ final order moving state-licensed medical cannabis to Schedule III, explaining different implications for medical, adult-use, and dual-license operators, and the critical 60-day compliance window.",
+          "publishImage": true,
+          "imageSearchQuery": "legal flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/16989/16989999.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-16989999.png"
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "CBD": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test Week14 - CBD</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>Purdue Pharma got sentenced and ordered to pay $5.5 billion in criminal penalties for deceiving federal regulators and paying doctors kickbacks to boost OxyContin sales, fueling the opioid epidemic. A new Oxford-published study shows that minor cannabinoids CBC and CBG can boost silver's antimicrobial power by up to 64-fold against superbugs like MRSA, E. coli, and Pseudomonas, with clinical trials of the combination planned for late 2026. Swedish researchers found that salmon dosed with cocaine and its metabolite benzoylecgonine swam significantly faster and farther than sober fish, raising concerns about pharmaceutical pollution in waterways affecting wildlife behavior.</div><table><tr><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\"><img src=\"https://purablis.com/News-roundup/images/freepik-4866690.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/\">Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.</a></td></tr></table>\n<table><tr><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\"><img src=\"https://purablis.com/News-roundup/images/freepik-12405078.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\">Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case</a></td></tr></table>\n<table><tr><td><a href=\"https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges\"><img src=\"https://purablis.com/News-roundup/images/freepik-5671229.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges\">Purdue Pharma Sentenced in Criminal Opioid Case While Company Leaders Avoid Charges</a></td></tr></table>\n<table><tr><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\"><img src=\"https://purablis.com/News-roundup/images/freepik-17353901.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\">Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai</a></td></tr></table></body></html>",
+      "resultText": "Purdue Pharma got sentenced and ordered to pay $5.5 billion in criminal penalties for deceiving federal regulators and paying doctors kickbacks to boost OxyContin sales, fueling the opioid epidemic. A new Oxford-published study shows that minor cannabinoids CBC and CBG can boost silver's antimicrobial power by up to 64-fold against superbugs like MRSA, E. coli, and Pseudomonas, with clinical trials of the combination planned for late 2026. Swedish researchers found that salmon dosed with cocaine and its metabolite benzoylecgonine swam significantly faster and farther than sober fish, raising concerns about pharmaceutical pollution in waterways affecting wildlife behavior.",
+      "articles": [
+        {
+          "id": 12,
+          "url": "https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-4866690.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "2",
+            "MED": "1",
+            "THC": "Y"
+          },
+          "title": "Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.",
+          "status": "Y",
+          "addedAt": "2026-05-04T05:48:35.789Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "superbug flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4866/4866690.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4866690.png"
+        },
+        {
+          "id": 44,
+          "url": "https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-12405078.png",
+          "notes": "y",
+          "ranks": {
+            "CBD": "1",
+            "INV": "Y",
+            "MED": "2"
+          },
+          "title": "Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Purdue Pharma, the OxyContin manufacturer, was sentenced in federal court on April 28, 2026, and ordered to pay $5.5 billion in criminal penalties for its role in fueling the opioid epidemic. The company will cease operations and transfer assets to Knoa Pharma LLC.",
+          "publishImage": true,
+          "imageSearchQuery": "death flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/12405/12405078.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-12405078.png"
+        },
+        {
+          "id": 45,
+          "url": "https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-5671229.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "3"
+          },
+          "title": "Purdue Pharma Sentenced in Criminal Opioid Case While Company Leaders Avoid Charges",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "Purdue Pharma will pay the DOJ $225 million in a criminal settlement while Sackler family members contribute billions in a bankruptcy deal, but the company's owners and executives avoid prison time despite the company's role in the opioid crisis.",
+          "publishImage": true,
+          "imageSearchQuery": "fines",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5671/5671229.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5671229.png"
+        },
+        {
+          "id": 11,
+          "url": "https://apjjf.org/Peter-Dale-Scott/3340/article",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-17353901.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:57:29.126Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "corruption",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17353/17353901.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17353901.png"
+        },
+        {
+          "id": 15,
+          "url": "https://www.youtube.com/watch?v=Aq5Ua6wuYLw",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-14456294.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:59:42.723Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "poppy flower",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14456/14456294.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14456294.png"
+        },
+        {
+          "id": 36,
+          "url": "https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more",
+          "date": "04/29/26",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "notes": "yup",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "Y",
+            "THC": "YM"
+          },
+          "title": "Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "GBH radio interview with Dr. Peter Grinspoon exploring ibogaine's potential for treating opioid addiction and PTSD in veterans, its risks including cardiac arrhythmias, and the implications of Trump's executive order accelerating psychedelic research.",
+          "publishImage": true,
+          "imageSearchQuery": "Iboga",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+        },
+        {
+          "id": 21,
+          "url": "https://www.psychiatrictimes.com/view/fda-fast-tracks-psychedelic-therapies-for-depression-ptsd-and-alcohol-use-disorder",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-3832969.png",
+          "notes": "from 24th",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "FDA Fast-Tracks Psychedelic Therapies for Depression, PTSD, and Alcohol Use Disorder",
+          "status": "YM",
+          "addedAt": "2026-05-03T04:24:28.098Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Fast-Track flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3832/3832969.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3832969.png"
+        },
+        {
+          "id": 53,
+          "url": "https://lynnwebstermd.substack.com/p/the-opioid-crisis-is-driven-by-demand",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-6159698.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "What Drives the Opioid Crisis?",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "Dr. Lynn Webster argues that while fentanyl's potency has made America's overdose crisis far more lethal, supply alone cannot explain why demand persists — pain, despair, mental illness, and failed policy must be addressed to stem the crisis.",
+          "publishImage": true,
+          "imageSearchQuery": "crisis",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6159/6159698.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6159698.png"
+        },
+        {
+          "id": 33,
+          "url": "https://www.medscape.com/viewarticle/race-first-psychedelic-approval-whos-leading-2026a1000e0n",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-14673307.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "3",
+            "MED": "Y"
+          },
+          "title": "In the Race to the First Psychedelic Approval, Who's Leading?",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Medscape examines which psychedelic compounds are closest to FDA approval, with Compass Pathways' COMP360 psilocybin furthest along. FDA Commissioner Makary expects a decision by late summer or fall 2026, with therapies required in supervised clinical settings.",
+          "publishImage": true,
+          "imageSearchQuery": "Race First flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14673/14673307.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14673307.png"
+        },
+        {
+          "id": 47,
+          "url": "https://brainhealthinstitute.rutgers.edu/2026/04/29/opioid-crisis-hits-hardest-in-new-jerseys-most-vulnerable-communities/",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-14463734.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "MED": "YM"
+          },
+          "title": "Opioid Crisis Hits Hardest in New Jersey's Most Vulnerable Communities",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 1,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "A new Rutgers study reveals that the opioid epidemic is disproportionately impacting New Jersey's most socially vulnerable communities, with higher overdose rates and wider disparities in healthcare access persisting across counties.",
+          "publishImage": true,
+          "imageSearchQuery": "new jersey",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14463/14463734.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14463734.png"
+        },
+        {
+          "id": 5,
+          "url": "https://archive.is/vq4De",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-6973797.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "3"
+          },
+          "title": "These Salmon Got High on Cocaine. That Wasn't the Craziest Part.",
+          "status": "Y",
+          "addedAt": "2026-05-04T07:28:08.162Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 3,
+          "categories": [
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "crazy fish",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6973/6973797.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6973797.png"
+        },
+        {
+          "id": 10,
+          "url": "https://hempgazette.com/news/dea-assigns-new-drug-code-hexahydrocannabinol-hhc-schedule-i/",
+          "date": "",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/dea.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "DEA Assigns New Drug Code to Hexahydrocannabinol (HHC), Reaffirming Schedule I Status",
+          "status": "Y",
+          "addedAt": "2026-05-04T06:08:12.623Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 5,
+          "categories": [
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "dea",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/dea.png",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/dea.png"
+        },
+        {
+          "id": 46,
+          "url": "https://www.npr.org/2026/04/28/nx-s1-5801463/natural-disasters-medication-access-opioid-addiction",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-3431512.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "Natural Disasters Can Cause Another Crisis for Those Recovering from Opioid Addiction",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD"
+          ],
+          "description": "People recovering from opioid addiction risk relapse when they can't access medications after natural disasters. A group of doctors is calling for lawmakers to ease access to meds like buprenorphine and methadone during emergencies.",
+          "publishImage": true,
+          "imageSearchQuery": "Natural Disasters",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3431/3431512.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3431512.png"
+        },
+        {
+          "id": 34,
+          "url": "https://www.statnews.com/2026/05/01/psychedelics-law-black-hispanic-indigenous-groups-research/",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-7527475.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "Psychedelics Should Be More Available to People from Minority Groups",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 3,
+          "categories": [
+            "CBD"
+          ],
+          "description": "STAT opinion piece by researchers from the University of Chicago and NYU arguing that the persistent exclusion of racial minorities from psychedelics research must be addressed as the field advances, noting disparities in clinical trial participation and outcomes.",
+          "publishImage": true,
+          "imageSearchQuery": "minorities kawaii flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/7527/7527475.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-7527475.png"
+        },
+        {
+          "id": 9,
+          "url": "https://hempgazette.com/news/dea-assigns-new-drug-code-hexahydrocannabinol-hhc-schedule-i/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-6815955.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "Trump Calls on Congress to Loosen Fed Restrictions on Hemp-Derived CBD and Cannabinoids",
+          "status": "YM",
+          "addedAt": "2026-05-04T06:10:24.227Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "cbd",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6815/6815955.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6815955.png"
+        },
+        {
+          "id": 24,
+          "url": "https://www.cannabisbusinesstimes.com/hemp/news/15823852/s-house-passes-2026-farm-bill-intoxicating-hemp-product-ban-remains",
+          "date": "04/30/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-3698754.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "U.S. House Passes 2026 Farm Bill; Intoxicating Hemp Product Ban Remains",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 8,
+          "categories": [
+            "CBD"
+          ],
+          "description": "The U.S. House voted 224-200 to pass the 2026 Farm Bill, which redefines hemp to include total THC (including THCA) and maintains the impending ban on intoxicating hemp products. The legislation now heads to the Senate.",
+          "publishImage": true,
+          "imageSearchQuery": "congress",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3698/3698754.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3698754.png"
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "INV": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test Week14 - INV</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>Canada's cannabis industry is flexing its global advantage, with surviving companies benefiting from world-class facilities built during the investor boom and years of experience in heavy regulation that new competitors can't easily replicate. The FDA could approve the first psychedelic therapy as early as late summer or fall 2026, with Compass Pathways' synthetic psilocybin for treatment-resistant depression leading the pack after receiving a National Priority Voucher that cuts review time to one or two months. Following the DOJ's April 22 order moving medical cannabis to Schedule III, Section 280E tax relief now applies to state-licensed medical operations for the full 2026 tax year, but adult-use businesses still face effective federal tax rates that can top 70%. </div><table><tr><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\"><img src=\"https://purablis.com/News-roundup/images/freepik-12405078.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case\">Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case</a></td></tr></table>\n<table><tr><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\"><img src=\"https://purablis.com/News-roundup/images/freepik-17353901.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://apjjf.org/Peter-Dale-Scott/3340/article\">Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai</a></td></tr></table>\n<table><tr><td><a href=\"https://www.youtube.com/watch?v=Aq5Ua6wuYLw\"><img src=\"https://purablis.com/News-roundup/images/freepik-14456294.png\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.youtube.com/watch?v=Aq5Ua6wuYLw\">Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001</a></td></tr></table>\n<table><tr><td><a href=\"https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more\"><img src=\"https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more\">Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More</a></td></tr></table></body></html>",
+      "resultText": "Canada's cannabis industry is flexing its global advantage, with surviving companies benefiting from world-class facilities built during the investor boom and years of experience in heavy regulation that new competitors can't easily replicate. The FDA could approve the first psychedelic therapy as early as late summer or fall 2026, with Compass Pathways' synthetic psilocybin for treatment-resistant depression leading the pack after receiving a National Priority Voucher that cuts review time to one or two months. Following the DOJ's April 22 order moving medical cannabis to Schedule III, Section 280E tax relief now applies to state-licensed medical operations for the full 2026 tax year, but adult-use businesses still face effective federal tax rates that can top 70%. ",
+      "articles": [
+        {
+          "id": 44,
+          "url": "https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-12405078.png",
+          "notes": "y",
+          "ranks": {
+            "CBD": "1",
+            "INV": "Y",
+            "MED": "2"
+          },
+          "title": "Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Purdue Pharma, the OxyContin manufacturer, was sentenced in federal court on April 28, 2026, and ordered to pay $5.5 billion in criminal penalties for its role in fueling the opioid epidemic. The company will cease operations and transfer assets to Knoa Pharma LLC.",
+          "publishImage": true,
+          "imageSearchQuery": "death flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/12405/12405078.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-12405078.png"
+        },
+        {
+          "id": 11,
+          "url": "https://apjjf.org/Peter-Dale-Scott/3340/article",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-17353901.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:57:29.126Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "corruption",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17353/17353901.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17353901.png"
+        },
+        {
+          "id": 15,
+          "url": "https://www.youtube.com/watch?v=Aq5Ua6wuYLw",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-14456294.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001",
+          "status": "COOL FINDS",
+          "addedAt": "2026-05-03T04:59:42.723Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "THC",
+            "CBD",
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "poppy flower",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14456/14456294.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14456294.png"
+        },
+        {
+          "id": 36,
+          "url": "https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more",
+          "date": "04/29/26",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "notes": "yup",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "Y",
+            "THC": "YM"
+          },
+          "title": "Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "GBH radio interview with Dr. Peter Grinspoon exploring ibogaine's potential for treating opioid addiction and PTSD in veterans, its risks including cardiac arrhythmias, and the implications of Trump's executive order accelerating psychedelic research.",
+          "publishImage": true,
+          "imageSearchQuery": "Iboga",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+        },
+        {
+          "id": 33,
+          "url": "https://www.medscape.com/viewarticle/race-first-psychedelic-approval-whos-leading-2026a1000e0n",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-14673307.png",
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "3",
+            "MED": "Y"
+          },
+          "title": "In the Race to the First Psychedelic Approval, Who's Leading?",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 4,
+          "categories": [
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Medscape examines which psychedelic compounds are closest to FDA approval, with Compass Pathways' COMP360 psilocybin furthest along. FDA Commissioner Makary expects a decision by late summer or fall 2026, with therapies required in supervised clinical settings.",
+          "publishImage": true,
+          "imageSearchQuery": "Race First flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14673/14673307.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14673307.png"
+        },
+        {
+          "id": 26,
+          "url": "https://mgmagazine.com/policy-regulation/federal-policy/cannabis-schedule-iii-impact-280e-analysis/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-9793501.png",
+          "notes": "",
+          "ranks": {
+            "INV": "5",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Schedule III Cannabis Rescheduling: 280E Tax Impact & Analysis",
+          "status": "YM",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED"
+          ],
+          "description": "An in-depth analysis of how the April 23 DOJ order reclassifying state-licensed medical cannabis to Schedule III affects 280E tax obligations. The article clarifies that relief applies to medical operators but leaves the adult-use sector in limbo pending further proceedings.",
+          "publishImage": true,
+          "imageSearchQuery": "tax flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/9793/9793501.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-9793501.png"
+        },
+        {
+          "id": 28,
+          "url": "https://www.cannabisregulations.ai/cannabis-and-hemp-regulations-compliance-ai-blog/cannabis-280e-schedule-iii-tax-playbook-2026",
+          "date": "04/28/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-568410.png",
+          "notes": "",
+          "ranks": {
+            "INV": "4",
+            "THC": "Y"
+          },
+          "title": "Cannabis 280E After Schedule III: The 2026 Operator and CPA Tax Playbook",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 6,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A detailed tax guide for cannabis operators and CPAs navigating the post-rescheduling landscape, covering how to handle 280E relief for medical vs. adult-use operations, amended returns, and transition rules following the April 23 DOJ order.",
+          "publishImage": true,
+          "imageSearchQuery": "cpa flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/568/568410.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-568410.png"
+        },
+        {
+          "id": 31,
+          "url": "https://gisuser.com/2026/04/cannabis-industry-stats-2025-2026-growth-trends-market-size-key-insights/",
+          "date": "04/29/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-5776947.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis Industry Stats 2025–2026: Growth Trends, Market Size & Key Insights",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A comprehensive look at cannabis industry data for 2025-2026, reporting that revenue is expected to reach $47 billion. North America accounts for over 83% of global revenue, with growth driven by regulatory refinement rather than new legalization.",
+          "publishImage": true,
+          "imageSearchQuery": "industry trend",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5776/5776947.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5776947.png"
+        },
+        {
+          "id": 27,
+          "url": "https://foleyhoag.com/news-and-insights/publications/alerts-and-updates/2026/april/cannabis-rescheduling-doj-treasury-and-dea-updates-since-the-april-23-order/",
+          "date": "04/27/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-7312763.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis Rescheduling: DOJ, Treasury, and DEA Updates Since the April 23 Order",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "Legal analysis from Foley Hoag covering post-rescheduling developments, including the DEA registration portal opening April 29, Treasury/IRS guidance on 280E tax relief, and the formal Federal Register publication date of April 28, 2026 for the rescheduling order.",
+          "publishImage": true,
+          "imageSearchQuery": "drug rescheduling",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/7312/7312763.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-7312763.png"
+        },
+        {
+          "id": 3,
+          "url": "https://stratcann.com/news/canadas-cannabis-industry-positioned-global-industry/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-16205755.png",
+          "notes": "",
+          "ranks": {
+            "INV": "1"
+          },
+          "title": "Canada’s Cannabis Industry Stands Uniquely Positioned in Growing Global Industry",
+          "status": "Y",
+          "addedAt": "2026-05-04T18:05:43.612Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Canada flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/16205/16205755.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-16205755.png"
+        },
+        {
+          "id": 11,
+          "url": "https://hightimes.com/news/pax-cannabica-how-the-plant-became-a-geopolitical-tool-in-a-world-at-war/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-2897748.png",
+          "notes": "",
+          "ranks": {
+            "INV": "2"
+          },
+          "title": "Pax Cannabica: How the Plant Became a Geopolitical Tool in a World at War",
+          "status": "Y",
+          "addedAt": "2026-05-04T05:51:24.797Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 6,
+          "categories": [
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "global flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/2897/2897748.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-2897748.png"
+        },
+        {
+          "id": 41,
+          "url": "https://www.bloomberg.com/features/2026-jjs-spravato-psychedelic-blockbuster-drug/",
+          "date": "05/01/26",
+          "image": "https://purablis.com/News-roundup/images/freepik-6079282.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y"
+          },
+          "title": "J&J's Ketamine-Derived Nasal Spray Paves the Way for Psychedelic Therapy",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:48:03.406Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "imagePage": 2,
+          "categories": [
+            "INV"
+          ],
+          "description": "Bloomberg feature on how Johnson & Johnson's Spravato nasal spray has become a $2.3 billion blockbuster, expanding from 2,800 to over 7,000 certified sites, and how its success is paving the way for next-generation psychedelic therapies from rivals like Compass Pathways and AbbVie.",
+          "publishImage": true,
+          "imageSearchQuery": "nasal spray flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6079/6079282.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6079282.png"
+        },
+        {
+          "id": 1,
+          "url": "https://www.rollingstone.com/culture-council/articles/global-expansion-is-becoming-strategic-imperative-cannabis-companies-1235556607/",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-18549576.png",
+          "notes": "",
+          "ranks": {
+            "INV": "Y"
+          },
+          "title": "Why Global Expansion Is Becoming a Strategic Imperative for Cannabis Companies",
+          "status": "Y",
+          "addedAt": "2026-05-04T18:23:47.275Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Global Expansion",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/18549/18549576.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-18549576.png"
+        },
+        {
+          "id": 2,
+          "url": "https://archive.is/qyi0B",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-11031268.png",
+          "notes": "",
+          "ranks": {
+            "INV": "YM"
+          },
+          "title": "22 Monks Smuggled 240 Pounds of Cannabis Into Sri Lanka, Officials Say",
+          "status": "YM",
+          "addedAt": "2026-05-04T18:20:45.831Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "Monks kawaii flat",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/11031/11031268.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-11031268.png"
+        },
+        {
+          "id": 50,
+          "url": "https://www.hklaw.com/en/insights/publications/2026/04/cannabis-rescheduling-doj-fda-announce-rescheduling",
+          "date": "04/30/26",
+          "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "notes": "",
+          "ranks": {
+            "INV": "YM"
+          },
+          "title": "Cannabis Rescheduling: DOJ Announces Rescheduling of Certain Products",
+          "status": "Y",
+          "addedAt": "2026-05-02T08:50:39.449Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV"
+          ],
+          "description": "Holland & Knight analyzes the DOJ's April 23 order rescheduling FDA-approved and state-licensed medical cannabis to Schedule III, detailing the implications for 280E tax relief, DEA registration, banking access, and the proposed June 29 hearing timeline.",
+          "publishImage": true,
+          "imageSearchQuery": "Cannabis Rescheduling:",
+          "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+          "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+        },
+        {
+          "id": 22,
+          "url": "https://archive.is/cceGV",
+          "date": "",
+          "image": "https://purablis.com/News-roundup/images/freepik-15427551.png",
+          "notes": "",
+          "ranks": {
+            "INV": "YM"
+          },
+          "title": "The Cannabis Industry's New Best Friend? President Trump",
+          "status": "YM",
+          "addedAt": "2026-05-03T03:58:54.671Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV"
+          ],
+          "description": "",
+          "publishImage": true,
+          "imageSearchQuery": "trump",
+          "originalImageUrl": "https://cdn-icons-png.freepik.com/128/15427/15427551.png",
+          "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-15427551.png"
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    }
+  },
+  "inspirationalImages": [
+    "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+  ],
+  "articles": [
+    {
+      "id": 12,
+      "url": "https://hightimes.com/health/big-pharma-gave-up-on-superbugs-this-pharmacist-asked-the-cannabis-plant-instead/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-4866690.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "2",
+        "MED": "1",
+        "THC": "Y"
+      },
+      "title": "Big Pharma Gave Up on Superbugs. This Pharmacist Asked the Cannabis Plant Instead.",
+      "status": "Y",
+      "addedAt": "2026-05-04T05:48:35.789Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "MED",
+        "THC",
+        "CBD"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "superbug flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4866/4866690.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4866690.png"
+    },
+    {
+      "id": 44,
+      "url": "https://www.foxbusiness.com/politics/purdue-pharma-sentenced-5-5b-opioid-criminal-case",
+      "date": "04/28/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-12405078.png",
+      "notes": "y",
+      "ranks": {
+        "CBD": "1",
+        "INV": "Y",
+        "MED": "2"
+      },
+      "title": "Purdue Pharma Sentenced and Ordered to Pay $5.5 Billion in Opioid Criminal Case",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "Purdue Pharma, the OxyContin manufacturer, was sentenced in federal court on April 28, 2026, and ordered to pay $5.5 billion in criminal penalties for its role in fueling the opioid epidemic. The company will cease operations and transfer assets to Knoa Pharma LLC.",
+      "publishImage": true,
+      "imageSearchQuery": "death flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/12405/12405078.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-12405078.png"
+    },
+    {
+      "id": 45,
+      "url": "https://www.npr.org/2026/04/29/nx-s1-5793938/purdue-pharma-sentenced-in-criminal-opioid-case-while-company-leaders-avoid-charges",
+      "date": "04/29/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-5671229.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "3"
+      },
+      "title": "Purdue Pharma Sentenced in Criminal Opioid Case While Company Leaders Avoid Charges",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "MED",
+        "CBD"
+      ],
+      "description": "Purdue Pharma will pay the DOJ $225 million in a criminal settlement while Sackler family members contribute billions in a bankruptcy deal, but the company's owners and executives avoid prison time despite the company's role in the opioid crisis.",
+      "publishImage": true,
+      "imageSearchQuery": "fines",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5671/5671229.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5671229.png"
+    },
+    {
+      "id": 11,
+      "url": "https://apjjf.org/Peter-Dale-Scott/3340/article",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-17353901.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Can the US Triumph in the Drug-Addicted War in Afghanistan? Opium, the CIA and Karzai",
+      "status": "COOL FINDS",
+      "addedAt": "2026-05-03T04:57:29.126Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED",
+        "THC",
+        "CBD",
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "corruption",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17353/17353901.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17353901.png"
+    },
+    {
+      "id": 15,
+      "url": "https://www.youtube.com/watch?v=Aq5Ua6wuYLw",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-14456294.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Prof. Alfred W. McCoy on the Opium Trade in Afghanistan Radio Interview in 2001",
+      "status": "COOL FINDS",
+      "addedAt": "2026-05-03T04:59:42.723Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED",
+        "THC",
+        "CBD",
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "poppy flower",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14456/14456294.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14456294.png"
+    },
+    {
+      "id": 36,
+      "url": "https://www.wgbh.org/radio-podcasts/2026-04-29/ibogaine-is-gaining-ground-in-the-treatment-of-addiction-ptsd-and-more",
+      "date": "04/29/26",
+      "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+      "notes": "yup",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "YM",
+        "MED": "Y",
+        "THC": "YM"
+      },
+      "title": "Ibogaine Is Gaining Ground in the Treatment of Addiction, PTSD, and More",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 4,
+      "categories": [
+        "THC",
+        "INV",
+        "MED",
+        "CBD"
+      ],
+      "description": "GBH radio interview with Dr. Peter Grinspoon exploring ibogaine's potential for treating opioid addiction and PTSD in veterans, its risks including cardiac arrhythmias, and the implications of Trump's executive order accelerating psychedelic research.",
+      "publishImage": true,
+      "imageSearchQuery": "Iboga",
+      "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+      "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+    },
+    {
+      "id": 21,
+      "url": "https://www.psychiatrictimes.com/view/fda-fast-tracks-psychedelic-therapies-for-depression-ptsd-and-alcohol-use-disorder",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-3832969.png",
+      "notes": "from 24th",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "Y"
+      },
+      "title": "FDA Fast-Tracks Psychedelic Therapies for Depression, PTSD, and Alcohol Use Disorder",
+      "status": "YM",
+      "addedAt": "2026-05-03T04:24:28.098Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED",
+        "CBD"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "Fast-Track flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3832/3832969.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3832969.png"
+    },
+    {
+      "id": 53,
+      "url": "https://lynnwebstermd.substack.com/p/the-opioid-crisis-is-driven-by-demand",
+      "date": "05/01/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-6159698.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "Y"
+      },
+      "title": "What Drives the Opioid Crisis?",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD",
+        "MED"
+      ],
+      "description": "Dr. Lynn Webster argues that while fentanyl's potency has made America's overdose crisis far more lethal, supply alone cannot explain why demand persists — pain, despair, mental illness, and failed policy must be addressed to stem the crisis.",
+      "publishImage": true,
+      "imageSearchQuery": "crisis",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6159/6159698.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6159698.png"
+    },
+    {
+      "id": 33,
+      "url": "https://www.medscape.com/viewarticle/race-first-psychedelic-approval-whos-leading-2026a1000e0n",
+      "date": "05/01/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-14673307.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "INV": "3",
+        "MED": "Y"
+      },
+      "title": "In the Race to the First Psychedelic Approval, Who's Leading?",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 4,
+      "categories": [
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "Medscape examines which psychedelic compounds are closest to FDA approval, with Compass Pathways' COMP360 psilocybin furthest along. FDA Commissioner Makary expects a decision by late summer or fall 2026, with therapies required in supervised clinical settings.",
+      "publishImage": true,
+      "imageSearchQuery": "Race First flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14673/14673307.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14673307.png"
+    },
+    {
+      "id": 4,
+      "url": "https://www.medicalnewstoday.com/articles/coffee-gut-brain-axis-mental-health-brain-health",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-6006625.png",
+      "notes": "",
+      "ranks": {
+        "MED": "4"
+      },
+      "title": "All Coffee, Even Decaf, Can Improve Mood and Brain Health, Study Finds",
+      "status": "YM",
+      "addedAt": "2026-05-04T07:35:02.875Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "Coffee flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6006/6006625.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6006625.png"
+    },
+    {
+      "id": 26,
+      "url": "https://mgmagazine.com/policy-regulation/federal-policy/cannabis-schedule-iii-impact-280e-analysis/",
+      "date": "04/27/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-9793501.png",
+      "notes": "",
+      "ranks": {
+        "INV": "5",
+        "MED": "YM",
+        "THC": "Y"
+      },
+      "title": "Schedule III Cannabis Rescheduling: 280E Tax Impact & Analysis",
+      "status": "YM",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV",
+        "MED"
+      ],
+      "description": "An in-depth analysis of how the April 23 DOJ order reclassifying state-licensed medical cannabis to Schedule III affects 280E tax obligations. The article clarifies that relief applies to medical operators but leaves the adult-use sector in limbo pending further proceedings.",
+      "publishImage": true,
+      "imageSearchQuery": "tax flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/9793/9793501.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-9793501.png"
+    },
+    {
+      "id": 47,
+      "url": "https://brainhealthinstitute.rutgers.edu/2026/04/29/opioid-crisis-hits-hardest-in-new-jerseys-most-vulnerable-communities/",
+      "date": "04/29/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-14463734.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "MED": "YM"
+      },
+      "title": "Opioid Crisis Hits Hardest in New Jersey's Most Vulnerable Communities",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 1,
+      "categories": [
+        "CBD",
+        "MED"
+      ],
+      "description": "A new Rutgers study reveals that the opioid epidemic is disproportionately impacting New Jersey's most socially vulnerable communities, with higher overdose rates and wider disparities in healthcare access persisting across counties.",
+      "publishImage": true,
+      "imageSearchQuery": "new jersey",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/14463/14463734.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-14463734.png"
+    },
+    {
+      "id": 29,
+      "url": "https://healthdataconsortium.org/medical-marijuana-schedule-iii-patient-impact-2026/",
+      "date": "04/27/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-542793.png",
+      "notes": "",
+      "ranks": {
+        "THC": "1"
+      },
+      "title": "What Medical Cannabis Operators Must Do Now",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "A practical guide for state medical cannabis license holders detailing the 60-day DEA registration deadline of June 22, 2026, how to file for Schedule III registration, and what the rescheduling means for patients and operators.",
+      "publishImage": true,
+      "imageSearchQuery": "operations flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/542/542793.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-542793.png"
+    },
+    {
+      "id": 13,
+      "url": "https://hightimes.com/business/the-cannabis-shit-list-where-vendors-are-naming-californias-lowest-rated-operators/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-4201697.png",
+      "notes": "",
+      "ranks": {
+        "THC": "2"
+      },
+      "title": "The Cannabis 'Shit List': Where Vendors Are Naming California's Lowest-Rated Operators",
+      "status": "Y",
+      "addedAt": "2026-05-04T05:46:31.854Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "shit flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/4201/4201697.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-4201697.png"
+    },
+    {
+      "id": 6,
+      "url": "https://www.marijuanamoment.net/federal-marijuana-reschedulhttps://www.marijuanamoment.net/federal-marijuana-rescheduling-will-end-discrimination-in-housing-healthcare-and-employment-for-medical-cannabis-patients-op-ed/ing-will-end-discrimination-in-housing-healthcare-and-employment-for-medical-cannabis-patients-op-ed/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-3586405.png",
+      "notes": "",
+      "ranks": {
+        "THC": "3"
+      },
+      "title": "Cannabis Rescheduling Will End Discrimination in Housing, Healthcare and Employment",
+      "status": "Y",
+      "addedAt": "2026-05-04T06:28:45.480Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "THC"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "housing discrimination",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3586/3586405.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3586405.png"
+    },
+    {
+      "id": 28,
+      "url": "https://www.cannabisregulations.ai/cannabis-and-hemp-regulations-compliance-ai-blog/cannabis-280e-schedule-iii-tax-playbook-2026",
+      "date": "04/28/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-568410.png",
+      "notes": "",
+      "ranks": {
+        "INV": "4",
+        "THC": "Y"
+      },
+      "title": "Cannabis 280E After Schedule III: The 2026 Operator and CPA Tax Playbook",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 6,
+      "categories": [
+        "THC",
+        "INV"
+      ],
+      "description": "A detailed tax guide for cannabis operators and CPAs navigating the post-rescheduling landscape, covering how to handle 280E relief for medical vs. adult-use operations, amended returns, and transition rules following the April 23 DOJ order.",
+      "publishImage": true,
+      "imageSearchQuery": "cpa flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/568/568410.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-568410.png"
+    },
+    {
+      "id": 31,
+      "url": "https://gisuser.com/2026/04/cannabis-industry-stats-2025-2026-growth-trends-market-size-key-insights/",
+      "date": "04/29/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-5776947.png",
+      "notes": "",
+      "ranks": {
+        "INV": "Y",
+        "THC": "Y"
+      },
+      "title": "Cannabis Industry Stats 2025–2026: Growth Trends, Market Size & Key Insights",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV"
+      ],
+      "description": "A comprehensive look at cannabis industry data for 2025-2026, reporting that revenue is expected to reach $47 billion. North America accounts for over 83% of global revenue, with growth driven by regulatory refinement rather than new legalization.",
+      "publishImage": true,
+      "imageSearchQuery": "industry trend",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/5776/5776947.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-5776947.png"
+    },
+    {
+      "id": 27,
+      "url": "https://foleyhoag.com/news-and-insights/publications/alerts-and-updates/2026/april/cannabis-rescheduling-doj-treasury-and-dea-updates-since-the-april-23-order/",
+      "date": "04/27/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-7312763.png",
+      "notes": "",
+      "ranks": {
+        "INV": "Y",
+        "THC": "Y"
+      },
+      "title": "Cannabis Rescheduling: DOJ, Treasury, and DEA Updates Since the April 23 Order",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "THC",
+        "INV"
+      ],
+      "description": "Legal analysis from Foley Hoag covering post-rescheduling developments, including the DEA registration portal opening April 29, Treasury/IRS guidance on 280E tax relief, and the formal Federal Register publication date of April 28, 2026 for the rescheduling order.",
+      "publishImage": true,
+      "imageSearchQuery": "drug rescheduling",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/7312/7312763.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-7312763.png"
+    },
+    {
+      "id": 7,
+      "url": "https://archive.is/NAI7A",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-6970490.png",
+      "notes": "",
+      "ranks": {
+        "THC": "Y"
+      },
+      "title": "An L.A. Man Recruited Thieves and Used Drones to Steal Cannabis and Luxury Goods",
+      "status": "YM",
+      "addedAt": "2026-05-04T06:23:27.126Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 5,
+      "categories": [
+        "THC"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "kawaii theif",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6970/6970490.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6970490.png"
+    },
+    {
+      "id": 25,
+      "url": "https://marijuana.net/cannabis-reform-momentum-2026-legalization-lags/",
+      "date": "04/28/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-17504409.png",
+      "notes": "",
+      "ranks": {
+        "THC": "Y"
+      },
+      "title": "Cannabis Reform Momentum Builds in 2026, But Full Legalization Still Lags",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 3,
+      "categories": [
+        "THC"
+      ],
+      "description": "An analysis of the uneven progress of cannabis reform in 2026, covering federal policy shifts, state-level legislation, and evolving hemp regulations, noting that medical cannabis, hemp products, and adult-use cannabis are increasingly treated as distinct regulatory categories.",
+      "publishImage": true,
+      "imageSearchQuery": "reform",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/17504/17504409.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-17504409.png"
+    },
+    {
+      "id": 30,
+      "url": "https://www.wecannca.com/federal-cannabis-rescheduling-cannabis-operators/",
+      "date": "04/29/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-16989999.png",
+      "notes": "",
+      "ranks": {
+        "THC": "Y"
+      },
+      "title": "Federal Cannabis Rescheduling Is Here: What It Means for Cannabis Operators",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "WeCann breaks down the April 22 DOJ final order moving state-licensed medical cannabis to Schedule III, explaining different implications for medical, adult-use, and dual-license operators, and the critical 60-day compliance window.",
+      "publishImage": true,
+      "imageSearchQuery": "legal flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/16989/16989999.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-16989999.png"
+    },
+    {
+      "id": 5,
+      "url": "https://archive.is/vq4De",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-6973797.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "3"
+      },
+      "title": "These Salmon Got High on Cocaine. That Wasn't the Craziest Part.",
+      "status": "Y",
+      "addedAt": "2026-05-04T07:28:08.162Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 3,
+      "categories": [
+        "CBD"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "crazy fish",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6973/6973797.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6973797.png"
+    },
+    {
+      "id": 10,
+      "url": "https://hempgazette.com/news/dea-assigns-new-drug-code-hexahydrocannabinol-hhc-schedule-i/",
+      "date": "",
+      "image": "https://purablis.com/purablis.com/News-roundup/images/dea.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "DEA Assigns New Drug Code to Hexahydrocannabinol (HHC), Reaffirming Schedule I Status",
+      "status": "Y",
+      "addedAt": "2026-05-04T06:08:12.623Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 5,
+      "categories": [
+        "CBD"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "dea",
+      "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/dea.png",
+      "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/dea.png"
+    },
+    {
+      "id": 46,
+      "url": "https://www.npr.org/2026/04/28/nx-s1-5801463/natural-disasters-medication-access-opioid-addiction",
+      "date": "04/28/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-3431512.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "Natural Disasters Can Cause Another Crisis for Those Recovering from Opioid Addiction",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD"
+      ],
+      "description": "People recovering from opioid addiction risk relapse when they can't access medications after natural disasters. A group of doctors is calling for lawmakers to ease access to meds like buprenorphine and methadone during emergencies.",
+      "publishImage": true,
+      "imageSearchQuery": "Natural Disasters",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3431/3431512.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3431512.png"
+    },
+    {
+      "id": 34,
+      "url": "https://www.statnews.com/2026/05/01/psychedelics-law-black-hispanic-indigenous-groups-research/",
+      "date": "05/01/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-7527475.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "Psychedelics Should Be More Available to People from Minority Groups",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 3,
+      "categories": [
+        "CBD"
+      ],
+      "description": "STAT opinion piece by researchers from the University of Chicago and NYU arguing that the persistent exclusion of racial minorities from psychedelics research must be addressed as the field advances, noting disparities in clinical trial participation and outcomes.",
+      "publishImage": true,
+      "imageSearchQuery": "minorities kawaii flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/7527/7527475.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-7527475.png"
+    },
+    {
+      "id": 9,
+      "url": "https://hempgazette.com/news/dea-assigns-new-drug-code-hexahydrocannabinol-hhc-schedule-i/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-6815955.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "Trump Calls on Congress to Loosen Fed Restrictions on Hemp-Derived CBD and Cannabinoids",
+      "status": "YM",
+      "addedAt": "2026-05-04T06:10:24.227Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "cbd",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6815/6815955.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6815955.png"
+    },
+    {
+      "id": 24,
+      "url": "https://www.cannabisbusinesstimes.com/hemp/news/15823852/s-house-passes-2026-farm-bill-intoxicating-hemp-product-ban-remains",
+      "date": "04/30/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-3698754.png",
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "U.S. House Passes 2026 Farm Bill; Intoxicating Hemp Product Ban Remains",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 8,
+      "categories": [
+        "CBD"
+      ],
+      "description": "The U.S. House voted 224-200 to pass the 2026 Farm Bill, which redefines hemp to include total THC (including THCA) and maintains the impending ban on intoxicating hemp products. The legislation now heads to the Senate.",
+      "publishImage": true,
+      "imageSearchQuery": "congress",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/3698/3698754.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-3698754.png"
+    },
+    {
+      "id": 3,
+      "url": "https://stratcann.com/news/canadas-cannabis-industry-positioned-global-industry/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-16205755.png",
+      "notes": "",
+      "ranks": {
+        "INV": "1"
+      },
+      "title": "Canada’s Cannabis Industry Stands Uniquely Positioned in Growing Global Industry",
+      "status": "Y",
+      "addedAt": "2026-05-04T18:05:43.612Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "Canada flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/16205/16205755.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-16205755.png"
+    },
+    {
+      "id": 11,
+      "url": "https://hightimes.com/news/pax-cannabica-how-the-plant-became-a-geopolitical-tool-in-a-world-at-war/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-2897748.png",
+      "notes": "",
+      "ranks": {
+        "INV": "2"
+      },
+      "title": "Pax Cannabica: How the Plant Became a Geopolitical Tool in a World at War",
+      "status": "Y",
+      "addedAt": "2026-05-04T05:51:24.797Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 6,
+      "categories": [
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "global flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/2897/2897748.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-2897748.png"
+    },
+    {
+      "id": 41,
+      "url": "https://www.bloomberg.com/features/2026-jjs-spravato-psychedelic-blockbuster-drug/",
+      "date": "05/01/26",
+      "image": "https://purablis.com/News-roundup/images/freepik-6079282.png",
+      "notes": "",
+      "ranks": {
+        "INV": "Y"
+      },
+      "title": "J&J's Ketamine-Derived Nasal Spray Paves the Way for Psychedelic Therapy",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:48:03.406Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "imagePage": 2,
+      "categories": [
+        "INV"
+      ],
+      "description": "Bloomberg feature on how Johnson & Johnson's Spravato nasal spray has become a $2.3 billion blockbuster, expanding from 2,800 to over 7,000 certified sites, and how its success is paving the way for next-generation psychedelic therapies from rivals like Compass Pathways and AbbVie.",
+      "publishImage": true,
+      "imageSearchQuery": "nasal spray flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/6079/6079282.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-6079282.png"
+    },
+    {
+      "id": 1,
+      "url": "https://www.rollingstone.com/culture-council/articles/global-expansion-is-becoming-strategic-imperative-cannabis-companies-1235556607/",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-18549576.png",
+      "notes": "",
+      "ranks": {
+        "INV": "Y"
+      },
+      "title": "Why Global Expansion Is Becoming a Strategic Imperative for Cannabis Companies",
+      "status": "Y",
+      "addedAt": "2026-05-04T18:23:47.275Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "Global Expansion",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/18549/18549576.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-18549576.png"
+    },
+    {
+      "id": 2,
+      "url": "https://archive.is/qyi0B",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-11031268.png",
+      "notes": "",
+      "ranks": {
+        "INV": "YM"
+      },
+      "title": "22 Monks Smuggled 240 Pounds of Cannabis Into Sri Lanka, Officials Say",
+      "status": "YM",
+      "addedAt": "2026-05-04T18:20:45.831Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "Monks kawaii flat",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/11031/11031268.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-11031268.png"
+    },
+    {
+      "id": 50,
+      "url": "https://www.hklaw.com/en/insights/publications/2026/04/cannabis-rescheduling-doj-fda-announce-rescheduling",
+      "date": "04/30/26",
+      "image": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+      "notes": "",
+      "ranks": {
+        "INV": "YM"
+      },
+      "title": "Cannabis Rescheduling: DOJ Announces Rescheduling of Certain Products",
+      "status": "Y",
+      "addedAt": "2026-05-02T08:50:39.449Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "INV"
+      ],
+      "description": "Holland & Knight analyzes the DOJ's April 23 order rescheduling FDA-approved and state-licensed medical cannabis to Schedule III, detailing the implications for 280E tax relief, DEA registration, banking access, and the proposed June 29 hearing timeline.",
+      "publishImage": true,
+      "imageSearchQuery": "Cannabis Rescheduling:",
+      "originalImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg",
+      "publishedImageUrl": "https://purablis.com/purablis.com/News-roundup/images/iboga-small.jpg"
+    },
+    {
+      "id": 22,
+      "url": "https://archive.is/cceGV",
+      "date": "",
+      "image": "https://purablis.com/News-roundup/images/freepik-15427551.png",
+      "notes": "",
+      "ranks": {
+        "INV": "YM"
+      },
+      "title": "The Cannabis Industry's New Best Friend? President Trump",
+      "status": "YM",
+      "addedAt": "2026-05-03T03:58:54.671Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "INV"
+      ],
+      "description": "",
+      "publishImage": true,
+      "imageSearchQuery": "trump",
+      "originalImageUrl": "https://cdn-icons-png.freepik.com/128/15427/15427551.png",
+      "publishedImageUrl": "https://purablis.com/News-roundup/images/freepik-15427551.png"
+    }
+  ]
+}

@@ -909,6 +909,9 @@ router.post('/summarize', async (req, res) => {
                 console.error('Failed to read rules file:', err);
             }
         }
+        
+        // Always enforce no conversational filler, even if the user overwrote the base prompt
+        systemPrompt += `\n\nCRITICAL INSTRUCTION: Output ONLY the newsletter content itself. Do NOT include any conversational filler, greetings, or introductory phrases such as "Here is your summary paragraph:" or "Here's the summary:".`;
 
         const articleInputs = articles.map(a => ({
             title: a.title || '',

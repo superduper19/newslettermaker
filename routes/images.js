@@ -1,7 +1,29 @@
 const express = require('express');
 const router = express.Router();
+const { matchStateIcons } = require('../lib/state-icons');
+const {
+    DEFAULT_PUBLIC_ROOT,
+    getPublicBaseUrl,
+    normalizePublicSubfolder,
+    findReachablePublicUrl,
+    getFtpRemoteDir,
+    buildPublicImageUrl,
+    applyEditionDatePrefix,
+    getArticleSubfolder,
+    getStatesSubfolder,
+    getInspirationalSubfolder,
+    isPublicUrlReachable,
+    editionDatePrefix,
+} = require('../lib/purablis-public-url');
+const {
+    getPurablisUrlCandidates,
+    buildPurablisPublicUrl,
+    buildArticleExportFilename,
+    NEWS_ROUNDUP_BASE,
+} = require('../lib/purablis-article-filename');
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 const fs = require('fs');
 const os = require('os');
 
@@ -32,27 +54,48 @@ const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || 'newsletter-images
 let supabase = null;
 
 // FTP remote path from env (no leading slash). Public URL base with no trailing slash.
-function getRemotePath() {
-    const ftpPath = (process.env.GODADDY_FTP_PATH || 'images').replace(/^\/+/, '');
-    const publicBase = (process.env.GODADDY_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
-    return { remoteDir: ftpPath, publicUrlBase: publicBase };
+function getRemotePath(subfolder) {
+    const folder = normalizePublicSubfolder(subfolder || process.env.GODADDY_PUBLIC_SUBFOLDER);
+    const ftpPath = getFtpRemoteDir(folder, process.env.GODADDY_FTP_PATH || 'images');
+    const publicRoot = getPublicBaseUrl().replace(/\/+$/, '');
+    const publicUrlBase = folder
+        ? `${publicRoot}/${folder.split('/').map(encodeURIComponent).join('/')}`
+        : publicRoot;
+    return { remoteDir: ftpPath, publicUrlBase, publicSubfolder: folder };
+}
+
+function getStateIconsRemotePath() {
+    const subfolder = getStatesSubfolder();
+    const publicRoot = getPublicBaseUrl().replace(/\/+$/, '');
+    const publicBase = (
+        process.env.GODADDY_STATE_PUBLIC_BASE_URL
+        || `${publicRoot}/${subfolder.split('/').map(encodeURIComponent).join('/')}`
+    ).replace(/\/+$/, '');
+    return {
+        remoteDir: getFtpRemoteDir(subfolder, process.env.GODADDY_FTP_PATH || 'images'),
+        publicUrlBase: publicBase,
+        publicSubfolder: subfolder,
+    };
 }
 
 function getInspirationalRemotePath() {
-    const article = getRemotePath();
-    // Default: same folder as article icons (News-roundup/images/) with insp- filenames.
-    // Override with GODADDY_INSPIRATIONAL_* when a dedicated inspirational/ folder exists in cPanel.
-    const ftpPath = (process.env.GODADDY_INSPIRATIONAL_FTP_PATH || article.remoteDir || 'images').replace(/^\/+/, '');
+    const subfolder = getInspirationalSubfolder();
+    const publicRoot = getPublicBaseUrl().replace(/\/+$/, '');
     const publicBase = (
         process.env.GODADDY_INSPIRATIONAL_PUBLIC_BASE_URL
-        || article.publicUrlBase
-        || 'https://purablis.com/News-roundup/images'
+        || `${publicRoot}/${subfolder.split('/').map(encodeURIComponent).join('/')}`
     ).replace(/\/+$/, '');
-    return { remoteDir: ftpPath, publicUrlBase: publicBase };
+    return {
+        remoteDir: getFtpRemoteDir(subfolder, process.env.GODADDY_FTP_PATH || 'images'),
+        publicUrlBase: publicBase,
+        publicSubfolder: subfolder,
+    };
 }
 
-function getRemotePathForTarget(target) {
-    return target === 'inspirational' ? getInspirationalRemotePath() : getRemotePath();
+function getRemotePathForTarget(target, subfolder) {
+    if (target === 'inspirational') return getInspirationalRemotePath();
+    if (target === 'state') return getStateIconsRemotePath();
+    return getRemotePath(getArticleSubfolder());
 }
 
 function getFtpConfig() {
@@ -82,6 +125,33 @@ function getSupabase() {
 
 function isImageFile(name) {
     return /\.(png|jpe?g|gif|webp|svg)$/i.test(name || '');
+}
+
+/** Only user inspirational uploads — not article icons (freepik-, state-, upload-, etc.). */
+function isInspirationalLibraryFilename(name) {
+    const n = String(name || '').trim();
+    if (!n || !isImageFile(n)) return false;
+    const lower = n.toLowerCase();
+    if (lower.startsWith('freepik-') || lower.startsWith('state-') || lower.startsWith('upload-')) {
+        return false;
+    }
+    if (lower.startsWith('insp-')) return true;
+    if (lower.includes('_insp_') || lower.includes('insp_')) return true;
+    // Legacy inspirational assets from bookbunnylibrary (e.g. 2020-15-01__DR_Jerzy_Vetulani_FR.jpg)
+    if (/^\d{4}-\d{2}-\d{2}__/.test(n)) return true;
+    return false;
+}
+
+function filterInspirationalLibraryImages(images) {
+    return normalizeLibraryImages(images)
+        .filter((item) => isInspirationalLibraryFilename(item.name))
+        .map((item) => {
+            const name = item.name || extractFilenameFromUrl(item.url);
+            const previewUrl = (item.url && /^https:\/\/[^/]*purablis\.com/i.test(item.url))
+                ? item.url
+                : (name ? `${getInspirationalRemotePath().publicUrlBase}/${encodeURIComponent(name)}` : item.url);
+            return { ...item, previewUrl };
+        });
 }
 
 function extractFilenameFromUrl(url) {
@@ -138,11 +208,11 @@ async function listInspirationalLibraryFromFtp() {
 
             const entries = await client.list(remoteDir);
             return entries
-                .filter(entry => entry.isFile && isImageFile(entry.name))
-                .map(entry => ({
+                .filter((entry) => entry.isFile && isInspirationalLibraryFilename(entry.name))
+                .map((entry) => ({
                     name: entry.name,
                     url: `${publicUrlBase}/${entry.name}`,
-                    source: 'ftp'
+                    source: 'ftp',
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name));
         } finally {
@@ -187,24 +257,55 @@ async function accessFtpClient() {
     return client;
 }
 
-async function uploadLocalFileToPurablis(localPath, filename, target = 'article') {
-    const { remoteDir, publicUrlBase } = getRemotePathForTarget(target);
+async function ftpCdToDir(client, remoteDir) {
+    const parts = String(remoteDir || '').replace(/^\/+/, '').split('/').filter(Boolean);
+    await client.cd('/');
+    for (const part of parts) {
+        try {
+            await client.cd(part);
+        } catch (e) {
+            await client.send(`MKD ${part}`);
+            await client.cd(part);
+        }
+    }
+}
+
+async function uploadLocalFileToPurablis(localPath, filename, target = 'article', subfolder = '') {
+    let publishName = path.basename(filename || '');
+    if (target === 'article') {
+        publishName = applyEditionDatePrefix(publishName);
+    }
+    const { remoteDir, publicUrlBase } = getRemotePathForTarget(target, subfolder);
     if (!publicUrlBase) {
         throw new Error('GODADDY_PUBLIC_BASE_URL is not configured');
     }
     const client = await accessFtpClient();
     try {
-        await client.ensureDir(remoteDir);
-        await client.uploadFrom(localPath, filename);
-        console.log(`FTP upload OK (${target}): ${remoteDir}/${filename}`);
-        return `${publicUrlBase}/${filename}`;
+        await ftpCdToDir(client, remoteDir);
+        await client.uploadFrom(localPath, publishName);
+        console.log(`FTP upload OK (${target}): ${remoteDir}/${publishName}`);
+        return `${publicUrlBase}/${publishName}`;
     } finally {
         client.close();
     }
 }
 
+function resolveStateIconLocalPath(url) {
+    const value = String(url || '').trim();
+    const match = value.match(/\/(?:all\/states|state_icons_dark)\/([^?#]+)/i);
+    if (!match) return null;
+    const filename = decodeURIComponent(match[1]);
+    const localPath = path.join(__dirname, '..', 'public', 'state_icons_dark', filename);
+    if (!fs.existsSync(localPath)) return null;
+    return { localPath, filename };
+}
+
 async function resolveUrlToLocalFile(url, target = 'article') {
     const value = String(url || '').trim();
+    const stateLocal = resolveStateIconLocalPath(value);
+    if (stateLocal) {
+        return { localPath: stateLocal.localPath, filename: stateLocal.filename };
+    }
     const namePrefix = target === 'inspirational' ? 'insp-' : (value.includes('freepik') ? 'freepik-' : '');
     const uploadsMatch = value.match(/\/uploads\/([^?#]+)/);
     if (value.startsWith('/uploads/') || uploadsMatch) {
@@ -238,14 +339,61 @@ async function resolveUrlToLocalFile(url, target = 'article') {
         : `${namePrefix}publish-${Date.now()}${ext}`;
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     const localPath = path.join(uploadDir, filename);
-    fs.writeFileSync(localPath, buf);
+    
+    let outBuf = buf;
+    if (target === 'inspirational') {
+        try {
+            outBuf = await sharp(buf)
+                .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+                .toBuffer();
+        } catch (err) {
+            console.warn('Failed to resize inspirational image:', err.message);
+        }
+    }
+    
+    fs.writeFileSync(localPath, outBuf);
     return { localPath, filename };
 }
 
-async function publishImageUrlToPurablis(url, target = 'article') {
-    const { localPath, filename } = await resolveUrlToLocalFile(url, target);
-    const publicUrl = await uploadLocalFileToPurablis(localPath, filename, target);
-    return { success: true, url: publicUrl, published: true, filename, provider: 'purablis' };
+function buildAssetPreviewUrl(filename) {
+    const safe = encodeURIComponent(path.basename(filename || ''));
+    return safe ? `/api/images/asset/${safe}` : '';
+}
+
+async function publishImageUrlToPurablis(url, target = 'article', options = {}) {
+    const stateLocal = resolveStateIconLocalPath(url);
+    const effectiveTarget = stateLocal ? 'state' : target;
+    const subfolder = effectiveTarget === 'inspirational'
+        ? getInspirationalSubfolder()
+        : effectiveTarget === 'state'
+            ? getStatesSubfolder()
+            : getArticleSubfolder();
+    const { localPath, filename } = await resolveUrlToLocalFile(url, effectiveTarget);
+    const publicUrl = await uploadLocalFileToPurablis(localPath, filename, effectiveTarget, subfolder);
+    const publishFilename = effectiveTarget === 'article'
+        ? applyEditionDatePrefix(filename)
+        : path.basename(filename || '');
+    const { publicReachable, tried } = await findReachablePublicUrl(publishFilename, subfolder, {
+        baseUrl: getPublicBaseUrl(),
+    });
+    const configuredUrl = buildPublicImageUrl(publishFilename, {
+        subfolder,
+        baseUrl: getPublicBaseUrl(),
+    });
+    const resolvedUrl = publicReachable ? publicUrl : (publicUrl || configuredUrl);
+    return {
+        success: true,
+        url: resolvedUrl,
+        configuredUrl,
+        previewUrl: resolvedUrl,
+        published: true,
+        filename: publishFilename,
+        provider: 'purablis',
+        publicReachable,
+        publicSubfolder: subfolder,
+        tried,
+        ftpRemoteDir: getFtpRemoteDir(subfolder, process.env.GODADDY_FTP_PATH || 'images'),
+    };
 }
 
 function normalizeLibraryImages(images) {
@@ -278,14 +426,14 @@ async function getInspirationalLibraryFromDb() {
     if (error) {
         throw new Error(error.message);
     }
-    return data ? normalizeLibraryImages(data.value) : null;
+    return data ? filterInspirationalLibraryImages(data.value) : null;
 }
 
 async function saveInspirationalLibraryToDb(images) {
     const client = getSupabase();
     if (!client) return false;
 
-    const normalized = normalizeLibraryImages(images);
+    const normalized = filterInspirationalLibraryImages(images);
     const { error } = await client
         .from(STATE_TABLE)
         .upsert(
@@ -375,7 +523,7 @@ async function listSupabaseInspirationalLibrary() {
         .filter(item => item.url);
 }
 
-// GET /api/images/inspirational-library - list previously uploaded inspirational images
+// GET /api/images/inspirational-library - inspirational uploads only (insp-*, legacy INSP assets)
 router.get('/inspirational-library', async (req, res) => {
     try {
         let images = [];
@@ -387,17 +535,23 @@ router.get('/inspirational-library', async (req, res) => {
         }
         try {
             const fromFtp = await listInspirationalLibraryFromFtp();
-            images = normalizeLibraryImages([...images, ...(fromFtp || [])]);
+            images = filterInspirationalLibraryImages([...images, ...(fromFtp || [])]);
         } catch (ftpErr) {
             console.warn('Inspirational library FTP list failed:', ftpErr.message);
         }
         if (!images.length) {
             try {
                 const legacy = await listSupabaseInspirationalLibrary();
-                if (legacy && legacy.length) images = legacy;
+                if (legacy && legacy.length) images = filterInspirationalLibraryImages(legacy);
             } catch (e) {
                 console.warn('Legacy Supabase inspirational list failed:', e.message);
             }
+        }
+        images = filterInspirationalLibraryImages(images);
+        try {
+            await saveInspirationalLibraryToDb(images);
+        } catch (dbErr) {
+            console.warn('Inspirational library DB prune failed:', dbErr.message);
         }
         res.json({ success: true, images });
     } catch (error) {
@@ -457,30 +611,14 @@ router.delete('/inspirational-library', async (req, res) => {
     }
 });
 
-/** One strong keyword — multi-word Freepik icon searches often time out. */
+/** Prefer "essence flat" queries; fall back to one keyword for legacy input. */
 function buildIconSearchTerm(query) {
-    const raw = String(query || '').trim();
-    const lower = raw.toLowerCase();
-    const themed = [
-        { match: 'marijuana', term: 'cannabis' },
-        { match: 'cannabis', term: 'cannabis' },
-        { match: 'hemp', term: 'hemp' },
-        { match: 'cbd', term: 'cbd' },
-        { match: 'psilocybin', term: 'psilocybin' },
-        { match: 'psychedelic', term: 'psychedelic' },
-        { match: 'opioid', term: 'opioid' },
-        { match: 'veto', term: 'veto' },
-        { match: 'governor', term: 'government' },
-        { match: 'pharma', term: 'pharmacy' },
-        { match: 'hospital', term: 'hospital' },
-    ];
-    for (const { match, term } of themed) {
-        if (lower.includes(match)) return term;
-    }
+    const raw = String(query || '').trim().toLowerCase();
+    if (!raw) return 'news flat';
+    if (/\s+flat$/.test(raw)) return raw;
     const words = raw.split(/\s+/).filter((w) => w.length > 2);
-    if (words.length === 0) return 'cannabis';
-    words.sort((a, b) => b.length - a.length);
-    return words[0].toLowerCase();
+    if (words.length === 0) return 'news flat';
+    return `${words[0]} flat`;
 }
 
 async function fetchFreepikIcons(searchTerm, page) {
@@ -533,6 +671,7 @@ router.post('/search', async (req, res) => {
             return res.status(400).json({ error: 'Search query is required' });
         }
 
+        const stateImages = matchStateIcons(query, 8);
         const searchTerm = buildIconSearchTerm(query);
         console.log(`Searching Flaticon (Freepik API) for: "${searchTerm}" (from "${query}", page ${page})`);
 
@@ -546,21 +685,26 @@ router.post('/search', async (req, res) => {
                 usedFallback = true;
             }
         }
-        if (result.error) {
+        if (result.error && !stateImages.length) {
             return res.status(result.status || 500).json({
                 error: result.error,
                 details: result.details,
                 searchTerm,
+                stateImages,
             });
         }
+
+        const freepikImages = result.error ? [] : result.images.slice(0, 9);
 
         res.json({
             success: true,
             page,
-            images: result.images.slice(0, 9),
+            images: freepikImages,
+            stateImages,
             searchTerm: usedFallback ? 'cannabis' : searchTerm,
             originalQuery: query,
             usedFallback,
+            freepikSkipped: !!result.error,
         });
 
     } catch (error) {
@@ -623,8 +767,9 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
         }
 
         try {
-            const publicUrl = await uploadLocalFileToPurablis(localPath, filename, 'article');
-            res.json({ success: true, url: publicUrl, published: true });
+            const publishName = applyEditionDatePrefix(filename);
+            const publicUrl = await uploadLocalFileToPurablis(localPath, publishName, 'article', getArticleSubfolder());
+            res.json({ success: true, url: publicUrl, published: true, filename: publishName });
         } catch (ftpErr) {
             console.error('FTP upload failed:', ftpErr.message);
             res.json({ success: true, url: inlineUrl, fallbackUrl: localUrl, published: false, ftpError: ftpErr.message, storedInline: true });
@@ -639,7 +784,7 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
 // Body: { url, target?: 'article' | 'inspirational' }
 router.post('/publish-to-purablis', async (req, res) => {
     try {
-        let { url, target } = req.body || {};
+        let { url, target, publicSubfolder } = req.body || {};
         if (!url || typeof url !== 'string') {
             return res.status(400).json({ error: 'Missing url' });
         }
@@ -716,11 +861,20 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
             return res.status(400).json({ error: 'Uploaded file buffer was empty' });
         }
 
+        let outBuffer = buffer;
+        try {
+            outBuffer = await sharp(buffer)
+                .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+                .toBuffer();
+        } catch (err) {
+            console.warn('Failed to resize uploaded inspirational image:', err.message);
+        }
+
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
         const localPath = path.join(uploadDir, safeName);
-        fs.writeFileSync(localPath, buffer);
+        fs.writeFileSync(localPath, outBuffer);
 
-        const publicUrl = await uploadLocalFileToPurablis(localPath, safeName, 'inspirational');
+        const publicUrl = await uploadLocalFileToPurablis(localPath, safeName, 'inspirational', getInspirationalSubfolder());
         try {
             const existing = await getInspirationalLibraryFromDb();
             const next = normalizeLibraryImages([
@@ -732,10 +886,150 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
             console.warn('Failed to save inspirational upload in DB:', dbErr.message);
         }
 
-        res.json({ success: true, url: publicUrl, published: true, provider: 'purablis', filename: safeName });
+        res.json({
+            success: true,
+            url: publicUrl,
+            previewUrl: publicUrl,
+            published: true,
+            provider: 'purablis',
+            filename: safeName,
+            publicReachable: await isPublicUrlReachable(publicUrl),
+        });
     } catch (error) {
         console.error('Inspirational Upload Error:', error);
         res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+const STATE_PUBLIC_DIR = path.join(__dirname, '..', 'public', 'state_icons_dark');
+
+function stateFtpFilenameToLocalPath(filename) {
+    const match = String(filename || '').match(/^state-([a-z0-9-]+)\.png$/i);
+    if (!match) return null;
+    const name = match[1]
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    const localPath = path.join(STATE_PUBLIC_DIR, `${name}.png`);
+    return fs.existsSync(localPath) ? localPath : null;
+}
+
+// POST /api/images/resolve-article-urls — find live purablis.com URLs (News-roundup flat)
+router.post('/resolve-article-urls', async (req, res) => {
+    try {
+        const { articles, datePrefix, baseUrl } = req.body || {};
+        const list = Array.isArray(articles) ? articles : [];
+        const prefix = datePrefix || editionDatePrefix();
+        const base = (baseUrl || NEWS_ROUNDUP_BASE).replace(/\/+$/, '');
+        const results = [];
+
+        for (const article of list) {
+            const candidates = getPurablisUrlCandidates(article, { datePrefix: prefix, baseUrl: base });
+            let resolved = '';
+            let publicReachable = false;
+            for (const url of candidates) {
+                if (await isPublicUrlReachable(url)) {
+                    resolved = url;
+                    publicReachable = true;
+                    break;
+                }
+            }
+            if (!resolved && candidates.length) {
+                resolved = candidates[0];
+            }
+            const filename = buildArticleExportFilename(article, prefix);
+            results.push({
+                id: article.id,
+                title: article.title,
+                url: resolved,
+                purablisFilename: filename,
+                publicReachable,
+                candidates: candidates.slice(0, 6),
+            });
+        }
+
+        const reachable = results.filter((r) => r.publicReachable).length;
+        res.json({
+            ok: true,
+            checked: results.length,
+            reachable,
+            publicBase: base,
+            datePrefix: prefix,
+            results,
+        });
+    } catch (error) {
+        console.error('resolve-article-urls error:', error);
+        res.status(500).json({ error: error.message || 'Resolve failed' });
+    }
+});
+
+// POST /api/images/verify-public — HEAD-check public purablis URLs for filenames
+router.post('/verify-public', async (req, res) => {
+    try {
+        const { filenames, publicSubfolder, baseUrl } = req.body || {};
+        const list = Array.isArray(filenames) ? filenames : [];
+        const subfolder = normalizePublicSubfolder(
+            publicSubfolder !== undefined && publicSubfolder !== null
+                ? publicSubfolder
+                : getArticleSubfolder(),
+        );
+        const results = [];
+        for (const name of list) {
+            const filename = applyEditionDatePrefix(path.basename(String(name || '')));
+            if (!filename) continue;
+            const { url, publicReachable } = await findReachablePublicUrl(filename, subfolder, {
+                baseUrl: baseUrl || getPublicBaseUrl(),
+            });
+            results.push({ filename, url, publicReachable });
+        }
+        const ok = results.filter((r) => r.publicReachable).length;
+        res.json({
+            ok: true,
+            checked: results.length,
+            reachable: ok,
+            unreachable: results.length - ok,
+            publicSubfolder: subfolder,
+            publicBase: (baseUrl || getPublicBaseUrl()).replace(/\/+$/, ''),
+            results,
+        });
+    } catch (error) {
+        console.error('verify-public error:', error);
+        res.status(500).json({ error: error.message || 'Verification failed' });
+    }
+});
+
+// GET /api/images/asset/:filename — serve FTP-uploaded images (FTP folder is not always public HTTP)
+router.get('/asset/:filename', async (req, res) => {
+    try {
+        const filename = path.basename(req.params.filename || '');
+        if (!filename || !isImageFile(filename)) {
+            return res.status(400).json({ error: 'Invalid filename' });
+        }
+
+        const stateLocal = stateFtpFilenameToLocalPath(filename);
+        if (stateLocal) {
+            return res.sendFile(stateLocal);
+        }
+
+        const { remoteDir } = getRemotePath();
+        const client = await accessFtpClient();
+        const tempPath = path.join(uploadDir, `asset-${Date.now()}-${filename}`);
+        const remoteFile = path.posix.join(String(remoteDir || 'images').replace(/^\/+/, ''), filename);
+        try {
+            await client.downloadTo(tempPath, remoteFile);
+        } finally {
+            client.close();
+        }
+        res.sendFile(tempPath, () => {
+            try {
+                if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+            } catch (e) {
+                // ignore cleanup errors
+            }
+        });
+    } catch (error) {
+        console.error('Asset serve error:', error);
+        res.status(404).json({ error: 'Image not found on server or FTP' });
     }
 });
 

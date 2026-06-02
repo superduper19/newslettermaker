@@ -71,11 +71,19 @@
             <div class="form-group search-panel search-panel-name mb-5">
               <label class="text-[0.85rem] font-semibold text-[#555] uppercase tracking-[0.5px] block mb-2">Newsletter Name</label>
               <div class="newsletter-search-inline flex items-center gap-2">
-                <input type="text" id="newsletter-name" placeholder="Type a new newsletter name or choose a saved one" value="Week 1" class="max-w-100">
+                <input type="text" id="newsletter-name" placeholder="Type a new newsletter name or choose a saved one" value="Week 1" class="max-w-100" oninput="updatePublicImageSettings()">
                 <select id="saved-sessions-dropdown-step1" title="Choose a previously saved newsletter name" class="py-1 px-1.5 border-solid border-2 border-[#ccc] rounded text-[0.85rem] w-auto min-w-55">
                   <option value="">Saved newsletters</option>
                 </select>
                 <button type="button" class="btn btn-primary btn-sm" onclick="saveSession()" title="Save current name and articles as a session (no search needed)">Save current</button>
+              </div>
+              <p class="text-[0.78rem] text-[#666] mt-2">Article images: <code class="text-[0.75rem]">News-roundup/images/</code> (flat, <code class="text-[0.75rem]">MM-DD-YY-filename.png</code>). States: <code class="text-[0.75rem]">News-roundup/images/states/</code>.</p>
+              <div class="flex flex-wrap gap-2 items-center mt-2">
+                <label class="text-[0.8rem] text-[#555] whitespace-nowrap" for="public-image-subfolder">Article subfolder</label>
+                <input type="text" id="public-image-subfolder" class="form-control max-w-50 text-[0.85rem]" value="" placeholder="(flat — leave empty)" oninput="updatePublicImageSettings()">
+                <input type="hidden" id="public-image-base" value="https://purablis.com/News-roundup/images">
+                <button type="button" class="btn btn-outline btn-sm" onclick="verifyPublicArticleImages(true)">Check public image URLs</button>
+                <span id="public-image-status" class="text-[0.75rem] text-[#666]"></span>
               </div>
             </div>
 
@@ -390,6 +398,22 @@
             <button class="tab-btn" onclick="switchEditorTab('THC')">THC</button>
             <button class="tab-btn" onclick="switchEditorTab('CBD')">CBD</button>
             <button class="tab-btn" onclick="switchEditorTab('INV')">INV</button>
+          </div>
+
+          <div id="editor-bulk-workflow" class="mb-6 p-4 border border-[#c5cae9] rounded-lg bg-[#f3f4fb]">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div>
+                <label class="font-bold block">All four newsletters (Grammarly)</label>
+                <p class="text-[0.8rem] text-[#555] mt-0.5">Copy once with MED / THC / CBD / INV labels. Edit in Grammarly, paste back here, then apply to Selected Content below.</p>
+              </div>
+              <div class="flex flex-wrap gap-2 items-center">
+                <span id="bulk-newsletter-status" class="text-[0.75rem] text-[#666]"></span>
+                <button type="button" class="btn btn-outline btn-sm" onclick="loadBulkNewsletterText()">Load from Selected</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="copyAllNewsletterText()">Copy all 4</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkNewsletterPaste()">Apply to Selected</button>
+              </div>
+            </div>
+            <textarea id="editor-bulk-paste" rows="14" class="form-control font-[monospace] text-[0.88rem] bg-white p-2 w-full border border-[#9fa8da]" placeholder="--- MED ---&#10;(summary text)&#10;&#10;--- THC ---&#10;...&#10;&#10;--- CBD ---&#10;...&#10;&#10;--- INV ---&#10;..."></textarea>
           </div>
 
           <div id="editor-content">

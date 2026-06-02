@@ -1,0 +1,565 @@
+{
+  "session": "Week 16C",
+  "savedAt": "2026-05-26T00:31:56.227Z",
+  "editionDatePrefix": "05-25-26",
+  "uploadTargets": {
+    "articlesFolder": "Newsletter images/all",
+    "statesFolder": "Newsletter images/all/states",
+    "inspirationalFolder": "Newsletter images/inspirational",
+    "publicBase": "https://purablis.com/Newsletter%20images"
+  },
+  "articles": [
+    {
+      "filename": "05-25-26-MED-Y-world-war-speed-the-drugs-that-won-w-freepik-8732487.png",
+      "title": "World War Speed: The Drugs that Won WWII (BBC)",
+      "articleId": 1,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "THC",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        },
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-8732487.png",
+      "source": "ftp-images",
+      "bytes": 6046,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-world-war-speed-the-drugs-that-won-w-freepik-8732487.png"
+    },
+    {
+      "filename": "05-25-26-MED-1-cbd-review-cannabidiol-exerts-antitu-freepik-6566802.png",
+      "title": "CBD Review: Cannabidiol Exerts Antitumor Effects via Multi-Target Mechanisms",
+      "articleId": 73,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "1"
+        },
+        {
+          "cat": "THC",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "1"
+        },
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-6566802.png",
+      "source": "ftp-images",
+      "bytes": 6545,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-1-cbd-review-cannabidiol-exerts-antitu-freepik-6566802.png"
+    },
+    {
+      "filename": "05-25-26-CBD-2-researchers-develop-high-temperature-freepik-12696647.png",
+      "title": "Researchers Develop High-Temperature Stable Hemp-Derived Plastic from CBD",
+      "articleId": 9,
+      "categories": [
+        {
+          "cat": "CBD",
+          "rank": "2"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-12696647.png",
+      "source": "ftp-images",
+      "bytes": 2096,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-CBD-2-researchers-develop-high-temperature-freepik-12696647.png"
+    },
+    {
+      "filename": "05-25-26-MED-3-marijuana-legalization-is-linked-to-freepik-12756067.png",
+      "title": "Marijuana Legalization Is Linked To ‘Significant Reductions’ In Opioid Overdoses",
+      "articleId": 59,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "3"
+        },
+        {
+          "cat": "THC",
+          "rank": "2"
+        },
+        {
+          "cat": "CBD",
+          "rank": "3"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-12756067.png",
+      "source": "ftp-images",
+      "bytes": 1837,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-3-marijuana-legalization-is-linked-to-freepik-12756067.png"
+    },
+    {
+      "filename": "05-25-26-MED-4-medical-cannabis-associated-with-sig-freepik-10476458.png",
+      "title": "Medical Cannabis Associated With Significant Declines in Opioid Use",
+      "articleId": 15,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "4"
+        },
+        {
+          "cat": "THC",
+          "rank": "3"
+        },
+        {
+          "cat": "CBD",
+          "rank": "4"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-10476458.png",
+      "source": "ftp-images",
+      "bytes": 3113,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-4-medical-cannabis-associated-with-sig-freepik-10476458.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-fda-staff-blindsided-by-allowing-mor-freepik-9756189.png",
+      "title": "FDA Staff Blindsided by Allowing More E-Cigarettes and Nicotine Pouches onto US Market",
+      "articleId": 8,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "5"
+        },
+        {
+          "cat": "INV",
+          "rank": "1"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-9756189.png",
+      "source": "ftp-images",
+      "bytes": 1956,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-fda-staff-blindsided-by-allowing-mor-freepik-9756189.png"
+    },
+    {
+      "filename": "05-25-26-MED-2-how-does-acetaminophen-work-study-li-freepik-10368712.png",
+      "title": "How Does Acetaminophen Work? Study Links Pain Relief to the Endocannabinoid System",
+      "articleId": 2,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "2"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-10368712.png",
+      "source": "ftp-images",
+      "bytes": 5735,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-2-how-does-acetaminophen-work-study-li-freepik-10368712.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-norml-remembers-congressman-barney-f-freepik-2553027.png",
+      "title": "NORML Remembers Congressman Barney Frank",
+      "articleId": 12,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "THC",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        },
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-2553027.png",
+      "source": "ftp-images",
+      "bytes": 9306,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-norml-remembers-congressman-barney-f-freepik-2553027.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-u-s-overdose-deaths-fell-again-in-20-freepik-8110216.png",
+      "title": "U.S. Overdose Deaths Fell Again in 2025, but Some Worry About Policy Changes",
+      "articleId": 18,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        },
+        {
+          "cat": "INV",
+          "rank": "YM"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-8110216.png",
+      "source": "ftp-images",
+      "bytes": 7644,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-u-s-overdose-deaths-fell-again-in-20-freepik-8110216.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-oregon-sees-a-sustained-drop-in-over-state-oregon.png",
+      "title": "Oregon Sees a Sustained Drop in Overdose Deaths, State Officials Say",
+      "articleId": 16,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "CBD",
+          "rank": "6"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/state-oregon.png",
+      "source": "ftp-images",
+      "bytes": 30286,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-oregon-sees-a-sustained-drop-in-over-state-oregon.png"
+    },
+    {
+      "filename": "05-25-26-MED-YM-cfr-backgrounder-fentanyl-and-the-u-freepik-1869138.png",
+      "title": "CFR Backgrounder: Fentanyl and the U.S. Opioid Epidemic (Updated May 2026)",
+      "articleId": 71,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "YM"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-1869138.png",
+      "source": "ftp-images",
+      "bytes": 5046,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-YM-cfr-backgrounder-fentanyl-and-the-u-freepik-1869138.png"
+    },
+    {
+      "filename": "05-25-26-THC-4-virginia-governor-explains-shock-rej-state-virginia.png",
+      "title": "Virginia Governor Explains Shock Rejection of Cannabis Retail Market",
+      "articleId": 14,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "4"
+        },
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/state-virginia.png",
+      "source": "ftp-images",
+      "bytes": 29970,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-4-virginia-governor-explains-shock-rej-state-virginia.png"
+    },
+    {
+      "filename": "05-25-26-CBD-Y-are-psychedelics-getting-a-tech-rebr-freepik-18457875.png",
+      "title": "Are Psychedelics Getting a Tech Rebrand?",
+      "articleId": 5,
+      "categories": [
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-18457875.png",
+      "source": "ftp-images",
+      "bytes": 3114,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-CBD-Y-are-psychedelics-getting-a-tech-rebr-freepik-18457875.png"
+    },
+    {
+      "filename": "05-25-26-CBD-Y-minnesota-lawmakers-tweak-cannabis-l-state-minnesota.png",
+      "title": "Minnesota Lawmakers 'Tweak' Cannabis Laws to Create New Category, Boost Hemp THC",
+      "articleId": 17,
+      "categories": [
+        {
+          "cat": "CBD",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/state-minnesota.png",
+      "source": "ftp-images",
+      "bytes": 30252,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-CBD-Y-minnesota-lawmakers-tweak-cannabis-l-state-minnesota.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-the-cloud-may-soon-clear-regarding-c-freepik-1704867.png",
+      "title": "The Cloud May Soon Clear Regarding Cannabis in Long-Term Care Settings",
+      "articleId": 10,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "THC",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-1704867.png",
+      "source": "ftp-images",
+      "bytes": 6024,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-the-cloud-may-soon-clear-regarding-c-freepik-1704867.png"
+    },
+    {
+      "filename": "05-25-26-MED-Y-brazil-tops-873-000-cannabis-patient-freepik-5921994.png",
+      "title": "Brazil Tops 873,000 Cannabis Patients as São Paulo Fair Returns in 2026",
+      "articleId": 79,
+      "categories": [
+        {
+          "cat": "MED",
+          "rank": "Y"
+        },
+        {
+          "cat": "INV",
+          "rank": "2"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-5921994.png",
+      "source": "ftp-images",
+      "bytes": 5515,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-MED-Y-brazil-tops-873-000-cannabis-patient-freepik-5921994.png"
+    },
+    {
+      "filename": "05-25-26-THC-1-survey-67-of-gen-z-have-consumed-can-freepik-7026654.png",
+      "title": "Survey: 67% of Gen Z Have Consumed Cannabis, 28% Report Daily Consumption",
+      "articleId": 11,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "1"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-7026654.png",
+      "source": "ftp-images",
+      "bytes": 3098,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-1-survey-67-of-gen-z-have-consumed-can-freepik-7026654.png"
+    },
+    {
+      "filename": "05-25-26-THC-5-virginia-governor-signs-bills-includ-freepik-2924220.png",
+      "title": "Virginia Governor Signs Bills Including Cannabis Sentence Review for 1,000+ Inmates",
+      "articleId": 21,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "5"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-2924220.png",
+      "source": "ftp-images",
+      "bytes": 6233,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-5-virginia-governor-signs-bills-includ-freepik-2924220.png"
+    },
+    {
+      "filename": "05-25-26-THC-Y-cannabis-prices-keep-falling-new-glo-freepik-13153487.png",
+      "title": "Cannabis Prices Keep Falling. New Global Report Says That Was Always Going To Happen",
+      "articleId": 7,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "Y"
+        },
+        {
+          "cat": "INV",
+          "rank": "3"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-13153487.png",
+      "source": "ftp-images",
+      "bytes": 3832,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-Y-cannabis-prices-keep-falling-new-glo-freepik-13153487.png"
+    },
+    {
+      "filename": "05-25-26-THC-Y-tsa-quietly-softens-cannabis-policy-freepik-3396295.png",
+      "title": "TSA Quietly Softens Cannabis Policy for Air Travelers in 2026",
+      "articleId": 53,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-3396295.png",
+      "source": "ftp-images",
+      "bytes": 5298,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-Y-tsa-quietly-softens-cannabis-policy-freepik-3396295.png"
+    },
+    {
+      "filename": "05-25-26-THC-YM-california-dcc-proposes-emergency-ru-state-california.png",
+      "title": "California DCC Proposes Emergency Rules for Rescheduling Relief",
+      "articleId": 66,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "YM"
+        },
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/state-california.png",
+      "source": "ftp-images",
+      "bytes": 33766,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-YM-california-dcc-proposes-emergency-ru-state-california.png"
+    },
+    {
+      "filename": "05-25-26-THC-YM-2026-oklahoma-medical-cannabis-resea-freepik-13340952.png",
+      "title": "2026 Oklahoma Medical Cannabis Research Data and Program Report Released",
+      "articleId": 49,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "YM"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-13340952.png",
+      "source": "ftp-images",
+      "bytes": 2452,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-YM-2026-oklahoma-medical-cannabis-resea-freepik-13340952.png"
+    },
+    {
+      "filename": "05-25-26-THC-YM-u-s-army-reminds-soldiers-cannabis-u-freepik-2646743.png",
+      "title": "U.S. Army Reminds Soldiers Cannabis Use Is Prohibited, Including Hemp CBD",
+      "articleId": 65,
+      "categories": [
+        {
+          "cat": "THC",
+          "rank": "YM"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-2646743.png",
+      "source": "ftp-images",
+      "bytes": 2775,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-THC-YM-u-s-army-reminds-soldiers-cannabis-u-freepik-2646743.png"
+    },
+    {
+      "filename": "05-25-26-INV-Y-cannabis-mso-lands-in-receivership-o-freepik-16073677.png",
+      "title": "Cannabis MSO Lands in Receivership Over $210 Million Debt to Lender",
+      "articleId": 13,
+      "categories": [
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-16073677.png",
+      "source": "ftp-images",
+      "bytes": 4835,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-INV-Y-cannabis-mso-lands-in-receivership-o-freepik-16073677.png"
+    },
+    {
+      "filename": "05-25-26-INV-Y-curaleaf-benefits-from-cannabis-resc-upload-1779746744755-curaleaf.png",
+      "title": "Curaleaf Benefits From Cannabis Rescheduling And International Growth",
+      "articleId": 6,
+      "categories": [
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/upload-1779746744755-curaleaf.png",
+      "source": "ftp-images",
+      "bytes": 9211,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-INV-Y-curaleaf-benefits-from-cannabis-resc-upload-1779746744755-curaleaf.png"
+    },
+    {
+      "filename": "05-25-26-INV-Y-pakistan-s-cannabis-regulator-advanc-freepik-11848541.png",
+      "title": "Pakistan's Cannabis Regulator Advances Facility Refurbishment Plan",
+      "articleId": 80,
+      "categories": [
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-11848541.png",
+      "source": "ftp-images",
+      "bytes": 5213,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-INV-Y-pakistan-s-cannabis-regulator-advanc-freepik-11848541.png"
+    },
+    {
+      "filename": "05-25-26-INV-Y-trump-s-psychedelic-drug-order-boost-freepik-14781383.png",
+      "title": "Trump's psychedelic drug order boosts investor interest with promise of faster reviews",
+      "articleId": 4,
+      "categories": [
+        {
+          "cat": "INV",
+          "rank": "Y"
+        }
+      ],
+      "sourceUrl": "https://purablis.com/News-roundup/images/freepik-14781383.png",
+      "source": "ftp-images",
+      "bytes": 4927,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/05-25-26-INV-Y-trump-s-psychedelic-drug-order-boost-freepik-14781383.png"
+    }
+  ],
+  "states": [
+    {
+      "state": "Oregon",
+      "filename": "Oregon.png",
+      "title": "Oregon Sees a Sustained Drop in Overdose Deaths, State Officials Say",
+      "articleId": 16,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/states/Oregon.png"
+    },
+    {
+      "state": "Virginia",
+      "filename": "Virginia.png",
+      "title": "Virginia Governor Explains Shock Rejection of Cannabis Retail Market",
+      "articleId": 14,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/states/Virginia.png"
+    },
+    {
+      "state": "Minnesota",
+      "filename": "Minnesota.png",
+      "title": "Minnesota Lawmakers 'Tweak' Cannabis Laws to Create New Category, Boost Hemp THC",
+      "articleId": 17,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/states/Minnesota.png"
+    },
+    {
+      "state": "California",
+      "filename": "California.png",
+      "title": "California DCC Proposes Emergency Rules for Rescheduling Relief",
+      "articleId": 66,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/states/California.png"
+    },
+    {
+      "state": "Oklahoma",
+      "filename": "Oklahoma.png",
+      "title": "2026 Oklahoma Medical Cannabis Research Data and Program Report Released",
+      "articleId": 49,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/all/states/Oklahoma.png"
+    }
+  ],
+  "inspirational": [
+    {
+      "filename": "insp-INSP_Elbert_Hubbard_FR__2_.jpg",
+      "sourceUrl": "https://purablis.com/News-roundup/images/insp-INSP_Elbert_Hubbard_FR__2_.jpg",
+      "source": "ftp-images",
+      "bytes": 155533,
+      "suggestedUrl": "https://purablis.com/Newsletter%20images/inspirational/insp-INSP_Elbert_Hubbard_FR__2_.jpg"
+    }
+  ],
+  "errors": []
+}

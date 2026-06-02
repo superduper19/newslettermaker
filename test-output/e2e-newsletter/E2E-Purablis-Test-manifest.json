@@ -1,0 +1,2202 @@
+{
+  "meta": {
+    "name": "E2E Purablis Test",
+    "generatedAt": "2026-05-22T06:52:54.871Z",
+    "e2e": true
+  },
+  "newsletters": {
+    "MED": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test - MED</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>A pharmacist is turning to cannabis compounds as a potential weapon against antibiotic-resistant superbugs after big pharma largely abandoned the fight against antimicrobial resistance. Purdue Pharma was sentenced and ordered to pay $5.5 billion in criminal penalties for illegally marketing OxyContin, deceiving federal regulators, and paying kickbacks to doctors, with a judge ordering the company chairman to apologize directly to victims in court. Despite the corporate conviction, Sackler family members and company executives avoid any prison time or individual charges, drawing sharp criticism from families who lost loved ones to the opioid crisis. One article on coffee's effects on the gut-brain axis and mental health could not be fully accessed.</div><table><tr><td><a href=\"https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/\">A Single Dose Of Psilocybin Appears To Safely Treat Cocaine Addiction, New Study Published By American Medical Association Study Shows</a></td></tr></table>\n<table><tr><td><a href=\"https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/\">Bipartisan Lawmakers Push FDA To Speed Up Approval Of Psychedelic Therapies</a></td></tr></table>\n<table><tr><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\">Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy</a></td></tr></table>\n<table><tr><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\">Psychedelics researchers are getting what they want. Are they ready?</a></td></tr></table></body></html>",
+      "resultText": "A pharmacist is turning to cannabis compounds as a potential weapon against antibiotic-resistant superbugs after big pharma largely abandoned the fight against antimicrobial resistance. Purdue Pharma was sentenced and ordered to pay $5.5 billion in criminal penalties for illegally marketing OxyContin, deceiving federal regulators, and paying kickbacks to doctors, with a judge ordering the company chairman to apologize directly to victims in court. Despite the corporate conviction, Sackler family members and company executives avoid any prison time or individual charges, drawing sharp criticism from families who lost loved ones to the opioid crisis. One article on coffee's effects on the gut-brain axis and mental health could not be fully accessed.",
+      "articles": [
+        {
+          "id": 1,
+          "url": "https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/",
+          "date": "",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "2",
+            "MED": "Y"
+          },
+          "title": "A Single Dose Of Psilocybin Appears To Safely Treat Cocaine Addiction, New Study Published By American Medical Association Study Shows",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:10:18.157Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 2,
+          "url": "https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/",
+          "date": "",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "Bipartisan Lawmakers Push FDA To Speed Up Approval Of Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T16:10:12.659Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 7,
+          "url": "https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An analysis of the two major federal cannabis policy shifts in 2026: the April rescheduling of medical marijuana to Schedule III and the November hemp definition change that could shut down 95% of the intoxicating hemp industry.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 8,
+          "url": "https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/",
+          "date": "05/06/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Psychedelics researchers are getting what they want. Are they ready?",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "A psychiatry researcher reflects on Trump's sweeping psychedelics executive order, which directs FDA priority review vouchers, $50 million in ARPA-H funding, and right-to-try pathways for ibogaine, arguing the field may not be prepared for the rapid opening.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 9,
+          "url": "https://medicalxpress.com/news/2026-05-dose-psilocybin-human-brain-higher.html",
+          "date": "05/05/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "1"
+          },
+          "title": "One dose of psilocybin changes the human brain, leading to higher entropy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "UC San Francisco and Imperial College London researchers show a single 25mg dose of psilocybin causes increased brain entropy and structural brain changes lasting up to a month, published in Nature Communications.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 26,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Arizona campaign to repeal marijuana legalization stalls",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Arizona campaign seeking to place an initiative on the ballot to repeal key provisions of the state's voter-approved marijuana legalization law has stalled, leaving only Massachusetts' well-funded repeal effort alive in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 31,
+          "url": "https://news.emory.edu/stories/2026/04/hs_bhc_nih_psychedelics/story.html",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Emory joins landmark $21 million NIH study of psychedelics for chronic pain in older adults",
+          "status": "YM",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "Emory University joins the NIH-funded $21 million INSPIRE Network, the first federally funded program dedicated to studying psychedelics in adults 65 and older, testing psilocybin for chronic back pain and LSD for cancer-related bone pain.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 35,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Connecticut Governor Sent Bill to Reinstate THC Potency Caps",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Connecticut legislators sent Gov. Ned Lamont a bill to reinstate THC potency caps for cannabis flower, reversing a reform recently adopted in separate legislation, while Ohio courts heard arguments on hemp THC product restriction enforcement.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 36,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Ohio Judge Hears Arguments on Hemp THC Product Sales Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Ohio judge heard oral arguments on a motion for a preliminary injunction to prevent state officials from enforcing Senate Bill 56, the new law restricting hemp THC product sales that opponents say overrides the will of voters.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 37,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Texas Hemp Businesses Fight State Enforcement of New Product Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Texas officials appealed a temporary injunction on hemp product restrictions, which allowed enforcement to resume, but a court then reinstated the injunction protecting hemp businesses from the new rules.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 38,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Pennsylvania House Majority Advances Cannabis Regulatory Vote",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "The Pennsylvania House majority moves forward on cannabis regulatory framework legislation, as the state remains one of the most closely watched potential legalization markets in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 40,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Bipartisan Coalition of 32 Members of Congress Urges FDA to Expedite Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "A bipartisan coalition of 32 members of Congress sent a letter urging federal health officials to expedite ongoing reviews of psychedelic therapies, calling for transparency, urgency, and scientific rigor in the approval process.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 41,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Psilocybin Shows Promise as Treatment for Treatment-Resistant Depression",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "MED"
+          ],
+          "description": "New research shows a single dose of psilocybin coupled with psychotherapy appears to be a safe and efficacious treatment option for people with treatment-resistant depression, adding to the growing body of evidence supporting psychedelic medicine.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "THC": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test - THC</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>State-licensed medical cannabis operators face a hard June 22, 2026 deadline to file for DEA Schedule III registration or lose protected operating continuity, with the rescheduling also eliminating the Section 280E tax burden and potentially dropping effective tax rates from around 70-80% down to 20-30%. California cannabis vendors are publicly naming the state's lowest-rated operators on a so-called \"shit list,\" though full details of the article were not accessible. Advocates argue that federal rescheduling now makes it illegal to deny medical cannabis patients housing, employment, healthcare or VA services, since agencies can no longer hide behind the old Schedule I \"no accepted medical use\" justification to discriminate.</div><table><tr><td><a href=\"https://news.cornell.edu/stories/2026/05/new-laws-cut-cannabis-arrests-racial-disparities-persist\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://news.cornell.edu/stories/2026/05/new-laws-cut-cannabis-arrests-racial-disparities-persist\">New laws cut cannabis arrests, but racial disparities persist</a></td></tr></table>\n<table><tr><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\">Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy</a></td></tr></table>\n<table><tr><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\">Psychedelics researchers are getting what they want. Are they ready?</a></td></tr></table>\n<table><tr><td><a href=\"https://blog.mpp.org/blog/iowa-ask-your-governor-to-sign-the-bill-doubling-medical-dispensaries/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://blog.mpp.org/blog/iowa-ask-your-governor-to-sign-the-bill-doubling-medical-dispensaries/\">Iowa Rural Medical Dispensary Access Needed</a></td></tr></table></body></html>",
+      "resultText": "State-licensed medical cannabis operators face a hard June 22, 2026 deadline to file for DEA Schedule III registration or lose protected operating continuity, with the rescheduling also eliminating the Section 280E tax burden and potentially dropping effective tax rates from around 70-80% down to 20-30%. California cannabis vendors are publicly naming the state's lowest-rated operators on a so-called \"shit list,\" though full details of the article were not accessible. Advocates argue that federal rescheduling now makes it illegal to deny medical cannabis patients housing, employment, healthcare or VA services, since agencies can no longer hide behind the old Schedule I \"no accepted medical use\" justification to discriminate.",
+      "articles": [
+        {
+          "id": 3,
+          "url": "https://news.cornell.edu/stories/2026/05/new-laws-cut-cannabis-arrests-racial-disparities-persist",
+          "date": "05/07/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "THC": "Y"
+          },
+          "title": "New laws cut cannabis arrests, but racial disparities persist",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "A Weill Cornell Medicine study finds recreational cannabis laws reduced arrests by over 50% but racial disparities in enforcement persist. The study, published in the American Economic Journal, is the most comprehensive national analysis to date.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 7,
+          "url": "https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An analysis of the two major federal cannabis policy shifts in 2026: the April rescheduling of medical marijuana to Schedule III and the November hemp definition change that could shut down 95% of the intoxicating hemp industry.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 8,
+          "url": "https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/",
+          "date": "05/06/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Psychedelics researchers are getting what they want. Are they ready?",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "A psychiatry researcher reflects on Trump's sweeping psychedelics executive order, which directs FDA priority review vouchers, $50 million in ARPA-H funding, and right-to-try pathways for ibogaine, arguing the field may not be prepared for the rapid opening.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 18,
+          "url": "https://blog.mpp.org/blog/iowa-ask-your-governor-to-sign-the-bill-doubling-medical-dispensaries/",
+          "date": "05/07/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "THC": "YM"
+          },
+          "title": "Iowa Rural Medical Dispensary Access Needed",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "The Marijuana Policy Project highlights that rural Iowans must expend enormous time and resources on costly travel to receive medical cannabis, calling for expansion of the state's medical dispensary license caps.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 19,
+          "url": "https://www.mpp.org/issues/legislation/key-marijuana-policy-reform/",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "2026 Cannabis Policy Reform Legislation and Voter Measures",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "MPP's comprehensive tracker of cannabis reform legislation across all 50 states, updated May 3, covering legalization bills, decriminalization measures, medical cannabis access, and ballot initiatives for November 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 26,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Arizona campaign to repeal marijuana legalization stalls",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Arizona campaign seeking to place an initiative on the ballot to repeal key provisions of the state's voter-approved marijuana legalization law has stalled, leaving only Massachusetts' well-funded repeal effort alive in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 27,
+          "url": "https://indianacapitalchronicle.com/2026/04/29/braun-signals-openness-to-marijuana-legalization-as-outside-report-outlines-policy-considerations/",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "THC": "YM"
+          },
+          "title": "Indiana Governor Signals Openness to Marijuana Legalization as RAND Report Outlines Policy Considerations",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "Indiana Gov. Braun says legalization is 'more likely' following federal rescheduling, as a RAND study reveals Hoosiers spend an estimated $1.8 billion annually on marijuana and 96% live within 100 miles of an out-of-state dispensary.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 28,
+          "url": "https://www.wfyi.org/statewide/2026-04-29/indiana-embraces-marijuana-with-more-than-1b-sales-study-finds",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Indiana embraces marijuana with more than $1B in sales, study finds",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A RAND study commissioned by the Fairbanks Foundation reveals Indiana's unregulated cannabis sector includes over $1 billion in sales and estimates recreational legalization could generate $180 million in annual tax revenue.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 31,
+          "url": "https://news.emory.edu/stories/2026/04/hs_bhc_nih_psychedelics/story.html",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Emory joins landmark $21 million NIH study of psychedelics for chronic pain in older adults",
+          "status": "YM",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "Emory University joins the NIH-funded $21 million INSPIRE Network, the first federally funded program dedicated to studying psychedelics in adults 65 and older, testing psilocybin for chronic back pain and LSD for cancer-related bone pain.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 35,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Connecticut Governor Sent Bill to Reinstate THC Potency Caps",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Connecticut legislators sent Gov. Ned Lamont a bill to reinstate THC potency caps for cannabis flower, reversing a reform recently adopted in separate legislation, while Ohio courts heard arguments on hemp THC product restriction enforcement.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 36,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Ohio Judge Hears Arguments on Hemp THC Product Sales Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Ohio judge heard oral arguments on a motion for a preliminary injunction to prevent state officials from enforcing Senate Bill 56, the new law restricting hemp THC product sales that opponents say overrides the will of voters.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 37,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Texas Hemp Businesses Fight State Enforcement of New Product Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Texas officials appealed a temporary injunction on hemp product restrictions, which allowed enforcement to resume, but a court then reinstated the injunction protecting hemp businesses from the new rules.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 38,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Pennsylvania House Majority Advances Cannabis Regulatory Vote",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "The Pennsylvania House majority moves forward on cannabis regulatory framework legislation, as the state remains one of the most closely watched potential legalization markets in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 40,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Bipartisan Coalition of 32 Members of Congress Urges FDA to Expedite Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "A bipartisan coalition of 32 members of Congress sent a letter urging federal health officials to expedite ongoing reviews of psychedelic therapies, calling for transparency, urgency, and scientific rigor in the approval process.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 41,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Psilocybin Shows Promise as Treatment for Treatment-Resistant Depression",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "MED"
+          ],
+          "description": "New research shows a single dose of psilocybin coupled with psychotherapy appears to be a safe and efficacious treatment option for people with treatment-resistant depression, adding to the growing body of evidence supporting psychedelic medicine.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 42,
+          "url": "https://mjbizdaily.com/news/second-state-level-effort-to-recriminalize-adult-use-marijuana-sales-fails/615867/",
+          "date": "05/06/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "THC": "Y"
+          },
+          "title": "Second State-Level Effort to Repeal Adult-Use Marijuana Sales Fails",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC"
+          ],
+          "description": "A second state-level effort to repeal adult-use marijuana sales has failed in 2026, leaving only a well-funded campaign in Massachusetts as the sole remaining active repeal attempt in the country.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "CBD": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test - CBD</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>Purdue Pharma got sentenced and ordered to pay $5.5 billion in criminal penalties for deceiving federal regulators and paying doctors kickbacks to boost OxyContin sales, fueling the opioid epidemic. A new Oxford-published study shows that minor cannabinoids CBC and CBG can boost silver's antimicrobial power by up to 64-fold against superbugs like MRSA, E. coli, and Pseudomonas, with clinical trials of the combination planned for late 2026. Swedish researchers found that salmon dosed with cocaine and its metabolite benzoylecgonine swam significantly faster and farther than sober fish, raising concerns about pharmaceutical pollution in waterways affecting wildlife behavior.</div><table><tr><td><a href=\"https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/\">A Single Dose Of Psilocybin Appears To Safely Treat Cocaine Addiction, New Study Published By American Medical Association Study Shows</a></td></tr></table>\n<table><tr><td><a href=\"https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/\">Bipartisan Lawmakers Push FDA To Speed Up Approval Of Psychedelic Therapies</a></td></tr></table>\n<table><tr><td><a href=\"https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products\">Trump Administration Claims 'New Legal Authority' to Dismantle Intoxicating Hemp Products</a></td></tr></table>\n<table><tr><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\">Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy</a></td></tr></table></body></html>",
+      "resultText": "Purdue Pharma got sentenced and ordered to pay $5.5 billion in criminal penalties for deceiving federal regulators and paying doctors kickbacks to boost OxyContin sales, fueling the opioid epidemic. A new Oxford-published study shows that minor cannabinoids CBC and CBG can boost silver's antimicrobial power by up to 64-fold against superbugs like MRSA, E. coli, and Pseudomonas, with clinical trials of the combination planned for late 2026. Swedish researchers found that salmon dosed with cocaine and its metabolite benzoylecgonine swam significantly faster and farther than sober fish, raising concerns about pharmaceutical pollution in waterways affecting wildlife behavior.",
+      "articles": [
+        {
+          "id": 1,
+          "url": "https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/",
+          "date": "",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "2",
+            "MED": "Y"
+          },
+          "title": "A Single Dose Of Psilocybin Appears To Safely Treat Cocaine Addiction, New Study Published By American Medical Association Study Shows",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:10:18.157Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 2,
+          "url": "https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/",
+          "date": "",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "Y"
+          },
+          "title": "Bipartisan Lawmakers Push FDA To Speed Up Approval Of Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T16:10:12.659Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "MED",
+            "CBD"
+          ],
+          "description": "",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 6,
+          "url": "https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products",
+          "date": "05/07/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "Trump Administration Claims 'New Legal Authority' to Dismantle Intoxicating Hemp Products",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV",
+            "CBD"
+          ],
+          "description": "The White House's 2026 National Drug Control Strategy released May 4 targets delta-8 THC, delta-10 THC, THC-O, and other hemp-derived psychoactive products, declaring they will be Schedule I substances under new regulations taking effect November 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 7,
+          "url": "https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An analysis of the two major federal cannabis policy shifts in 2026: the April rescheduling of medical marijuana to Schedule III and the November hemp definition change that could shut down 95% of the intoxicating hemp industry.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 8,
+          "url": "https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/",
+          "date": "05/06/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Psychedelics researchers are getting what they want. Are they ready?",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "A psychiatry researcher reflects on Trump's sweeping psychedelics executive order, which directs FDA priority review vouchers, $50 million in ARPA-H funding, and right-to-try pathways for ibogaine, arguing the field may not be prepared for the rapid opening.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 9,
+          "url": "https://medicalxpress.com/news/2026-05-dose-psilocybin-human-brain-higher.html",
+          "date": "05/05/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "1"
+          },
+          "title": "One dose of psilocybin changes the human brain, leading to higher entropy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "MED"
+          ],
+          "description": "UC San Francisco and Imperial College London researchers show a single 25mg dose of psilocybin causes increased brain entropy and structural brain changes lasting up to a month, published in Nature Communications.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 13,
+          "url": "https://www.bloomberg.com/news/articles/2026-05-07/sackler-family-member-admits-felony-tied-to-her-opioid-addiction",
+          "date": "05/07/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y"
+          },
+          "title": "Sackler Family Member Admits Felony Tied to Her Opioid Addiction",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD"
+          ],
+          "description": "Joss Sackler, wife of former Purdue board member David Sackler, pleaded guilty to obstructing a federal grand jury investigation after deleting messages showing she was the intended recipient of seized prescription drugs while addicted to opioids.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 25,
+          "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "California cannabis retail May 2026 update",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV"
+          ],
+          "description": "California's DCC streamlined medical license designations after federal rescheduling, Sonoma County eliminated cultivation taxes, DEA formally classified HHC as Schedule I, and LA reviewed type-10 retail license requirements.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 26,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Arizona campaign to repeal marijuana legalization stalls",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Arizona campaign seeking to place an initiative on the ballot to repeal key provisions of the state's voter-approved marijuana legalization law has stalled, leaving only Massachusetts' well-funded repeal effort alive in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 31,
+          "url": "https://news.emory.edu/stories/2026/04/hs_bhc_nih_psychedelics/story.html",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Emory joins landmark $21 million NIH study of psychedelics for chronic pain in older adults",
+          "status": "YM",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "Emory University joins the NIH-funded $21 million INSPIRE Network, the first federally funded program dedicated to studying psychedelics in adults 65 and older, testing psilocybin for chronic back pain and LSD for cancer-related bone pain.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 35,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Connecticut Governor Sent Bill to Reinstate THC Potency Caps",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Connecticut legislators sent Gov. Ned Lamont a bill to reinstate THC potency caps for cannabis flower, reversing a reform recently adopted in separate legislation, while Ohio courts heard arguments on hemp THC product restriction enforcement.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 36,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Ohio Judge Hears Arguments on Hemp THC Product Sales Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Ohio judge heard oral arguments on a motion for a preliminary injunction to prevent state officials from enforcing Senate Bill 56, the new law restricting hemp THC product sales that opponents say overrides the will of voters.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 37,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Texas Hemp Businesses Fight State Enforcement of New Product Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Texas officials appealed a temporary injunction on hemp product restrictions, which allowed enforcement to resume, but a court then reinstated the injunction protecting hemp businesses from the new rules.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 38,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Pennsylvania House Majority Advances Cannabis Regulatory Vote",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "The Pennsylvania House majority moves forward on cannabis regulatory framework legislation, as the state remains one of the most closely watched potential legalization markets in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 39,
+          "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+          "date": "05/04/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "DEA Formally Classifies HHC as Schedule I Controlled Substance",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV"
+          ],
+          "description": "The Drug Enforcement Administration filed a Federal Register notice on May 4 formally assigning hexahydrocannabinol (HHC) its own Schedule I drug code, formalizing the agency's position that the synthetic cannabinoid does not qualify as legal hemp.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 40,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Bipartisan Coalition of 32 Members of Congress Urges FDA to Expedite Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "A bipartisan coalition of 32 members of Congress sent a letter urging federal health officials to expedite ongoing reviews of psychedelic therapies, calling for transparency, urgency, and scientific rigor in the approval process.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 41,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Psilocybin Shows Promise as Treatment for Treatment-Resistant Depression",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "MED"
+          ],
+          "description": "New research shows a single dose of psilocybin coupled with psychotherapy appears to be a safe and efficacious treatment option for people with treatment-resistant depression, adding to the growing body of evidence supporting psychedelic medicine.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    },
+    "INV": {
+      "html": "<!DOCTYPE html><html><body><h1>E2E Purablis Test - INV</h1><img src=\"https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg\" alt=\"Header\"><div>Canada's cannabis industry is flexing its global advantage, with surviving companies benefiting from world-class facilities built during the investor boom and years of experience in heavy regulation that new competitors can't easily replicate. The FDA could approve the first psychedelic therapy as early as late summer or fall 2026, with Compass Pathways' synthetic psilocybin for treatment-resistant depression leading the pack after receiving a National Priority Voucher that cuts review time to one or two months. Following the DOJ's April 22 order moving medical cannabis to Schedule III, Section 280E tax relief now applies to state-licensed medical operations for the full 2026 tax year, but adult-use businesses still face effective federal tax rates that can top 70%. </div><table><tr><td><a href=\"https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products\">Trump Administration Claims 'New Legal Authority' to Dismantle Intoxicating Hemp Products</a></td></tr></table>\n<table><tr><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/\">Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy</a></td></tr></table>\n<table><tr><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/\">Psychedelics researchers are getting what they want. Are they ready?</a></td></tr></table>\n<table><tr><td><a href=\"https://www.mpp.org/issues/legislation/key-marijuana-policy-reform/\"><img src=\"\" width=\"60\" alt=\"\"></a></td><td><a href=\"https://www.mpp.org/issues/legislation/key-marijuana-policy-reform/\">2026 Cannabis Policy Reform Legislation and Voter Measures</a></td></tr></table></body></html>",
+      "resultText": "Canada's cannabis industry is flexing its global advantage, with surviving companies benefiting from world-class facilities built during the investor boom and years of experience in heavy regulation that new competitors can't easily replicate. The FDA could approve the first psychedelic therapy as early as late summer or fall 2026, with Compass Pathways' synthetic psilocybin for treatment-resistant depression leading the pack after receiving a National Priority Voucher that cuts review time to one or two months. Following the DOJ's April 22 order moving medical cannabis to Schedule III, Section 280E tax relief now applies to state-licensed medical operations for the full 2026 tax year, but adult-use businesses still face effective federal tax rates that can top 70%. ",
+      "articles": [
+        {
+          "id": 6,
+          "url": "https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products",
+          "date": "05/07/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "Trump Administration Claims 'New Legal Authority' to Dismantle Intoxicating Hemp Products",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "INV",
+            "CBD"
+          ],
+          "description": "The White House's 2026 National Drug Control Strategy released May 4 targets delta-8 THC, delta-10 THC, THC-O, and other hemp-derived psychoactive products, declaring they will be Schedule I substances under new regulations taking effect November 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 7,
+          "url": "https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An analysis of the two major federal cannabis policy shifts in 2026: the April rescheduling of medical marijuana to Schedule III and the November hemp definition change that could shut down 95% of the intoxicating hemp industry.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 8,
+          "url": "https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/",
+          "date": "05/06/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Psychedelics researchers are getting what they want. Are they ready?",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "A psychiatry researcher reflects on Trump's sweeping psychedelics executive order, which directs FDA priority review vouchers, $50 million in ARPA-H funding, and right-to-try pathways for ibogaine, arguing the field may not be prepared for the rapid opening.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 19,
+          "url": "https://www.mpp.org/issues/legislation/key-marijuana-policy-reform/",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "2026 Cannabis Policy Reform Legislation and Voter Measures",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "MPP's comprehensive tracker of cannabis reform legislation across all 50 states, updated May 3, covering legalization bills, decriminalization measures, medical cannabis access, and ballot initiatives for November 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 25,
+          "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "California cannabis retail May 2026 update",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV"
+          ],
+          "description": "California's DCC streamlined medical license designations after federal rescheduling, Sonoma County eliminated cultivation taxes, DEA formally classified HHC as Schedule I, and LA reviewed type-10 retail license requirements.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 26,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Arizona campaign to repeal marijuana legalization stalls",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Arizona campaign seeking to place an initiative on the ballot to repeal key provisions of the state's voter-approved marijuana legalization law has stalled, leaving only Massachusetts' well-funded repeal effort alive in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 28,
+          "url": "https://www.wfyi.org/statewide/2026-04-29/indiana-embraces-marijuana-with-more-than-1b-sales-study-finds",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "INV": "Y",
+            "THC": "Y"
+          },
+          "title": "Indiana embraces marijuana with more than $1B in sales, study finds",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV"
+          ],
+          "description": "A RAND study commissioned by the Fairbanks Foundation reveals Indiana's unregulated cannabis sector includes over $1 billion in sales and estimates recreational legalization could generate $180 million in annual tax revenue.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 31,
+          "url": "https://news.emory.edu/stories/2026/04/hs_bhc_nih_psychedelics/story.html",
+          "date": "05/03/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y",
+            "MED": "YM",
+            "THC": "YM"
+          },
+          "title": "Emory joins landmark $21 million NIH study of psychedelics for chronic pain in older adults",
+          "status": "YM",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "INV",
+            "MED",
+            "CBD"
+          ],
+          "description": "Emory University joins the NIH-funded $21 million INSPIRE Network, the first federally funded program dedicated to studying psychedelics in adults 65 and older, testing psilocybin for chronic back pain and LSD for cancer-related bone pain.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 35,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Connecticut Governor Sent Bill to Reinstate THC Potency Caps",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Connecticut legislators sent Gov. Ned Lamont a bill to reinstate THC potency caps for cannabis flower, reversing a reform recently adopted in separate legislation, while Ohio courts heard arguments on hemp THC product restriction enforcement.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 36,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Ohio Judge Hears Arguments on Hemp THC Product Sales Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "An Ohio judge heard oral arguments on a motion for a preliminary injunction to prevent state officials from enforcing Senate Bill 56, the new law restricting hemp THC product sales that opponents say overrides the will of voters.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 37,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Texas Hemp Businesses Fight State Enforcement of New Product Restrictions",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "Texas officials appealed a temporary injunction on hemp product restrictions, which allowed enforcement to resume, but a court then reinstated the injunction protecting hemp businesses from the new rules.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 38,
+          "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "YM",
+            "INV": "Y",
+            "MED": "Y",
+            "THC": "Y"
+          },
+          "title": "Pennsylvania House Majority Advances Cannabis Regulatory Vote",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "The Pennsylvania House majority moves forward on cannabis regulatory framework legislation, as the state remains one of the most closely watched potential legalization markets in 2026.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 39,
+          "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+          "date": "05/04/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "Y"
+          },
+          "title": "DEA Formally Classifies HHC as Schedule I Controlled Substance",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "CBD",
+            "INV"
+          ],
+          "description": "The Drug Enforcement Administration filed a Federal Register notice on May 4 formally assigning hexahydrocannabinol (HHC) its own Schedule I drug code, formalizing the agency's position that the synthetic cannabinoid does not qualify as legal hemp.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        },
+        {
+          "id": 40,
+          "url": "https://www.marijuanamoment.net/",
+          "date": "05/08/26",
+          "image": null,
+          "notes": "",
+          "ranks": {
+            "CBD": "Y",
+            "INV": "YM",
+            "MED": "YM",
+            "THC": "Y"
+          },
+          "title": "Bipartisan Coalition of 32 Members of Congress Urges FDA to Expedite Psychedelic Therapies",
+          "status": "Y",
+          "addedAt": "2026-05-10T17:22:55.610Z",
+          "isValid": true,
+          "paywall": false,
+          "selected": true,
+          "categories": [
+            "THC",
+            "CBD",
+            "INV",
+            "MED"
+          ],
+          "description": "A bipartisan coalition of 32 members of Congress sent a letter urging federal health officials to expedite ongoing reviews of psychedelic therapies, calling for transparency, urgency, and scientific rigor in the approval process.",
+          "useInNewsletter": {},
+          "imageSearchQuery": ""
+        }
+      ],
+      "inspirationalImage": "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+    }
+  },
+  "inspirationalImages": [
+    "https://purablis.com/News-roundup/images/insp-1777921832673-2020-_15-01_INSP_Eleanor_Roosevelt__FR.jpg"
+  ],
+  "articles": [
+    {
+      "id": 1,
+      "url": "https://www.marijuanamoment.net/a-single-dose-of-psilocybin-appears-to-safely-treat-cocaine-addiction-new-study-published-by-american-medical-association-study-shows/",
+      "date": "",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "2",
+        "MED": "Y"
+      },
+      "title": "A Single Dose Of Psilocybin Appears To Safely Treat Cocaine Addiction, New Study Published By American Medical Association Study Shows",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:10:18.157Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED",
+        "CBD"
+      ],
+      "description": "",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 2,
+      "url": "https://www.marijuanamoment.net/bipartisan-lawmakers-push-fda-to-speed-up-approval-of-psychedelic-therapies/",
+      "date": "",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "Y"
+      },
+      "title": "Bipartisan Lawmakers Push FDA To Speed Up Approval Of Psychedelic Therapies",
+      "status": "Y",
+      "addedAt": "2026-05-10T16:10:12.659Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "MED",
+        "CBD"
+      ],
+      "description": "",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 3,
+      "url": "https://news.cornell.edu/stories/2026/05/new-laws-cut-cannabis-arrests-racial-disparities-persist",
+      "date": "05/07/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "THC": "Y"
+      },
+      "title": "New laws cut cannabis arrests, but racial disparities persist",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "A Weill Cornell Medicine study finds recreational cannabis laws reduced arrests by over 50% but racial disparities in enforcement persist. The study, published in the American Economic Journal, is the most comprehensive national analysis to date.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 6,
+      "url": "https://www.cannabisbusinesstimes.com/hemp/news/15824298/trump-administration-claims-new-legal-authority-to-dismantle-intoxicating-hemp-products",
+      "date": "05/07/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y"
+      },
+      "title": "Trump Administration Claims 'New Legal Authority' to Dismantle Intoxicating Hemp Products",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "INV",
+        "CBD"
+      ],
+      "description": "The White House's 2026 National Drug Control Strategy released May 4 targets delta-8 THC, delta-10 THC, THC-O, and other hemp-derived psychoactive products, declaring they will be Schedule I substances under new regulations taking effect November 2026.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 7,
+      "url": "https://everything-pr.com/cannabis-2026-schedule-iii-the-november-hemp-definition-change/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Cannabis 2026: Schedule III, the November Hemp Definition Change, and the Bifurcation of Federal Cannabis Policy",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "An analysis of the two major federal cannabis policy shifts in 2026: the April rescheduling of medical marijuana to Schedule III and the November hemp definition change that could shut down 95% of the intoxicating hemp industry.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 8,
+      "url": "https://www.statnews.com/2026/05/06/psychedelics-executive-order-ibogaine-trump-research-funding-scheduling/",
+      "date": "05/06/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y",
+        "MED": "YM",
+        "THC": "YM"
+      },
+      "title": "Psychedelics researchers are getting what they want. Are they ready?",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV",
+        "MED",
+        "CBD"
+      ],
+      "description": "A psychiatry researcher reflects on Trump's sweeping psychedelics executive order, which directs FDA priority review vouchers, $50 million in ARPA-H funding, and right-to-try pathways for ibogaine, arguing the field may not be prepared for the rapid opening.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 9,
+      "url": "https://medicalxpress.com/news/2026-05-dose-psilocybin-human-brain-higher.html",
+      "date": "05/05/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "1"
+      },
+      "title": "One dose of psilocybin changes the human brain, leading to higher entropy",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD",
+        "MED"
+      ],
+      "description": "UC San Francisco and Imperial College London researchers show a single 25mg dose of psilocybin causes increased brain entropy and structural brain changes lasting up to a month, published in Nature Communications.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 13,
+      "url": "https://www.bloomberg.com/news/articles/2026-05-07/sackler-family-member-admits-felony-tied-to-her-opioid-addiction",
+      "date": "05/07/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y"
+      },
+      "title": "Sackler Family Member Admits Felony Tied to Her Opioid Addiction",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD"
+      ],
+      "description": "Joss Sackler, wife of former Purdue board member David Sackler, pleaded guilty to obstructing a federal grand jury investigation after deleting messages showing she was the intended recipient of seized prescription drugs while addicted to opioids.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 18,
+      "url": "https://blog.mpp.org/blog/iowa-ask-your-governor-to-sign-the-bill-doubling-medical-dispensaries/",
+      "date": "05/07/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "THC": "YM"
+      },
+      "title": "Iowa Rural Medical Dispensary Access Needed",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "The Marijuana Policy Project highlights that rural Iowans must expend enormous time and resources on costly travel to receive medical cannabis, calling for expansion of the state's medical dispensary license caps.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 19,
+      "url": "https://www.mpp.org/issues/legislation/key-marijuana-policy-reform/",
+      "date": "05/03/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "INV": "Y",
+        "THC": "Y"
+      },
+      "title": "2026 Cannabis Policy Reform Legislation and Voter Measures",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV"
+      ],
+      "description": "MPP's comprehensive tracker of cannabis reform legislation across all 50 states, updated May 3, covering legalization bills, decriminalization measures, medical cannabis access, and ballot initiatives for November 2026.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 25,
+      "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y"
+      },
+      "title": "California cannabis retail May 2026 update",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD",
+        "INV"
+      ],
+      "description": "California's DCC streamlined medical license designations after federal rescheduling, Sonoma County eliminated cultivation taxes, DEA formally classified HHC as Schedule I, and LA reviewed type-10 retail license requirements.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 26,
+      "url": "https://www.marijuanamoment.net/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "YM",
+        "MED": "YM",
+        "THC": "Y"
+      },
+      "title": "Arizona campaign to repeal marijuana legalization stalls",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "An Arizona campaign seeking to place an initiative on the ballot to repeal key provisions of the state's voter-approved marijuana legalization law has stalled, leaving only Massachusetts' well-funded repeal effort alive in 2026.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 27,
+      "url": "https://indianacapitalchronicle.com/2026/04/29/braun-signals-openness-to-marijuana-legalization-as-outside-report-outlines-policy-considerations/",
+      "date": "05/03/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "THC": "YM"
+      },
+      "title": "Indiana Governor Signals Openness to Marijuana Legalization as RAND Report Outlines Policy Considerations",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "Indiana Gov. Braun says legalization is 'more likely' following federal rescheduling, as a RAND study reveals Hoosiers spend an estimated $1.8 billion annually on marijuana and 96% live within 100 miles of an out-of-state dispensary.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 28,
+      "url": "https://www.wfyi.org/statewide/2026-04-29/indiana-embraces-marijuana-with-more-than-1b-sales-study-finds",
+      "date": "05/03/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "INV": "Y",
+        "THC": "Y"
+      },
+      "title": "Indiana embraces marijuana with more than $1B in sales, study finds",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV"
+      ],
+      "description": "A RAND study commissioned by the Fairbanks Foundation reveals Indiana's unregulated cannabis sector includes over $1 billion in sales and estimates recreational legalization could generate $180 million in annual tax revenue.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 31,
+      "url": "https://news.emory.edu/stories/2026/04/hs_bhc_nih_psychedelics/story.html",
+      "date": "05/03/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y",
+        "MED": "YM",
+        "THC": "YM"
+      },
+      "title": "Emory joins landmark $21 million NIH study of psychedelics for chronic pain in older adults",
+      "status": "YM",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "INV",
+        "MED",
+        "CBD"
+      ],
+      "description": "Emory University joins the NIH-funded $21 million INSPIRE Network, the first federally funded program dedicated to studying psychedelics in adults 65 and older, testing psilocybin for chronic back pain and LSD for cancer-related bone pain.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 35,
+      "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Connecticut Governor Sent Bill to Reinstate THC Potency Caps",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "Connecticut legislators sent Gov. Ned Lamont a bill to reinstate THC potency caps for cannabis flower, reversing a reform recently adopted in separate legislation, while Ohio courts heard arguments on hemp THC product restriction enforcement.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 36,
+      "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Ohio Judge Hears Arguments on Hemp THC Product Sales Restrictions",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "An Ohio judge heard oral arguments on a motion for a preliminary injunction to prevent state officials from enforcing Senate Bill 56, the new law restricting hemp THC product sales that opponents say overrides the will of voters.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 37,
+      "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Texas Hemp Businesses Fight State Enforcement of New Product Restrictions",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "Texas officials appealed a temporary injunction on hemp product restrictions, which allowed enforcement to resume, but a court then reinstated the injunction protecting hemp businesses from the new rules.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 38,
+      "url": "https://www.marijuanamoment.net/congress-considers-veterans-medical-cannabis-amendment-newsletter-may-8-2026/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "YM",
+        "INV": "Y",
+        "MED": "Y",
+        "THC": "Y"
+      },
+      "title": "Pennsylvania House Majority Advances Cannabis Regulatory Vote",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "The Pennsylvania House majority moves forward on cannabis regulatory framework legislation, as the state remains one of the most closely watched potential legalization markets in 2026.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 39,
+      "url": "https://www.cann.dev/california-cannabis-retail-may-2026/",
+      "date": "05/04/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "Y"
+      },
+      "title": "DEA Formally Classifies HHC as Schedule I Controlled Substance",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "CBD",
+        "INV"
+      ],
+      "description": "The Drug Enforcement Administration filed a Federal Register notice on May 4 formally assigning hexahydrocannabinol (HHC) its own Schedule I drug code, formalizing the agency's position that the synthetic cannabinoid does not qualify as legal hemp.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 40,
+      "url": "https://www.marijuanamoment.net/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "INV": "YM",
+        "MED": "YM",
+        "THC": "Y"
+      },
+      "title": "Bipartisan Coalition of 32 Members of Congress Urges FDA to Expedite Psychedelic Therapies",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "INV",
+        "MED"
+      ],
+      "description": "A bipartisan coalition of 32 members of Congress sent a letter urging federal health officials to expedite ongoing reviews of psychedelic therapies, calling for transparency, urgency, and scientific rigor in the approval process.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 41,
+      "url": "https://www.marijuanamoment.net/",
+      "date": "05/08/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "CBD": "Y",
+        "MED": "YM",
+        "THC": "Y"
+      },
+      "title": "Psilocybin Shows Promise as Treatment for Treatment-Resistant Depression",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC",
+        "CBD",
+        "MED"
+      ],
+      "description": "New research shows a single dose of psilocybin coupled with psychotherapy appears to be a safe and efficacious treatment option for people with treatment-resistant depression, adding to the growing body of evidence supporting psychedelic medicine.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    },
+    {
+      "id": 42,
+      "url": "https://mjbizdaily.com/news/second-state-level-effort-to-recriminalize-adult-use-marijuana-sales-fails/615867/",
+      "date": "05/06/26",
+      "image": null,
+      "notes": "",
+      "ranks": {
+        "THC": "Y"
+      },
+      "title": "Second State-Level Effort to Repeal Adult-Use Marijuana Sales Fails",
+      "status": "Y",
+      "addedAt": "2026-05-10T17:22:55.610Z",
+      "isValid": true,
+      "paywall": false,
+      "selected": true,
+      "categories": [
+        "THC"
+      ],
+      "description": "A second state-level effort to repeal adult-use marijuana sales has failed in 2026, leaving only a well-funded campaign in Massachusetts as the sole remaining active repeal attempt in the country.",
+      "useInNewsletter": {},
+      "imageSearchQuery": ""
+    }
+  ]
+}

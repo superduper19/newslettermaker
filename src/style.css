@@ -535,7 +535,12 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .selected-image-container {
-  @apply relative w-full h-full flex justify-center items-center;
+  @apply relative w-full min-h-30 flex justify-center items-center p-1;
+}
+
+.selected-image-container .selected-preview-img {
+  @apply block max-w-full w-auto h-auto max-h-35 min-h-25 object-contain rounded-lg;
+  background: #fff;
 }
 
 .btn-remove-image {
@@ -568,6 +573,19 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 
 .mini-grid-item {
   @apply w-full h-full object-cover rounded-[3px] cursor-pointer border-2 border-solid border-transparent hover:border-(--primary);
+}
+
+.state-icon-wrap {
+  @apply w-full h-full rounded-[3px] overflow-hidden bg-white;
+}
+
+.state-icon-item {
+  @apply object-contain bg-white;
+}
+
+.mini-grid-item.is-selected,
+.state-icon-wrap.is-selected {
+  @apply border-(--primary) ring-2 ring-[rgba(46,125,50,0.35)];
 }
 
 .thumbnail-img {

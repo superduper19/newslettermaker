@@ -6,7 +6,7 @@
     not be accessed.
 6.  If a paywall prevents access, explicitly state that the article is
     paywalled.
-7.  If partial access is available, only summarize the visible content.
+7.  If partial access is available, state this so user can bring you the full text.
 8. Dont use em dashes
 9. Final product should be a paragraph
 10. Each article should be summarized by one sentence.
@@ -15,4 +15,4 @@
 14. Here is the lancet article to summarize into a sentence. 
 15. Dont include the names of the periodicals or the studies
 16. Keep sentences succinct but give important data if applicable. 
-17. If some links could not be accessed, briefly note that in one short line.
+17. for numbers of or above over one thousand, one million or one billion use the format K, M and B placed right behind the number such as 5K, 5M and 5B

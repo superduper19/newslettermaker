@@ -126,6 +126,12 @@ function normalizeSummaryRules(value) {
 const LEGACY_DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 const DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 
+const DEFAULT_PUBLIC_IMAGE_BASE = 'https://purablis.com/purablis.com/newsletter';
+const DEFAULT_INSPIRATIONAL_PUBLIC_BASE = 'https://purablis.com/purablis.com/newsletter/inspiration1';
+const DEFAULT_STATE_ICONS_PUBLIC_BASE = 'https://purablis.com/purablis.com/newsletter/states';
+const DEFAULT_ARTICLE_PUBLIC_SUBFOLDER = '';
+const LEGACY_NEWSLETTER_IMAGES_BASE = 'https://purablis.com/News-roundup/images';
+
 // Global State
 let articles = [];
 let archivedArticles = [];
@@ -140,9 +146,14 @@ let newsletterContent = {
     templates: { MED: '', THC: '', CBD: '', INV: '' },
     summaryRules: DEFAULT_SUMMARY_RULES,
     selectedGreeting: DEFAULT_GREETING,
+    customGreetings: [],
     subjectPrompt: DEFAULT_SUBJECT_PROMPT,
     generatedSubjects: { MED: '', THC: '', CBD: '', INV: '' },
     categoryPickOrder: { MED: '', THC: '', CBD: '', INV: '' },
+    publicImageBase: DEFAULT_PUBLIC_IMAGE_BASE,
+    publicImageSubfolder: DEFAULT_ARTICLE_PUBLIC_SUBFOLDER,
+    stateIconsPublicBase: DEFAULT_STATE_ICONS_PUBLIC_BASE,
+    inspirationalPublicBase: DEFAULT_INSPIRATIONAL_PUBLIC_BASE,
 };
 let currentEditorTab = 'MED';
 let currentConfirmationTab = 'MED';
@@ -154,6 +165,9 @@ let articleTitleSortOrder = '';
 let imageViewSortOrder = '';
 let batchFilter = ''; // '' = all, or addedAt ISO string to show only that batch
 const INSPIRATIONAL_LIBRARY_CACHE_KEY = 'newsletter_inspirational_library';
+const LAST_SESSION_NAME_KEY = 'newsletter_last_session_name';
+let cachedBasePrompt = null;
+let currentSessionName = '';
 
 // Load State: first from LocalStorage (instant), then from Supabase if configured (overwrites)
 try {
@@ -162,19 +176,27 @@ try {
         const data = JSON.parse(saved);
         if (Array.isArray(data)) {
             articles = data;
+            articles.forEach(repairArticleImagePreview);
         } else {
             applyWorkspaceState(data, { mergeLibrary: true });
         }
     }
     const savedLibrary = localStorage.getItem(INSPIRATIONAL_LIBRARY_CACHE_KEY);
     if (savedLibrary) {
-        inspirationalLibraryImages = JSON.parse(savedLibrary);
+        inspirationalLibraryImages = filterInspirationalLibraryImages(JSON.parse(savedLibrary));
     }
+    restoreLastSessionSelection();
+    repairMisplacedPurablisImageUrls();
+    inferPublicImageSettingsFromArticles();
+    syncPublicImageSettingsUi();
+    syncArticleImageFieldsFromPublished();
 } catch (e) {
     console.error('Failed to load state', e);
 }
 
 function buildWorkspaceState() {
+    const nameEl = document.getElementById('newsletter-name');
+    const sessionName = currentSessionName || (nameEl ? nameEl.value.trim() : '');
     return {
         articles,
         archivedArticles,
@@ -185,7 +207,520 @@ function buildWorkspaceState() {
         newsletterContent,
         lastGeneratedNewsletter,
         aiQuery: getAiQuery(),
+        currentSessionName: sessionName,
+        publicImageBase: newsletterContent.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE,
+        publicImageSubfolder: newsletterContent.publicImageSubfolder || '',
     };
+}
+
+function slugifyNewsletterFolder(name) {
+    return String(name || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
+function editionDatePrefixFromToday() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${mm}-${dd}-${yy}`;
+}
+
+function applyEditionDateToFilename(filename) {
+    const base = String(filename || '').trim().split('/').pop();
+    if (!base) return '';
+    if (/^\d{2}-\d{2}-\d{2}-/.test(base)) return base;
+    return `${getEditionDatePrefixForNewsletter()}-${base}`;
+}
+
+function getEditionDatePrefixForNewsletter() {
+    const saved = newsletterContent.editionDatePrefix;
+    if (saved && /^\d{2}-\d{2}-\d{2}$/.test(String(saved).trim())) {
+        return String(saved).trim();
+    }
+    for (const a of articles) {
+        for (const field of ['purablisFilename', 'publishedImageUrl', 'image']) {
+            const m = String(a[field] || '').match(/(\d{2}-\d{2}-\d{2})-/);
+            if (m) return m[1];
+        }
+    }
+    return editionDatePrefixFromToday();
+}
+
+function slugifyTitleForFilename(title, maxLen = 36) {
+    return String(title || 'article')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, maxLen) || 'article';
+}
+
+function isShortPurablisImageUrl(url) {
+    const u = String(url || '').trim();
+    if (!/purablis\.com\/News-roundup\/images\//i.test(u)) return false;
+    const fn = u.split('/').pop().split('?')[0];
+    if (/^\d{2}-\d{2}-\d{2}-/.test(fn)) return false;
+    return /^(?:freepik|upload)-/i.test(fn);
+}
+
+function getArticleCategoriesForFilename(article) {
+    const out = [];
+    const cats = ['MED', 'THC', 'CBD', 'INV'];
+    cats.forEach((cat) => {
+        const rank = String(getRankForSort(article, cat) ?? '').trim();
+        if (rank && /^(Y|YM|\d+|COOL FINDS)/i.test(rank)) {
+            out.push({ cat, rank });
+        }
+    });
+    if (!out.length && Array.isArray(article.categories)) {
+        article.categories.forEach((c) => {
+            if (c && typeof c === 'object' && c.cat) {
+                out.push({ cat: c.cat, rank: String(c.rank || 'Y') });
+            }
+        });
+    }
+    if (!out.length && article.status) {
+        out.push({ cat: 'ART', rank: article.status });
+    }
+    return out;
+}
+
+/** Matches export-session-images.js naming — files on News-roundup/images/ */
+function buildArticlePurablisFilename(article) {
+    if (article.purablisFilename) {
+        const fn = String(article.purablisFilename).trim().split('/').pop();
+        return /^\d{2}-\d{2}-\d{2}-/.test(fn) ? fn : applyEditionDateToFilename(fn);
+    }
+    let base = '';
+    for (const field of ['publishedImageUrl', 'image', 'originalImageUrl', 'uploadedImageUrl']) {
+        base = inferPurablisFilenameFromSource(article[field]);
+        if (base) break;
+    }
+    if (!base) base = `${slugifyTitleForFilename(article.title)}.png`;
+    const cats = getArticleCategoriesForFilename(article);
+    const primary = cats[0] || { cat: 'ART', rank: '0' };
+    const slug = slugifyTitleForFilename(article.title, 36);
+    const ext = (base.match(/\.[a-z]+$/i) || ['.png'])[0];
+    const core = base.replace(/\.[a-z]+$/i, '');
+    const labeled = `${primary.cat}-${primary.rank}-${slug}-${core}${ext}`.replace(/--+/g, '-');
+    return applyEditionDateToFilename(labeled);
+}
+
+function extractDateSubfolderFromUrl(url) {
+    const match = String(url || '').match(/\/(\d{2}-\d{2}-\d{2})\//);
+    return match ? match[1] : '';
+}
+
+function buildPurablisPublicUrlFromFilename(filename, originalUrl = '') {
+    const fn = String(filename || '').trim().split('/').pop();
+    if (!fn) return '';
+    const base = (newsletterContent.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE).replace(/\/+$/, '');
+    const dateFolder = extractDateSubfolderFromUrl(originalUrl);
+    const pathSegment = dateFolder ? `${dateFolder}/` : '';
+    return `${base}/${pathSegment}${encodeURIComponent(fn)}`;
+}
+
+function getPublicImageSettings() {
+    const subfolderInput = document.getElementById('public-image-subfolder');
+    const baseInput = document.getElementById('public-image-base');
+    const savedBase = newsletterContent.publicImageBase != null
+        ? String(newsletterContent.publicImageBase).trim()
+        : '';
+    const savedSub = newsletterContent.publicImageSubfolder != null
+        ? String(newsletterContent.publicImageSubfolder).trim()
+        : null;
+    const base = (savedBase || (baseInput && baseInput.value.trim()) || DEFAULT_PUBLIC_IMAGE_BASE)
+        .replace(/\/+$/, '');
+    const subfolder = savedSub !== null
+        ? savedSub
+        : ((subfolderInput && subfolderInput.value.trim()) || DEFAULT_ARTICLE_PUBLIC_SUBFOLDER);
+    return { base, subfolder };
+}
+
+function extractImageFilenameFromUrl(url) {
+    const match = String(url || '').match(/\/([^/?#]+\.(?:png|jpe?g|gif|webp|svg))(?:\?|#|$)/i);
+    return match ? match[1] : '';
+}
+
+function isExternalCdnImageUrl(url) {
+    const u = String(url || '').toLowerCase();
+    return /freepik\.com|flaticon\.com|cdn-icons/i.test(u);
+}
+
+/** Filename as stored on purablis FTP (freepik-123.png, upload-*, state-*, insp-*) */
+function inferPurablisFilenameFromSource(url) {
+    const u = String(url || '').trim();
+    if (!u) return '';
+    const fromPath = extractImageFilenameFromUrl(u);
+    if (fromPath && /^(freepik-|upload-|state-|insp-)/i.test(fromPath)) return fromPath;
+    if (/freepik|cdn-icons/i.test(u)) {
+        const m = u.match(/(\d{4,})\.(png|jpe?g|webp|gif)/i);
+        if (m) return `freepik-${m[1]}.${m[2].toLowerCase()}`;
+    }
+    if (/\/uploads\//i.test(u) && fromPath) {
+        return /^upload-/i.test(fromPath) ? fromPath : `upload-${fromPath}`;
+    }
+    return fromPath;
+}
+
+function extractArticleImageFilename(articleOrUrl) {
+    let fn = '';
+    let source = '';
+    if (typeof articleOrUrl === 'object' && articleOrUrl) {
+        for (const field of ['publishedImageUrl', 'image', 'originalImageUrl', 'uploadedImageUrl', 'previewImageUrl']) {
+            source = articleOrUrl[field];
+            fn = inferPurablisFilenameFromSource(source);
+            if (fn) break;
+        }
+    } else {
+        source = articleOrUrl;
+        fn = inferPurablisFilenameFromSource(articleOrUrl);
+    }
+    if (!fn) return '';
+    if (/^insp-/i.test(fn) || isAppStateIconUrl(source || '')) return fn;
+    return applyEditionDateToFilename(fn);
+}
+
+function buildPublicImageUrlCandidates(filename) {
+    if (!filename) return [];
+    const { base, subfolder } = getPublicImageSettings();
+    const encFile = encodeURIComponent(filename);
+    const encFolder = subfolder ? subfolder.split('/').map(encodeURIComponent).join('/') : '';
+    const roots = [...new Set([
+        base,
+        DEFAULT_PUBLIC_IMAGE_BASE,
+        LEGACY_NEWSLETTER_IMAGES_BASE,
+    ].filter(Boolean))];
+    const out = [];
+    roots.forEach((root) => {
+        if (subfolder) out.push(`${root}/${encFolder}/${encFile}`);
+        out.push(`${root}/${encFile}`);
+        if (!subfolder) {
+            out.push(`${root}/all/${encFile}`);
+            out.push(`${LEGACY_NEWSLETTER_IMAGES_BASE}/all/${encFile}`);
+        }
+    });
+    return [...new Set(out)];
+}
+
+function buildPublicArticleImageUrl(articleOrUrl) {
+    const filename = extractArticleImageFilename(articleOrUrl);
+    if (!filename) return '';
+    return buildPublicImageUrlCandidates(filename)[0] || '';
+}
+
+/** True when URL points at this app (localhost proxy, /uploads, etc.) — never use in newsletter HTML */
+function isLocalOrAppImageUrl(url) {
+    const v = String(url || '').trim();
+    if (!v) return true;
+    if (/^data:|^blob:/i.test(v)) return true;
+    if (/localhost|127\.0\.0\.1/i.test(v)) return true;
+    if (/\/api\/images\/asset\//i.test(v)) return true;
+    if (/^\/uploads\//i.test(v) || /^\/state_icons_dark\//i.test(v)) return true;
+    if (typeof window !== 'undefined' && v.startsWith('/') && !v.startsWith('//')) return true;
+    return false;
+}
+
+function buildPublicStateIconUrl(urlOrFilename) {
+    const value = String(urlOrFilename || '').trim();
+    let filename = extractImageFilenameFromUrl(value)
+        || (value.match(/\/(?:all\/states|state_icons_dark)\/([^/?#]+)/i) || [])[1]
+        || (/\.(png|jpe?g|gif|webp|svg)$/i.test(value) ? value.split('/').pop() : '');
+    if (!filename) return '';
+    if (/^state-/i.test(filename)) {
+        const slug = filename.replace(/^state-/i, '').replace(/\.[a-z]+$/i, '');
+        filename = `${slug.split('-').map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')}.png`;
+    }
+    const base = (newsletterContent.stateIconsPublicBase || DEFAULT_STATE_ICONS_PUBLIC_BASE).replace(/\/+$/, '');
+    return `${base}/${encodeURIComponent(filename)}`;
+}
+
+function buildPublicInspirationalImageUrl(itemOrUrl) {
+    if (typeof itemOrUrl === 'object' && itemOrUrl && isPurablisUrl(itemOrUrl.url) && !isLocalOrAppImageUrl(itemOrUrl.url)) {
+        return getDownloadSafeAssetUrl(itemOrUrl.url);
+    }
+    const filename = typeof itemOrUrl === 'object'
+        ? inspirationalItemFilename(itemOrUrl)
+        : (extractImageFilenameFromUrl(itemOrUrl) || (String(itemOrUrl || '').trim().split('/').pop() || ''));
+    if (!filename) return '';
+    const base = (newsletterContent.inspirationalPublicBase || DEFAULT_INSPIRATIONAL_PUBLIC_BASE).replace(/\/+$/, '');
+    return `${base}/${encodeURIComponent(filename)}`;
+}
+
+/** Newsletter HTML: purablis.com only — never localhost, Freepik CDN, or other hosts */
+function resolvePurablisImageUrl(articleOrUrl) {
+    if (!articleOrUrl) return '';
+    const urlFields = typeof articleOrUrl === 'object'
+        ? [
+            articleOrUrl.publishedImageUrl,
+            articleOrUrl.image,
+            articleOrUrl.originalImageUrl,
+            articleOrUrl.uploadedImageUrl,
+            articleOrUrl.previewImageUrl,
+        ]
+        : [articleOrUrl];
+
+    for (const raw of urlFields) {
+        let safe = String(raw || '').trim();
+        if (safe && isPurablisUrl(safe) && !isLocalOrAppImageUrl(safe) && !isShortPurablisImageUrl(safe)) {
+            if (safe.includes('/purablis.com/') || safe.includes('Newsletter images') || safe.includes('/News-roundup/images/')) {
+                // If it's a known legacy path with subfolders, don't strip the subfolder!
+                if (safe.includes('Newsletter images') || safe.includes('/News-roundup/images/')) {
+                    safe = safe.replace(/ /g, '%20');
+                } else if (safe.includes('purablis.com')) {
+                    const extractedFilename = safe.split('/').pop();
+                    if (extractedFilename) {
+                        if (safe.includes('inspiration1')) {
+                            safe = buildPublicInspirationalImageUrl(extractedFilename);
+                        } else if (safe.includes('states') || safe.includes('state_icons')) {
+                            safe = buildPublicStateIconUrl(extractedFilename);
+                        } else {
+                            safe = buildPurablisPublicUrlFromFilename(extractedFilename, safe);
+                        }
+                    }
+                }
+            }
+            return getDownloadSafeAssetUrl(safe);
+        }
+    }
+
+    if (typeof articleOrUrl === 'object' && articleOrUrl) {
+        const exportName = buildArticlePurablisFilename(articleOrUrl);
+        const legacyTarget = articleOrUrl.publishedImageUrl || articleOrUrl.image || '';
+        if (exportName) {
+            let built = '';
+            if (legacyTarget.includes('inspiration1')) built = buildPublicInspirationalImageUrl(exportName);
+            else if (legacyTarget.includes('states') || legacyTarget.includes('state_icons')) built = buildPublicStateIconUrl(exportName);
+            else built = buildPurablisPublicUrlFromFilename(exportName, legacyTarget);
+            return built;
+        }
+    }
+
+    const filename = extractArticleImageFilename(articleOrUrl);
+    if (!filename) return '';
+
+    // If passed a raw string URL that is an external CDN (e.g. freepik search result),
+    // do not fake a purablis.com URL. Only do this if it's an article object or an already-published URL.
+    if (typeof articleOrUrl === 'string' && isExternalCdnImageUrl(articleOrUrl)) {
+        return '';
+    }
+
+    if (isInspirationalLibraryFilename(filename)) {
+        const insp = buildPublicInspirationalImageUrl(
+            typeof articleOrUrl === 'object' ? articleOrUrl : filename,
+        );
+        if (insp && isPurablisUrl(insp)) return insp;
+    }
+    if (isAppStateIconUrl(typeof articleOrUrl === 'object' ? (articleOrUrl.originalImageUrl || articleOrUrl.image || '') : '')
+        || /\/all\/states\//i.test(String(filename))
+        || /^state-/i.test(filename)) {
+        const state = buildPublicStateIconUrl(filename);
+        if (state) return state;
+    }
+
+    const built = buildPublicImageUrlCandidates(filename).find((u) => isPurablisUrl(u));
+    return built || '';
+}
+
+window.updatePublicImageSettings = () => {
+    const { base, subfolder } = getPublicImageSettings();
+    newsletterContent.publicImageBase = base;
+    newsletterContent.publicImageSubfolder = subfolder;
+    saveState();
+};
+
+function inferPublicImageSettingsFromArticles() {
+    const sample = articles.find((a) => /News-roundup\/images/i.test(a.publishedImageUrl || a.image || ''));
+    if (!sample) return;
+    newsletterContent.publicImageBase = DEFAULT_PUBLIC_IMAGE_BASE;
+    newsletterContent.publicImageSubfolder = '';
+    newsletterContent.stateIconsPublicBase = DEFAULT_STATE_ICONS_PUBLIC_BASE;
+    newsletterContent.inspirationalPublicBase = DEFAULT_INSPIRATIONAL_PUBLIC_BASE;
+}
+
+/** Undo verify step that pointed images at Newsletter images/all/ while files live on News-roundup */
+function repairMisplacedPurablisImageUrls() {
+    articles.forEach((a, idx) => {
+        ['publishedImageUrl', 'image', 'previewImageUrl', 'originalImageUrl'].forEach((field) => {
+            const u = String(a[field] || '');
+            if (!u || !/purablis\.com/i.test(u)) return;
+            if (/News-roundup\/images/i.test(u)) return;
+            const stateMatch = u.match(/\/all\/states\/([^/?#]+)/i);
+            if (stateMatch) {
+                articles[idx][field] = `${DEFAULT_STATE_ICONS_PUBLIC_BASE}/${encodeURIComponent(stateMatch[1])}`;
+                return;
+            }
+            const fn = extractImageFilenameFromUrl(u);
+            if (!fn) return;
+            articles[idx][field] = `${DEFAULT_PUBLIC_IMAGE_BASE}/${encodeURIComponent(fn)}`;
+        });
+    });
+}
+
+function syncPublicImageSettingsUi() {
+    const subfolderEl = document.getElementById('public-image-subfolder');
+    const baseEl = document.getElementById('public-image-base');
+    const base = (newsletterContent.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE).replace(/\/+$/, '');
+    const subfolder = newsletterContent.publicImageSubfolder != null
+        ? String(newsletterContent.publicImageSubfolder)
+        : DEFAULT_ARTICLE_PUBLIC_SUBFOLDER;
+    if (baseEl) baseEl.value = base;
+    if (subfolderEl) subfolderEl.value = subfolder;
+}
+
+function syncArticleImageFieldsFromPublished() {
+    articles.forEach((a, idx) => {
+        let pub = resolvePurablisImageUrl(a);
+        if (!pub) return;
+        articles[idx].publishedImageUrl = pub;
+        articles[idx].purablisFilename = articles[idx].purablisFilename || buildArticlePurablisFilename(a);
+        articles[idx].image = pub;
+        articles[idx].previewImageUrl = pub;
+    });
+}
+
+/** HEAD-check and set live purablis.com URLs before Confirmation / export */
+async function ensureConfirmationPurablisUrls() {
+    const relevant = articles.filter((a) => {
+        if (a.publishImage === false) return false;
+        if (a.image || a.publishedImageUrl || a.originalImageUrl) return true;
+        return ['Y', 'YM', 'COOL FINDS', 'M'].includes(a.status)
+            || ['MED', 'THC', 'CBD', 'INV'].some((cat) => isCategoryRankIncluded(a, cat));
+    });
+    if (!relevant.length) return { reachable: 0, checked: 0 };
+
+    const { base } = getPublicImageSettings();
+    const res = await fetch('/api/images/resolve-article-urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            articles: relevant.map((a) => ({
+                id: a.id,
+                title: a.title,
+                status: a.status,
+                ranks: a.ranks,
+                categories: a.categories,
+                purablisFilename: a.purablisFilename,
+                publishedImageUrl: a.publishedImageUrl,
+                image: a.image,
+                originalImageUrl: a.originalImageUrl,
+            })),
+            datePrefix: getEditionDatePrefixForNewsletter(),
+            baseUrl: base,
+        }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not resolve purablis image URLs');
+
+    const byTitle = new Map((data.results || []).map((r) => [String(r.title || '').toLowerCase().trim(), r]));
+    const byId = new Map((data.results || []).filter((r) => r.id != null).map((r) => [r.id, r]));
+
+    relevant.forEach((article) => {
+        const idx = articles.indexOf(article);
+        if (idx < 0) return;
+        const row = byId.get(article.id) || byTitle.get(String(article.title || '').toLowerCase().trim());
+        if (!row || !row.url) return;
+        articles[idx].purablisFilename = row.purablisFilename || articles[idx].purablisFilename;
+        articles[idx].publishedImageUrl = row.url;
+        articles[idx].publicReachable = !!row.publicReachable;
+        articles[idx].image = row.url;
+        articles[idx].previewImageUrl = row.url;
+    });
+    saveState();
+    return { reachable: data.reachable, checked: data.checked };
+}
+
+window.verifyPublicArticleImages = async (showAlert = false) => {
+    const statusEl = document.getElementById('public-image-status');
+    const { base, subfolder } = getPublicImageSettings();
+    const withImages = articles.filter((a) => a.image || a.publishedImageUrl || a.originalImageUrl);
+    const filenames = [...new Set(withImages.map((a) => extractArticleImageFilename(a)).filter(Boolean))];
+    if (!filenames.length) {
+        if (statusEl) statusEl.textContent = 'No article images to check.';
+        if (showAlert) alert('No article images selected yet.');
+        return;
+    }
+    if (statusEl) statusEl.textContent = 'Checking…';
+    try {
+        const res = await fetch('/api/images/verify-public', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filenames, publicSubfolder: subfolder, baseUrl: base }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Check failed');
+        const byName = new Map((data.results || []).map((r) => [r.filename, r]));
+        withImages.forEach((article) => {
+            const fn = extractArticleImageFilename(article);
+            const row = byName.get(fn);
+            if (!row) return;
+            const existing = resolvePurablisImageUrl(article);
+            if (!row.publicReachable) {
+                article.publicReachable = false;
+                if (existing && isPurablisUrl(existing)) return;
+            }
+            article.publishedImageUrl = row.url;
+            article.publicReachable = row.publicReachable;
+            if (row.publicReachable) {
+                article.image = row.url;
+                article.previewImageUrl = row.url;
+            }
+        });
+        saveState();
+        const msg = `${data.reachable}/${data.checked} images reachable at ${data.publicBase}/${data.publicSubfolder || '(root)'}/`;
+        if (statusEl) {
+            statusEl.textContent = msg;
+            statusEl.classList.toggle('text-red-600', data.unreachable > 0);
+        }
+        if (showAlert) {
+            alert(
+                data.unreachable > 0
+                    ? `${msg}\n\n${data.unreachable} still return 404. Copy files into that folder on purablis.com (or set Public folder to match where they already live), then run Publish Selected to purablis again.`
+                    : `${msg}\n\nAll checked images load from purablis.com.`,
+            );
+        }
+        const activeStep = document.querySelector('.step.active');
+        if (activeStep && activeStep.getAttribute('data-step') === '6') {
+            Object.keys(confirmationRenderedHtml).forEach((k) => { confirmationRenderedHtml[k] = ''; });
+            renderConfirmationPreviews();
+        }
+    } catch (e) {
+        if (statusEl) statusEl.textContent = 'Check failed';
+        if (showAlert) alert('Could not verify public URLs: ' + (e.message || 'network error'));
+    }
+};
+
+function setCurrentSessionName(name) {
+    currentSessionName = String(name || '').trim();
+    if (currentSessionName) {
+        localStorage.setItem(LAST_SESSION_NAME_KEY, currentSessionName);
+    }
+    const nameEl = document.getElementById('newsletter-name');
+    if (nameEl && currentSessionName) nameEl.value = currentSessionName;
+    syncSessionDropdownSelection(currentSessionName);
+}
+
+function syncSessionDropdownSelection(name) {
+    ['saved-sessions-dropdown-step1', 'saved-sessions-dropdown', 'saved-sessions-dropdown-step3'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (name && [...el.options].some((opt) => opt.value === name)) {
+            el.value = name;
+        }
+    });
+}
+
+function restoreLastSessionSelection() {
+    const last = localStorage.getItem(LAST_SESSION_NAME_KEY) || '';
+    if (!last) return;
+    currentSessionName = last;
+    const nameEl = document.getElementById('newsletter-name');
+    if (nameEl) nameEl.value = last;
 }
 
 function getAiQuery() {
@@ -245,12 +780,13 @@ function isSelectedArticle(article) {
 function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
     const value = state || {};
     articles = Array.isArray(value.articles) ? value.articles : [];
+    articles.forEach(repairArticleImagePreview);
     archivedArticles = Array.isArray(value.archivedArticles) ? value.archivedArticles : [];
     laterCoolArticles = Array.isArray(value.laterCoolArticles) ? value.laterCoolArticles : [];
     inspirationalImages = Array.isArray(value.inspirationalImages) ? value.inspirationalImages : [];
     confirmationInspirationalImage = typeof value.confirmationInspirationalImage === 'string' ? value.confirmationInspirationalImage : '';
     if (Array.isArray(value.inspirationalLibraryImages)) {
-        inspirationalLibraryImages = value.inspirationalLibraryImages;
+        inspirationalLibraryImages = filterInspirationalLibraryImages(value.inspirationalLibraryImages);
     } else if (!mergeLibrary) {
         inspirationalLibraryImages = [];
     }
@@ -265,13 +801,38 @@ function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
         templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' },
         summaryRules: normalizeSummaryRules(nc.summaryRules),
         selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
+        customGreetings: Array.isArray(nc.customGreetings) ? nc.customGreetings.filter(Boolean) : [],
         subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
         generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
         categoryPickOrder: nc.categoryPickOrder || { MED: '', THC: '', CBD: '', INV: '' },
+        publicImageBase: nc.publicImageBase || value.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE,
+        publicImageSubfolder: nc.publicImageSubfolder != null
+            ? nc.publicImageSubfolder
+            : (value.publicImageSubfolder != null ? value.publicImageSubfolder : DEFAULT_ARTICLE_PUBLIC_SUBFOLDER),
+        stateIconsPublicBase: nc.stateIconsPublicBase || DEFAULT_STATE_ICONS_PUBLIC_BASE,
+        inspirationalPublicBase: nc.inspirationalPublicBase || DEFAULT_INSPIRATIONAL_PUBLIC_BASE,
+        editionDatePrefix: nc.editionDatePrefix || '',
     };
+    
+    // Auto-migrate legacy URLs to the new newsletter path
+    const legacyUrl1 = 'https://purablis.com/News-roundup/images';
+    const legacyUrl2 = 'https://purablis.com/News-roundup/images/states';
+    const legacyUrl3 = 'https://purablis.com/Newsletter images';
+    const legacyUrl4 = 'https://purablis.com/News-roundup/inspirational';
+    if (newsletterContent.publicImageBase === legacyUrl1 || newsletterContent.publicImageBase === legacyUrl3 || newsletterContent.publicImageBase === 'https://purablis.com/Newsletter%20images') newsletterContent.publicImageBase = DEFAULT_PUBLIC_IMAGE_BASE;
+    if (newsletterContent.inspirationalPublicBase === legacyUrl1 || newsletterContent.inspirationalPublicBase === legacyUrl4) newsletterContent.inspirationalPublicBase = DEFAULT_INSPIRATIONAL_PUBLIC_BASE;
+    if (newsletterContent.stateIconsPublicBase === legacyUrl2) newsletterContent.stateIconsPublicBase = DEFAULT_STATE_ICONS_PUBLIC_BASE;
+
+    repairMisplacedPurablisImageUrls();
+    inferPublicImageSettingsFromArticles();
+    syncPublicImageSettingsUi();
+    syncArticleImageFieldsFromPublished();
     lastGeneratedNewsletter = value.lastGeneratedNewsletter || null;
     if (typeof value.aiQuery === 'string') {
         setAiQuery(value.aiQuery);
+    }
+    if (value.currentSessionName) {
+        setCurrentSessionName(value.currentSessionName);
     }
     persistWorkspaceLocal(buildWorkspaceState());
 }
@@ -578,10 +1139,10 @@ window.updateStateHintFromDiagnostic = async function () {
                 localStorage.setItem('newsletter_saved_sessions', JSON.stringify(merged));
                 if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
                 if (hintEl) hideWithClass(hintEl);
-                const nameEl = document.getElementById('newsletter-name');
-                if (nameEl && nameEl.value.trim()) {
-                    currentSessionName = nameEl.value.trim();
+                if (!currentSessionName) {
+                    restoreLastSessionSelection();
                 }
+                syncSessionDropdownSelection(currentSessionName);
             }
         } else if (hintEl && !hintEl.classList.contains('hidden')) {
             await window.updateStateHintFromDiagnostic();
@@ -624,6 +1185,7 @@ window.startNewWeek = async () => {
     const nameInput = document.getElementById('newsletter-name');
     if (nameInput) nameInput.value = '';
     currentSessionName = '';
+    syncSessionDropdownSelection(localStorage.getItem(LAST_SESSION_NAME_KEY) || '');
 
     articles = [];
     archivedArticles = [];
@@ -644,6 +1206,7 @@ window.startNewWeek = async () => {
         templates: kept.templates || { MED: '', THC: '', CBD: '', INV: '' },
         summaryRules: normalizeSummaryRules(kept.summaryRules),
         selectedGreeting: kept.selectedGreeting || DEFAULT_GREETING,
+        customGreetings: Array.isArray(kept.customGreetings) ? kept.customGreetings : [],
         subjectPrompt: normalizeSubjectPrompt(kept.subjectPrompt),
         generatedSubjects: kept.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
         generatedHeadings: kept.generatedHeadings || { MED: '', THC: '', CBD: '', INV: '' },
@@ -708,6 +1271,9 @@ function switchStep(stepNumber) {
         renderEditorView();
         loadBasePromptFromServer();
     } else if (step === 6) {
+        Object.keys(confirmationRenderedHtml).forEach((k) => {
+            confirmationRenderedHtml[k] = '';
+        });
         renderConfirmationView();
     }
 
@@ -793,21 +1359,15 @@ window.renderImagesView = () => {
             <div class="img-col-actions"><div class="header-label">Actions</div></div>
         </div>`;
 
+    const usedSearchEssences = new Set();
     relevantArticles.forEach((article) => {
         const originalIndex = articles.indexOf(article);
+        repairArticleImagePreview(article);
 
-        if (!article.imageSearchQuery) {
-            article.imageSearchQuery = buildDefaultImageSearchQuery(article.title);
-        }
+        article.imageSearchQuery = buildDefaultImageSearchQuery(article.title, usedSearchEssences);
+        const searchEssence = parseImageSearchEssence(article.imageSearchQuery).essence;
 
-        const selectedImageHtml =
-            article.image
-                ? `<div class="selected-image-container">
-                    <img src="${article.image}" class="img-fluid max-h-30" onerror="this.onerror=null;this.src='${article.originalImageUrl || ''}';this.parentElement.classList.add('img-fallback');">
-                    <button class="btn-remove-image" onclick="removeImage(${originalIndex})">×</button>
-                    ${article.image.includes('purablis.com') ? '<span class="badge-published" title="Published">P</span>' : ''}
-                </div>`
-                : `<div class="no-image-placeholder">No Image</div>`;
+        const selectedImageHtml = buildSelectedImageHtml(originalIndex, article);
 
         const gridId = `grid-${originalIndex}`;
 
@@ -850,13 +1410,18 @@ window.renderImagesView = () => {
                 </div>
                 ${catInputs}
                 <div class="img-col-search">
-                    <div class="flex gap-1.25 mb-2">
-                        <input
-                            type="text"
-                            id="img-search-input-${originalIndex}"
-                            value="${article.imageSearchQuery}"
-                            placeholder="Keyword..."
-                            class="form-control h-8 py-1 px-px text-[0.85rem]">
+                    <div class="flex gap-1.25 mb-2 items-center">
+                        <div class="flex flex-1 items-center gap-1 min-w-0">
+                            <input
+                                type="text"
+                                id="img-search-input-${originalIndex}"
+                                value="${escapeHtml(searchEssence)}"
+                                placeholder="Keyword or state name"
+                                title="Topic keyword for flat Freepik icons, or a US state name (e.g. Virginia, TX) for state icons on purablis.com."
+                                oninput="updateImageSearchEssence(${originalIndex}, this.value)"
+                                class="form-control h-8 py-1 px-2 text-[0.85rem] min-w-0">
+                            <span class="text-[0.82rem] text-[#666] font-semibold whitespace-nowrap shrink-0">flat</span>
+                        </div>
                         <button
                             class="btn btn-sm btn-primary whitespace-nowrap"
                             onclick="searchArticleImages(${originalIndex})">
@@ -932,42 +1497,146 @@ function updateImageViewStats() {
         <span class="stat-item bg-[#f3e5f5] text-[#4a148c]">INV: ${counts.INV}</span>`;
 }
 
-function buildDefaultImageSearchQuery(title) {
-    const raw = String(title || '').trim();
-    const lower = raw.toLowerCase();
-    const themed = [
-        { match: 'marijuana', term: 'cannabis' },
-        { match: 'cannabis', term: 'cannabis' },
-        { match: 'hemp', term: 'hemp' },
-        { match: 'cbd', term: 'cbd' },
-        { match: 'psilocybin', term: 'psilocybin' },
-        { match: 'psychedelic', term: 'psychedelic' },
-        { match: 'opioid', term: 'opioid' },
-        { match: 'veto', term: 'veto' },
-        { match: 'governor', term: 'government' },
-        { match: 'pharma', term: 'pharmacy' },
-        { match: 'hospital', term: 'hospital' },
-    ];
-    for (const { match, term } of themed) {
-        if (lower.includes(match)) return term;
+const IMAGE_SEARCH_STOPWORDS = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as',
+    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+    'would', 'could', 'should', 'may', 'might', 'must', 'can', 'after', 'before', 'about', 'into', 'over',
+    'under', 'again', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few',
+    'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
+    'very', 'just', 'now', 'also', 'its', 'it', 'they', 'them', 'their', 'we', 'our', 'you', 'your', 'he',
+    'she', 'his', 'her', 'him', 'who', 'which', 'what', 'this', 'that', 'these', 'those', 'am', 'i', 'me',
+    'my', 'new', 'old', 'says', 'said', 'say', 'get', 'got', 'week', 'year', '2026', '2025', 'news', 'report',
+    'reports', 'article', 'articles', 'according', 'amid', 'among', 'between', 'via', 'per', 'vs', 'v', 'u',
+    's', 'us', 'uk', 'eu',
+]);
+
+const IMAGE_SEARCH_GENERIC_WORDS = new Set([
+    'marijuana', 'cannabis', 'hemp', 'cbd', 'thc', 'weed', 'drug', 'drugs', 'pot', 'dispensary', 'dispensaries',
+    'legalization', 'legalize', 'legalized', 'legalizing', 'recreational', 'medical', 'medicinal', 'industry',
+    'market', 'markets', 'business', 'companies', 'company', 'law', 'laws', 'bill', 'bills', 'legislation',
+    'legislature', 'congress', 'senate', 'house', 'state', 'states', 'federal', 'government', 'gov', 'governor',
+]);
+
+const IMAGE_SEARCH_VERB_NOUN = {
+    vetoes: 'veto',
+    vetoed: 'veto',
+    vetoing: 'veto',
+    passes: 'pass',
+    passed: 'pass',
+    passing: 'pass',
+    signs: 'signing',
+    signed: 'signing',
+    legalizes: 'legalize',
+    legalized: 'legalize',
+    approves: 'approval',
+    approved: 'approval',
+    bans: 'ban',
+    banned: 'ban',
+    ruling: 'ruling',
+    rules: 'rules',
+};
+
+function parseImageSearchEssence(query) {
+    const raw = String(query || '').trim();
+    const flatMatch = raw.match(/^(.+?)\s+flat$/i);
+    if (flatMatch) {
+        return { essence: flatMatch[1].trim(), full: `${flatMatch[1].trim()} flat` };
     }
-    const words = raw.split(/\s+/).filter((w) => w.length > 2);
-    if (words.length === 0) return 'cannabis';
-    words.sort((a, b) => b.length - a.length);
-    return words[0];
+    const single = raw.split(/\s+/).filter(Boolean)[0] || '';
+    return { essence: single, full: single ? `${single} flat` : '' };
 }
+
+function formatImageSearchQuery(essence) {
+    const word = String(essence || '').trim().replace(/\s+/g, ' ');
+    return word ? `${word} flat` : '';
+}
+
+function normalizeEssenceToken(word, originalTitle) {
+    let w = String(word || '').toLowerCase().replace(/[^a-z0-9'-]/g, '');
+    if (!w || w.length < 3) return '';
+    if (IMAGE_SEARCH_VERB_NOUN[w]) w = IMAGE_SEARCH_VERB_NOUN[w];
+    if (w.endsWith('ies') && w.length > 4) w = `${w.slice(0, -3)}y`;
+    else if (w.endsWith('s') && w.length > 4 && !w.endsWith('ss')) w = w.slice(0, -1);
+
+    const titleWords = String(originalTitle || '').split(/\s+/);
+    const idx = titleWords.findIndex((tw) => tw.toLowerCase().replace(/[^a-z0-9]/g, '') === w);
+    if (idx > 0 && /^[A-Z]/.test(titleWords[idx])) {
+        return w;
+    }
+    return w;
+}
+
+function extractTitleEssenceCandidates(title) {
+    const raw = String(title || '').trim();
+    const tokens = raw.split(/\s+/).map((w, i) => ({
+        raw: w,
+        norm: normalizeEssenceToken(w, raw),
+        index: i,
+        capitalized: /^[A-Z][a-z]/.test(w),
+    })).filter((t) => t.norm && t.norm.length >= 3 && !IMAGE_SEARCH_STOPWORDS.has(t.norm));
+
+    const scored = [];
+    tokens.forEach((t) => {
+        let score = 0;
+        const len = t.norm.length;
+        if (len >= 4 && len <= 14) score += 3;
+        if (t.capitalized) score += 2;
+        if (IMAGE_SEARCH_GENERIC_WORDS.has(t.norm)) score -= 6;
+        if (t.index <= 2) score += 1;
+        if (/^\d/.test(t.norm)) score -= 5;
+        scored.push({ word: t.norm, score });
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const seen = new Set();
+    const unique = [];
+    scored.forEach(({ word, score }) => {
+        if (seen.has(word)) return;
+        seen.add(word);
+        unique.push({ word, score });
+    });
+    return unique;
+}
+
+function buildDefaultImageSearchQuery(title, usedEssences = null) {
+    const candidates = extractTitleEssenceCandidates(title);
+    const used = usedEssences instanceof Set ? usedEssences : new Set();
+
+    for (const { word } of candidates) {
+        if (used.has(word)) continue;
+        used.add(word);
+        return formatImageSearchQuery(word);
+    }
+
+    const fallback = candidates[0]?.word || 'news';
+    let suffix = 1;
+    let word = fallback;
+    while (used.has(word)) {
+        word = `${fallback}${suffix}`;
+        suffix += 1;
+    }
+    used.add(word);
+    return formatImageSearchQuery(word);
+}
+
+window.updateImageSearchEssence = function (index, value) {
+    const essence = String(value || '').trim().replace(/\s+/g, ' ');
+    articles[index].imageSearchQuery = formatImageSearchQuery(essence);
+    saveState();
+};
 
 // Search Images
 window.searchArticleImages = async (index) => {
     const article = articles[index];
     const queryInput = document.getElementById(`img-search-input-${index}`);
-    const query = queryInput ? queryInput.value : '';
+    const essence = queryInput ? String(queryInput.value || '').trim() : '';
+    const query = formatImageSearchQuery(essence);
     const page = article.imagePage || 1;
 
-    if (!query) return alert('Please enter a search term');
+    if (!essence) return alert('Please enter a search keyword.');
 
-    // Update query in state
     article.imageSearchQuery = query;
+    article.imagePage = 1;
     saveState();
 
     const grid = document.getElementById(`grid-${index}`);
@@ -988,33 +1657,68 @@ window.searchArticleImages = async (index) => {
             return;
         }
 
-        if (data.success && data.images && data.images.length > 0) {
+        const stateImages = Array.isArray(data.stateImages) ? data.stateImages : [];
+        const freepikImages = Array.isArray(data.images) ? data.images : [];
+        const hasResults = stateImages.length > 0 || freepikImages.length > 0;
+
+        if (data.success && hasResults) {
             grid.innerHTML = '';
-            const displayImages = data.images.slice(0, 8);
+            const selectedUrl = articles[index].image || articles[index].publishedImageUrl || '';
 
-            displayImages.forEach(img => {
-                const imgEl = document.createElement('img');
-                imgEl.src = img.preview;
-                imgEl.className = 'mini-grid-item';
-                imgEl.alt = img.title || '';
-                imgEl.onclick = () => selectImage(index, img.download);
-                grid.appendChild(imgEl);
-            });
+            const appendResultThumb = (img, useWrap) => {
+                const url = img.download || img.preview;
+                const thumbSrc = resolvePurablisImageUrl(url)
+                    || getDownloadSafeAssetUrl(img.preview || url)
+                    || (img.preview || url);
+                const isPicked = selectedUrl && toAbsoluteAssetUrl(selectedUrl) === toAbsoluteAssetUrl(url);
+                const onPick = () => selectImage(index, url);
+                if (useWrap) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'mini-grid-item-wrap state-icon-wrap';
+                    wrap.setAttribute('data-pick-url', url);
+                    if (isPicked) wrap.classList.add('is-selected');
+                    wrap.title = img.title || '';
+                    const imgEl = document.createElement('img');
+                    imgEl.src = thumbSrc;
+                    imgEl.className = 'mini-grid-item state-icon-item';
+                    imgEl.alt = img.title || '';
+                    imgEl.onclick = onPick;
+                    wrap.appendChild(imgEl);
+                    grid.appendChild(wrap);
+                } else {
+                    const imgEl = document.createElement('img');
+                    imgEl.setAttribute('data-pick-url', url);
+                    imgEl.src = thumbSrc;
+                    imgEl.className = 'mini-grid-item';
+                    if (isPicked) imgEl.classList.add('is-selected');
+                    imgEl.alt = img.title || '';
+                    imgEl.onclick = onPick;
+                    grid.appendChild(imgEl);
+                }
+            };
 
-            const navDiv = document.createElement('div');
-            navDiv.className = 'img-page-nav';
-            const currentPage = article.imagePage || 1;
-            const termNote = data.searchTerm && data.searchTerm !== query
-                ? ` <span class="text-[0.75rem] text-[#888]">(${data.searchTerm})</span>`
-                : '';
-            navDiv.innerHTML =
-                `<button class="btn btn-sm btn-outline" ${currentPage <= 1 ? 'disabled' : ''} onclick="changeImagePage(${index}, -1)" title="Previous">&larr;</button>
-                <span class="text-[0.8rem] text-[#555]">Page ${currentPage}${termNote}</span>
-                <button class="btn btn-sm btn-outline" onclick="changeImagePage(${index}, 1)" title="Next">&rarr;</button>`;
-            grid.appendChild(navDiv);
+            stateImages.forEach((img) => appendResultThumb(img, true));
+            freepikImages.slice(0, 8).forEach((img) => appendResultThumb(img, false));
+
+            if (freepikImages.length > 0) {
+                const navDiv = document.createElement('div');
+                navDiv.className = 'img-page-nav';
+                const currentPage = article.imagePage || 1;
+                const termNote = data.searchTerm && data.searchTerm !== query
+                    ? ` <span class="text-[0.75rem] text-[#888]">(${data.searchTerm})</span>`
+                    : '';
+                navDiv.innerHTML =
+                    `<button class="btn btn-sm btn-outline" ${currentPage <= 1 ? 'disabled' : ''} onclick="changeImagePage(${index}, -1)" title="Previous">&larr;</button>
+                    <span class="text-[0.8rem] text-[#555]">Page ${currentPage}${termNote}</span>
+                    <button class="btn btn-sm btn-outline" onclick="changeImagePage(${index}, 1)" title="Next">&rarr;</button>`;
+                grid.appendChild(navDiv);
+            }
         } else {
             const tried = data.searchTerm ? ` for "${data.searchTerm}"` : '';
-            grid.innerHTML = `<div class="grid-placeholder">No icons found${tried}. Try a simpler keyword (e.g. cannabis, hemp, veto).</div>`;
+            const stateHint = essence.length >= 2
+                ? ' For a US state, type the full state name (e.g. Virginia, New York).'
+                : '';
+            grid.innerHTML = `<div class="grid-placeholder">No icons found${tried}.${stateHint} Try a simpler keyword (e.g. cannabis, hemp, veto).</div>`;
         }
     } catch (e) {
         console.error(e);
@@ -1039,13 +1743,12 @@ window.searchAllArticleImages = async () => {
     }
 
     let searched = 0;
+    const usedSearchEssences = new Set();
 
     try {
         for (const index of relevantIndexes) {
             const article = articles[index];
-            if (!article.imageSearchQuery) {
-                article.imageSearchQuery = buildDefaultImageSearchQuery(article.title);
-            }
+            article.imageSearchQuery = buildDefaultImageSearchQuery(article.title, usedSearchEssences);
 
             await searchArticleImages(index);
             searched++;
@@ -1062,36 +1765,109 @@ window.searchAllArticleImages = async () => {
     }
 };
 
+function normalizePreviewDisplayUrl(url) {
+    return resolvePurablisImageUrl(url) || '';
+}
+
+function repairArticleImagePreview(article) {
+    if (!article) return;
+    const resolved = resolvePurablisImageUrl(article);
+    if (resolved) article.previewImageUrl = resolved;
+}
+
+function getArticlePreviewImageUrl(article) {
+    if (!article) return '';
+    repairArticleImagePreview(article);
+    return resolvePurablisImageUrl(article) || '';
+}
+
+function buildSelectedImageHtml(index, article, { publishing = false } = {}) {
+    let previewSrc = getArticlePreviewImageUrl(article);
+    if (!previewSrc && article && article.originalImageUrl) {
+        previewSrc = article.originalImageUrl;
+    }
+    if (publishing && article && article.originalImageUrl) {
+        previewSrc = article.originalImageUrl;
+    }
+    if (!previewSrc) {
+        return '<div class="no-image-placeholder">No Image</div>';
+    }
+    const safeUrl = escapeHtml(previewSrc);
+    const published = article && (article.publishedImageUrl || (isPurablisUrl(article.image) ? article.image : ''));
+    const badge = publishing
+        ? '<span class="badge-published" title="Saving…">…</span>'
+        : (published && isPurablisUrl(published) ? '<span class="badge-published" title="Published">P</span>' : '');
+    const safeOriginal = escapeHtml(article && article.originalImageUrl ? article.originalImageUrl : '');
+    const fallbackScript = `this.onerror=null; if('${safeOriginal}') { this.src='${safeOriginal}'; }`;
+    return `<div class="selected-image-container">
+            <img src="${safeUrl}" class="selected-preview-img" alt="Selected" onerror="${fallbackScript}">
+            <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
+            ${badge}
+        </div>`;
+}
+
+function markSearchResultSelection(index, url) {
+    const grid = document.getElementById(`grid-${index}`);
+    if (!grid) return;
+    grid.querySelectorAll('.is-selected').forEach((el) => el.classList.remove('is-selected'));
+    if (!url) return;
+    const selected = toAbsoluteAssetUrl(url);
+    grid.querySelectorAll('[data-pick-url]').forEach((el) => {
+        if (toAbsoluteAssetUrl(el.getAttribute('data-pick-url')) === selected) {
+            el.classList.add('is-selected');
+        }
+    });
+}
+
 // Select Image — saves a copy on purablis.com (Freepik URLs are not kept for send)
 window.selectImage = async (index, url) => {
-    articles[index].image = url;
-    articles[index].originalImageUrl = url;
+    if (!url) return;
+    const displayUrl = toAbsoluteAssetUrl(url);
+    const article = articles[index];
+    article.originalImageUrl = displayUrl;
+    article.publishImage = true;
+    const needsPublish = !isPurablisUrl(displayUrl) || isExternalCdnImageUrl(displayUrl);
+    article.previewImageUrl = needsPublish ? '' : resolvePurablisImageUrl(displayUrl);
+    article.image = needsPublish ? null : resolvePurablisImageUrl(displayUrl);
+    updateSelectedImageBox(index, { publishing: needsPublish });
+    markSearchResultSelection(index, url);
+    saveState();
 
-    if (isPurablisUrl(url)) {
-        articles[index].publishedImageUrl = url;
+    if (isPurablisUrl(displayUrl)) {
+        article.publishedImageUrl = displayUrl;
+        article.image = displayUrl;
+        article.previewImageUrl = resolvePurablisImageUrl(article);
+        updateSelectedImageBox(index);
         saveState();
-        updateSelectedImageBox(index, url, false);
         return;
     }
 
-    articles[index].publishedImageUrl = null;
-    saveState();
-    updateSelectedImageBox(index, url, true);
+    article.publishedImageUrl = null;
 
     try {
-        const published = await publishUrlToPurablis(url, 'article');
-        articles[index].image = published;
-        articles[index].publishedImageUrl = published;
+        const pub = await publishUrlToPurablis(displayUrl, 'article');
+        const published = typeof pub === 'string' ? pub : pub.url;
+        article.publishedImageUrl = (typeof pub === 'object' && pub.url) ? pub.url : published;
+        article.publicReachable = typeof pub === 'object' ? !!pub.publicReachable : false;
+        article.image = article.publishedImageUrl;
+        article.previewImageUrl = resolvePurablisImageUrl(article);
         saveState();
-        updateSelectedImageBox(index, published, false);
+        updateSelectedImageBox(index);
+        if (typeof pub === 'object' && pub.publicReachable === false) {
+            console.warn('Image on FTP; public URL not reachable yet:', article.publishedImageUrl);
+        }
     } catch (e) {
         console.error('Publish to purablis failed:', e);
+        article.image = null;
+        article.publishedImageUrl = null;
+        article.previewImageUrl = '';
+        saveState();
+        updateSelectedImageBox(index);
         alert(
             'Image selected, but could not save a copy on purablis.com. '
             + 'Check FTP settings or use “Publish Selected to purablis” before sending.\n\n'
             + (e.message || ''),
         );
-        updateSelectedImageBox(index, url, false);
     }
 };
 
@@ -1100,6 +1876,7 @@ window.removeImage = (index) => {
     articles[index].image = null;
     articles[index].originalImageUrl = null;
     articles[index].publishedImageUrl = null;
+    articles[index].previewImageUrl = null;
     saveState();
     const box = document.getElementById(`selected-img-${index}`);
     if (box) {
@@ -1127,7 +1904,6 @@ window.uploadArticleImage = async (index, input) => {
 
     const formData = new FormData();
     formData.append('image', input.files[0]);
-
     try {
         const res = await fetch('/api/images/upload-article', {
             method: 'POST',
@@ -1135,12 +1911,13 @@ window.uploadArticleImage = async (index, input) => {
         });
         const data = await res.json();
         if (data.success) {
-            const imageUrl = data.url || data.fallbackUrl;
-            articles[index].image = imageUrl;
-            articles[index].originalImageUrl = imageUrl;
+            const imageUrl = data.url || '';
             articles[index].publishedImageUrl = data.published ? imageUrl : null;
+            articles[index].image = data.published ? imageUrl : null;
+            articles[index].previewImageUrl = data.published ? resolvePurablisImageUrl(articles[index]) : '';
+            articles[index].originalImageUrl = articles[index].previewImageUrl;
             saveState();
-            updateSelectedImageBox(index, imageUrl, !data.published);
+            updateSelectedImageBox(index, { publishing: !data.published });
 
             if (data.published) {
                 if (label) label.textContent = 'Uploaded (purablis)';
@@ -1169,6 +1946,50 @@ window.uploadArticleImage = async (index, input) => {
 
 // --- STEP 4: INSPIRATIONAL IMAGES ---
 
+function isInspirationalLibraryFilename(name) {
+    const n = String(name || '').trim();
+    if (!n || !/\.(png|jpe?g|gif|webp|svg)$/i.test(n)) return false;
+    const lower = n.toLowerCase();
+    if (lower.startsWith('freepik-') || lower.startsWith('state-') || lower.startsWith('upload-')) {
+        return false;
+    }
+    if (lower.startsWith('insp-')) return true;
+    if (lower.includes('_insp_') || lower.includes('insp_')) return true;
+    if (/^\d{4}-\d{2}-\d{2}__/.test(n)) return true;
+    return false;
+}
+
+function inspirationalItemFilename(item) {
+    const raw = (item && (item.name || item.url)) || '';
+    try {
+        if (/^https?:\/\//i.test(raw)) return decodeURIComponent(new URL(raw).pathname.split('/').pop() || '');
+    } catch (e) {
+        // fall through
+    }
+    return String(raw).split('/').pop().split('?')[0] || '';
+}
+
+function filterInspirationalLibraryImages(images) {
+    const seen = new Set();
+    return (Array.isArray(images) ? images : [])
+        .filter((item) => item && item.url && isInspirationalLibraryFilename(inspirationalItemFilename(item)))
+        .map((item) => {
+            const name = inspirationalItemFilename(item);
+            const previewUrl = resolvePurablisImageUrl(item) || buildPublicInspirationalImageUrl(item);
+            return { ...item, name: item.name || name, previewUrl };
+        })
+        .filter((item) => {
+            const key = String(item.url).trim();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+}
+
+function getInspirationalDisplayUrl(itemOrUrl) {
+    return resolvePurablisImageUrl(itemOrUrl) || buildPublicInspirationalImageUrl(itemOrUrl);
+}
+
 async function loadInspirationalLibrary() {
     const grid = document.getElementById('insp-gallery-grid');
     if (grid && inspirationalLibraryImages.length === 0) {
@@ -1181,7 +2002,7 @@ async function loadInspirationalLibrary() {
         if (!res.ok || !data.success) {
             throw new Error(data.error || 'Failed to load uploaded images');
         }
-        inspirationalLibraryImages = data.images || [];
+        inspirationalLibraryImages = filterInspirationalLibraryImages(data.images || []);
         localStorage.setItem(INSPIRATIONAL_LIBRARY_CACHE_KEY, JSON.stringify(inspirationalLibraryImages));
     } catch (e) {
         console.error(e);
@@ -1244,7 +2065,6 @@ window.uploadInspirationalImage = async () => {
 
     const formData = new FormData();
     formData.append('image', input.files[0]);
-
     try {
         const res = await fetch('/api/images/upload-inspirational', {
             method: 'POST',
@@ -1329,7 +2149,7 @@ window.selectInspirationalImage = async (url) => {
     if (!isPurablisUrl(url)) {
         if (status) status.textContent = 'Saving image copy on purablis.com...';
         try {
-            finalUrl = await publishUrlToPurablis(url, 'inspirational');
+            finalUrl = unwrapPublishedResult(await publishUrlToPurablis(url, 'inspirational'));
             await loadInspirationalLibrary();
         } catch (e) {
             console.error(e);
@@ -1390,14 +2210,21 @@ function renderInspirationalView() {
     if (inspirationalLibraryImages.length === 0) {
         galleryGrid.innerHTML = '<div class="grid-placeholder">No uploaded inspirational images yet.</div>';
     } else {
-        inspirationalLibraryImages.forEach(({ url, name }) => {
+        inspirationalLibraryImages.forEach((item) => {
+            const { url, name } = item;
+            const displaySrc = getInspirationalDisplayUrl(item);
             const div = document.createElement('div');
             div.className = 'insp-library-card';
 
             const imgEl = document.createElement('img');
-            imgEl.src = url;
+            imgEl.src = displaySrc;
             imgEl.className = 'insp-library-preview';
             imgEl.title = name || 'Uploaded image';
+            imgEl.onerror = function() {
+                if (this.src !== url && url) {
+                    this.src = url;
+                }
+            };
             imgEl.onclick = () => selectInspirationalImage(url);
 
             const previewWrap = document.createElement('div');
@@ -1450,12 +2277,21 @@ function renderInspirationalView() {
         selectedGrid.innerHTML = '<div class="grid-placeholder">No images selected.</div>';
     } else {
         inspirationalImages.forEach((url, index) => {
+            const libraryItem = inspirationalLibraryImages.find((item) => item.url === url);
+            const displaySrc = libraryItem
+                ? getInspirationalDisplayUrl(libraryItem)
+                : getInspirationalDisplayUrl(url);
             const div = document.createElement('div');
             div.className = 'insp-selected-card';
 
             const imgEl = document.createElement('img');
-            imgEl.src = url;
+            imgEl.src = displaySrc;
             imgEl.className = 'insp-selected-preview';
+            imgEl.onerror = function() {
+                if (this.src !== url && url) {
+                    this.src = url;
+                }
+            };
 
             const removeBtn = document.createElement('button');
             removeBtn.innerHTML = '&times;';
@@ -1557,7 +2393,15 @@ function ensureUseInNewsletter(article) {
     return article.useInNewsletter;
 }
 
-/** Article is included when the category column has a value (number, Y, YM, etc.). */
+/** Category column (MED/THC/CBD/INV) has Y, YM, or a numeric rank — used for Confirmation & summaries */
+function isCategoryRankIncluded(article, category) {
+    const rank = String(getRankForSort(article, category)).trim().toUpperCase();
+    if (!rank) return false;
+    if (/^\d+$/.test(rank)) return true;
+    return rank === 'Y' || rank === 'YM';
+}
+
+/** Article is included when the category column has any non-empty rank (legacy / stats). */
 function isUseInNewsletter(article, category) {
     return !!String(getRankForSort(article, category) ?? '').trim();
 }
@@ -1565,8 +2409,9 @@ function isUseInNewsletter(article, category) {
 function getArticlesForCategory(category) {
     return articles
         .filter(a => {
-            if (!isArticleEligibleForCategoryPicks(a)) return false;
-            return isUseInNewsletter(a, category);
+            if (a.selected === false) return false;
+            normalizeArticleDefaults(a);
+            return isCategoryRankIncluded(a, category);
         }).sort((a, b) => {
             const rA = rankToSortValue(getRankForSort(a, category));
             const rB = rankToSortValue(getRankForSort(b, category));
@@ -1594,6 +2439,12 @@ function getArticlesByPickOrder(category) {
         if (used.has(id)) return;
         used.add(id);
         result.push(match);
+    });
+    eligible.forEach((a) => {
+        const id = a.url || a.title || String(a.id);
+        if (used.has(id)) return;
+        used.add(id);
+        result.push(a);
     });
     return result;
 }
@@ -1661,12 +2512,107 @@ window.updateSummaryArticlesText = (category, value) => {
     saveState();
 };
 
+const EDITOR_NEWSLETTER_CATEGORIES = ['MED', 'THC', 'CBD', 'INV'];
+
 function getSelectedCategoryResults() {
     if (!newsletterContent.selectedResults) {
         newsletterContent.selectedResults = { MED: '', THC: '', CBD: '', INV: '' };
     }
     return newsletterContent.selectedResults;
 }
+
+function getNewsletterTextForCategory(category) {
+    const selected = getSelectedCategoryResults();
+    return (selected[category] || (newsletterContent[category] && newsletterContent[category].result) || '').trim();
+}
+
+function formatAllNewslettersForExport() {
+    return EDITOR_NEWSLETTER_CATEGORIES.map((cat) => `--- ${cat} ---\n${getNewsletterTextForCategory(cat)}`).join('\n\n');
+}
+
+function parseAllNewslettersImport(raw) {
+    const result = { MED: '', THC: '', CBD: '', INV: '' };
+    const matched = new Set();
+    const text = String(raw || '').replace(/\r\n/g, '\n').trim();
+    if (!text) return { result, found: 0, matched };
+
+    const re = /(?:^|\n)[-—–]{1,3}\s*(MED|THC|CBD|INV)\s*[-—–]{1,3}\s*\n([\s\S]*?)(?=\n[-—–]{1,3}\s*(?:MED|THC|CBD|INV)\s*[-—–]{1,3}\s*\n|$)/gi;
+    let match;
+    while ((match = re.exec(text)) !== null) {
+        const cat = match[1].toUpperCase();
+        result[cat] = match[2].trim();
+        matched.add(cat);
+    }
+    if (matched.size > 0) return { result, found: matched.size, matched };
+
+    const rePlain = /(?:^|\n)(MED|THC|CBD|INV)\s*\n([\s\S]*?)(?=\n(?:MED|THC|CBD|INV)\s*\n|$)/gi;
+    while ((match = rePlain.exec(text)) !== null) {
+        const cat = match[1].toUpperCase();
+        result[cat] = match[2].trim();
+        matched.add(cat);
+    }
+    return { result, found: matched.size, matched };
+}
+
+function setBulkNewsletterStatus(message, isError = false) {
+    const el = document.getElementById('bulk-newsletter-status');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.toggle('text-red-600', isError);
+    el.classList.toggle('text-[#666]', !isError);
+}
+
+window.loadBulkNewsletterText = () => {
+    const el = document.getElementById('editor-bulk-paste');
+    if (!el) return;
+    el.value = formatAllNewslettersForExport();
+    const empty = EDITOR_NEWSLETTER_CATEGORIES.filter((c) => !getNewsletterTextForCategory(c));
+    if (empty.length === 4) {
+        setBulkNewsletterStatus('No text in Selected or Created Result yet.', true);
+        return;
+    }
+    setBulkNewsletterStatus(empty.length ? `Loaded (${empty.join(', ')} empty).` : 'Loaded all four from Selected / Created Result.');
+};
+
+window.copyAllNewsletterText = () => {
+    const text = formatAllNewslettersForExport();
+    const empty = EDITOR_NEWSLETTER_CATEGORIES.filter((c) => !getNewsletterTextForCategory(c));
+    if (empty.length === 4) {
+        setBulkNewsletterStatus('Nothing to copy yet. Generate or Select content for each category first.', true);
+        return;
+    }
+    const bulkEl = document.getElementById('editor-bulk-paste');
+    if (bulkEl) bulkEl.value = text;
+    navigator.clipboard.writeText(text).then(() => {
+        setBulkNewsletterStatus(
+            empty.length
+                ? `Copied to clipboard (${empty.join(', ')} empty).`
+                : 'Copied all four to clipboard.',
+        );
+    }).catch((err) => {
+        console.error('Failed to copy all newsletters:', err);
+        setBulkNewsletterStatus('Copy failed — use Load from Selected and copy the box manually.', true);
+    });
+};
+
+window.applyBulkNewsletterPaste = () => {
+    const el = document.getElementById('editor-bulk-paste');
+    if (!el) return;
+    const { result: parsed, found, matched } = parseAllNewslettersImport(el.value);
+    if (found === 0) {
+        setBulkNewsletterStatus('No MED/THC/CBD/INV sections found. Use lines like: --- MED ---', true);
+        return;
+    }
+    const selected = getSelectedCategoryResults();
+    const updated = [];
+    matched.forEach((cat) => {
+        selected[cat] = parsed[cat];
+        updated.push(cat);
+    });
+    saveState();
+    renderEditorContent();
+    setBulkNewsletterStatus(`Applied to Selected Content: ${updated.join(', ')}.`);
+};
 
 window.switchEditorTab = (category) => {
     currentEditorTab = category;
@@ -1695,9 +2641,17 @@ window.renderEditorContent = () => {
     const resultValue = content.result || '';
     const templateValue = (newsletterContent.templates && newsletterContent.templates[currentEditorTab]) || '';
     const selectedGreeting = newsletterContent.selectedGreeting || DEFAULT_GREETING;
-    const greetingOptionsHtml = GREETING_OPTIONS.map(greeting => `
-        <option value="${escapeHtml(greeting)}" ${greeting === selectedGreeting ? 'selected' : ''}>${escapeHtml(greeting)}</option>
-    `).join('');
+    const greetingOptionsHtml = buildGreetingOptionsHtml(selectedGreeting);
+    const customGreetings = getCustomGreetings();
+    const customGreetingsListHtml = customGreetings.length
+        ? `<ul class="mt-2 mb-0 pl-4 text-[0.8rem] text-[#555] list-disc">
+            ${customGreetings.map((g) => `
+                <li class="mb-1 flex items-center gap-2 flex-wrap">
+                    <span>${escapeHtml(g)}</span>
+                    <button type="button" class="text-[0.7rem] text-red-600 underline" onclick="removeCustomGreetingEnding(${JSON.stringify(g)})">Remove</button>
+                </li>`).join('')}
+           </ul>`
+        : '';
     const selectedResults = getSelectedCategoryResults();
     const selectedSummaryHtml = ['MED', 'THC', 'CBD', 'INV'].map(cat => {
         const selectedText = selectedResults[cat] || '';
@@ -1796,18 +2750,24 @@ window.renderEditorContent = () => {
         </div>
 
         <div class="mt-6 pt-4.5 border-t border-[#e5e7eb]">
-            <label class="font-bold block mb-3">Selected Content</label>
+            <label class="font-bold block mb-1">Selected Content</label>
+            <p class="text-[0.8rem] text-[#666] mb-3">Filled from each tab’s “Select” button, or from the Grammarly box above via Apply to Selected.</p>
             <div class="grid grid-cols-2 gap-3.5">
                 ${selectedSummaryHtml}
             </div>
         </div>
 
         <div class="mt-5 pt-4.5 border-t border-[#e5e7eb]">
-            <label class="font-bold block mb-2.5">Greetings Selection</label>
-            <select class="form-control max-w-130 p-2" onchange="updateSelectedGreeting(this.value)">
+            <label class="font-bold block mb-2.5">Closing line (before Jessica)</label>
+            <select id="editor-greeting-select" class="form-control max-w-130 p-2 mb-2" onchange="updateSelectedGreeting(this.value)">
                 ${greetingOptionsHtml}
             </select>
-            <div class="text-[0.8rem] text-[#666] mt-2">This changes only the greeting line. The sign-off name stays as Jessica.</div>
+            <div class="flex flex-wrap items-center gap-2 mt-1">
+                <input type="text" id="custom-greeting-input" class="form-control flex-1 min-w-50 text-[0.9rem] p-2" placeholder="Add a new ending, e.g. Stay safe out there,">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomGreetingEnding()">Add ending</button>
+            </div>
+            ${customGreetingsListHtml}
+            <div class="text-[0.8rem] text-[#666] mt-2">Used in Confirmation as: …summary… then this line, then Jessica. Saved with your session.</div>
         </div>`;
     const templateEl = document.getElementById('editor-template');
     if (templateEl) templateEl.value = templateValue || '';
@@ -1828,7 +2788,17 @@ window.renderEditorContent = () => {
             : '<span class="text-muted">No articles picked for ' + currentEditorTab + '.</span>';
         listEl.innerHTML = '<label class="font-semibold">Picked in Article View for ' + currentEditorTab + '</label><div class="max-h-70 overflow-y-auto mt-1.5 leading-[1.4]">' + listHtml + '</div><div class="text-[0.7rem] text-[#999] mt-1">Uses pick-order box and rank values in the ' + currentEditorTab + ' column.</div>';
     }
+    applyBasePromptToEditor();
 };
+
+function applyBasePromptToEditor() {
+    const el = document.getElementById('editor-base-prompt');
+    if (!el) return;
+    if (cachedBasePrompt !== null) {
+        el.value = cachedBasePrompt;
+    }
+    loadBasePromptFromServer();
+}
 
 window.updateSummaryRules = (value) => {
     newsletterContent.summaryRules = value || DEFAULT_SUMMARY_RULES;
@@ -1840,13 +2810,18 @@ async function loadBasePromptFromServer() {
     const el = document.getElementById('editor-base-prompt');
     const status = document.getElementById('base-prompt-status');
     if (!el) return;
+    if (cachedBasePrompt !== null) {
+        el.value = cachedBasePrompt;
+    }
     try {
         const res = await fetch('/api/articles/summary-base-prompt');
         const data = await res.json();
-        el.value = data.prompt || '';
+        cachedBasePrompt = data.prompt || '';
+        el.value = cachedBasePrompt;
         if (status) status.textContent = 'Loaded from server';
     } catch (e) {
         if (status) status.textContent = 'Could not load';
+        if (cachedBasePrompt === null) el.value = '';
     }
 }
 
@@ -1862,6 +2837,7 @@ window.saveBasePrompt = async () => {
             body: JSON.stringify({ prompt: el.value }),
         });
         const data = await res.json();
+        if (data.ok) cachedBasePrompt = el.value;
         if (status) status.textContent = data.ok ? '✓ Saved' : '✗ Error';
     } catch (e) {
         if (status) status.textContent = '✗ Save failed';
@@ -1873,6 +2849,7 @@ window.resetBasePrompt = async () => {
     const defaultPrompt = `You are a professional newsletter editor. Create a newsletter-ready summary for the provided category articles only.\n\nWrite exactly 6 to 7 short lines total.\nEach line should be concise, natural, and publication-ready.\nOnly use the fetched article content and article metadata provided by the user.\nDo not use outside knowledge.\nDo not mention URLs in the output.\nFocus on the most important developments across the provided articles for the selected category.\nIf some links could not be accessed, briefly note that in one short line.`;
     const el = document.getElementById('editor-base-prompt');
     if (el) el.value = defaultPrompt;
+    cachedBasePrompt = defaultPrompt;
     await window.saveBasePrompt();
 };
 
@@ -2025,9 +3002,59 @@ window.updateNewsletterContent = (category, field, value) => {
     saveState();
 };
 
+function getCustomGreetings() {
+    if (!Array.isArray(newsletterContent.customGreetings)) {
+        newsletterContent.customGreetings = [];
+    }
+    return newsletterContent.customGreetings;
+}
+
+function getAllGreetingOptions() {
+    const custom = getCustomGreetings();
+    const merged = [...GREETING_OPTIONS];
+    custom.forEach((g) => {
+        const text = String(g || '').trim();
+        if (text && !merged.includes(text)) merged.push(text);
+    });
+    const selected = newsletterContent.selectedGreeting || DEFAULT_GREETING;
+    if (selected && !merged.includes(selected)) merged.push(selected);
+    return merged.sort((a, b) => a.localeCompare(b));
+}
+
+function buildGreetingOptionsHtml(selectedGreeting) {
+    const selected = selectedGreeting || DEFAULT_GREETING;
+    return getAllGreetingOptions().map((greeting) => `
+        <option value="${escapeHtml(greeting)}" ${greeting === selected ? 'selected' : ''}>${escapeHtml(greeting)}</option>
+    `).join('');
+}
+
 window.updateSelectedGreeting = (value) => {
     newsletterContent.selectedGreeting = value || DEFAULT_GREETING;
     saveState();
+};
+
+window.addCustomGreetingEnding = () => {
+    const input = document.getElementById('custom-greeting-input');
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) return alert('Enter a closing line to add (the line above “Jessica”).');
+    const custom = getCustomGreetings();
+    if (!custom.includes(value)) custom.push(value);
+    newsletterContent.selectedGreeting = value;
+    input.value = '';
+    saveState();
+    renderEditorContent();
+};
+
+window.removeCustomGreetingEnding = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return;
+    newsletterContent.customGreetings = getCustomGreetings().filter((g) => g !== text);
+    if (newsletterContent.selectedGreeting === text) {
+        newsletterContent.selectedGreeting = DEFAULT_GREETING;
+    }
+    saveState();
+    renderEditorContent();
 };
 
 window.selectGeneratedContent = (category) => {
@@ -2160,9 +3187,7 @@ function getSelectedOrGeneratedSummary(category) {
 }
 
 function getSubjectArticlesForCategory(category) {
-    return getArticlesByPickOrder(category).filter(a =>
-        ['Y', 'YM'].includes(normalizeArticleStatus(a.status)),
-    );
+    return getArticlesByPickOrder(category).filter((a) => isCategoryRankIncluded(a, category));
 }
 
 const TEMPLATE_FIXED_CONTENT = {
@@ -2181,10 +3206,7 @@ function isIncludedInConfirmation(article) {
 }
 
 function getMainArticlesForCategory(category) {
-    return getArticlesByPickOrder(category).filter(a =>
-        ['Y', 'YM'].includes(normalizeArticleStatus(a.status)) &&
-        isIncludedInConfirmation(a),
-    );
+    return getArticlesByPickOrder(category).filter((a) => isCategoryRankIncluded(a, category));
 }
 
 function getInterestingFindsArticles() {
@@ -2219,6 +3241,25 @@ function isPurablisUrl(url) {
     return Boolean(url && String(url).includes('purablis.com'));
 }
 
+function isAppStateIconUrl(url) {
+    return Boolean(url && /\/(?:all\/states|state_icons_dark)\//i.test(String(url)));
+}
+
+function toAbsoluteAssetUrl(url) {
+    const value = String(url || '').trim();
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value) || value.startsWith('data:')) return value;
+    if (value.startsWith('//')) return `${window.location.protocol}${value}`;
+    if (value.startsWith('/') && typeof window !== 'undefined') {
+        return `${window.location.origin}${value}`;
+    }
+    return value;
+}
+
+function unwrapPublishedResult(result) {
+    return typeof result === 'string' ? result : (result && result.url) || '';
+}
+
 async function publishUrlToPurablis(url, target = 'article') {
     let absolute = url;
     if (absolute.startsWith('/') && !absolute.startsWith('//') && typeof window !== 'undefined') {
@@ -2230,27 +3271,47 @@ async function publishUrlToPurablis(url, target = 'article') {
         body: JSON.stringify({ url: absolute, target }),
     });
     const data = await res.json();
-    if (data.success && data.url) return data.url;
+    if (data.success && data.url) {
+        return {
+            url: data.url,
+            previewUrl: data.url || data.configuredUrl || url,
+            publicReachable: data.publicReachable,
+            filename: data.filename,
+        };
+    }
     throw new Error(data.error || 'Publish failed');
 }
 
-function updateSelectedImageBox(index, url, publishing) {
+function updateSelectedImageBox(index, { publishing = false } = {}) {
     const box = document.getElementById(`selected-img-${index}`);
     if (!box) return;
-    const fallback = articles[index].originalImageUrl || '';
-    const badge = publishing
-        ? '<span class="badge-published" title="Saving to purablis…">…</span>'
-        : (isPurablisUrl(url) ? '<span class="badge-published" title="On purablis.com">P</span>' : '');
-    box.innerHTML =
-        `<div class="selected-image-container">
-            <img src="${url}" class="img-fluid max-h-37.5" onerror="this.onerror=null;this.src='${fallback}';this.parentElement.classList.add('img-fallback');">
-            <button class="btn-remove-image" onclick="removeImage(${index})">×</button>
-            ${badge}
-        </div>`;
+    const article = articles[index] || {};
+    box.innerHTML = buildSelectedImageHtml(index, article, { publishing });
 }
 
+/** Preview, Confirmation, MailWizz — always public purablis (or other https CDN), never localhost proxy */
 function getArticleImageUrl(article) {
-    return getDownloadSafeAssetUrl(article.publishedImageUrl || article.image || article.originalImageUrl || article.uploadedImageUrl || '');
+    return resolvePurablisImageUrl(article);
+}
+
+function getArticleImageUrlForSend(article) {
+    return resolvePurablisImageUrl(article);
+}
+
+function setArticleImageSrcWithFallback(imgEl, article, url) {
+    if (!imgEl) return;
+    const src = url || resolvePurablisImageUrl(article);
+    if (!src) return;
+    const title = ((article && article.title) || 'Article image').slice(0, 120);
+    imgEl.setAttribute('src', src);
+    imgEl.setAttribute('alt', title);
+    imgEl.setAttribute('width', '60');
+    imgEl.setAttribute('class', 'mcnImage');
+    imgEl.setAttribute(
+        'style',
+        'display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;max-width:60px;width:60px;height:auto;',
+    );
+    imgEl.removeAttribute('onerror');
 }
 
 function getSourceLabel(url) {
@@ -2263,19 +3324,21 @@ function getSourceLabel(url) {
     }
 }
 
+function getInspirationalNewsletterUrl(itemOrUrl) {
+    return getInspirationalDisplayUrl(itemOrUrl);
+}
+
 function chooseConfirmationInspirationalImage() {
-    const available = inspirationalImages.map(getDownloadSafeAssetUrl).filter(isPublicHostedUrl);
+    const available = inspirationalImages.map(getInspirationalNewsletterUrl).filter(Boolean);
     if (!available.length) {
         confirmationInspirationalImage = '';
         return '';
     }
-    const selected = getDownloadSafeAssetUrl(confirmationInspirationalImage);
+    const selected = confirmationInspirationalImage ? getInspirationalNewsletterUrl(confirmationInspirationalImage) : '';
     if (selected && available.includes(selected)) {
-        confirmationInspirationalImage = selected;
         return selected;
     }
-    confirmationInspirationalImage = available[0];
-    return confirmationInspirationalImage;
+    return available[0];
 }
 
 async function loadConfirmationTemplate(category) {
@@ -2309,8 +3372,11 @@ function buildFallbackConfirmationHtml(category) {
         const url = article.url || '#';
         const source = escapeHtml(getSourceLabel(article.url || ''));
         const image = getArticleImageUrl(article);
+        const imgTag = image
+            ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(article.title || '')}" width="60" style="display:block;border:0;max-width:60px;width:60px;height:auto;object-fit:cover;border-radius:6px;">`
+            : '';
         return `<div style="display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
-                ${image ? `<img src="${image}" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">` : ''}
+                ${imgTag}
                 <div>
                     <a href="${url}" target="_blank" style="color: #111; font-weight: 700; text-decoration: none;">${title}</a>
                     <div><a href="${url}" target="_blank" style="color: #2a6edc; font-size: 0.85rem;">${source}</a></div>
@@ -2417,9 +3483,13 @@ function buildArticleTableHtml(sampleHtml, article) {
     });
 
     const imageEl = table.querySelector('img.mcnImage, img');
-    if (imageEl && image) {
-        imageEl.src = image;
-        imageEl.alt = title;
+    if (imageEl) {
+        if (image) {
+            setArticleImageSrcWithFallback(imageEl, article, image);
+        } else {
+            imageEl.removeAttribute('src');
+            imageEl.style.display = 'none';
+        }
     }
 
     const descEl = table.querySelector('.a-desc');
@@ -2568,6 +3638,21 @@ async function renderConfirmationPreviews() {
     const container = document.getElementById('confirmation-previews');
     if (!container) return;
 
+    const statusEl = document.getElementById('public-image-status');
+    if (statusEl) statusEl.textContent = 'Linking images on purablis.com…';
+    try {
+        repairMisplacedPurablisImageUrls();
+        inferPublicImageSettingsFromArticles();
+        const resolved = await ensureConfirmationPurablisUrls();
+        if (statusEl && resolved.checked) {
+            statusEl.textContent = `${resolved.reachable}/${resolved.checked} images on purablis.com`;
+        }
+    } catch (e) {
+        console.warn('ensureConfirmationPurablisUrls:', e);
+        syncArticleImageFieldsFromPublished();
+        if (statusEl) statusEl.textContent = 'Using local image URLs (server check failed)';
+    }
+
     // const selectedSummary = getSelectedOrGeneratedSummary(currentConfirmationTab);
     const admonition =
         getHeadlineFormatAdmonition(
@@ -2610,6 +3695,12 @@ async function renderConfirmationPreviews() {
                 <span class="text-sm text-[${admonition.color}] mt-1">${admonition.message}</span>
             </div>
             <div class="flex gap-2.5 flex-wrap">
+                <button
+                    class="btn btn-outline btn-sm"
+                    onclick="verifyPublicArticleImages(true)"
+                    title="HEAD-check purablis.com image URLs for this issue">
+                    Check public images
+                </button>
                 <button
                     class="btn btn-primary btn-sm"
                     onclick="downloadConfirmationHtml('${currentConfirmationTab}')"
@@ -2813,22 +3904,31 @@ function buildArticlesHtml(category) {
         if (a.url) seenUrls.add(a.url);
         return true;
     });
-    return relevant.map(a => `
+    return relevant.map(a => {
+        const imgUrl = getArticleImageUrlForSend(a);
+        return `
         <div class="article-item">
-            ${a.image ? `<img src="${a.image}" alt="" style="max-width: 90px; height: 90px; object-fit: cover;" onerror="this.onerror=null;this.src='${a.originalImageUrl || ''}';">` : ''}
+            ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" alt="" style="max-width: 90px; height: 90px; object-fit: cover;">` : ''}
             <div>
                 <strong>${(a.title || '').replace(/</g, '&lt;')}</strong>
                 <a href="${a.url || '#'}">${(a.url || '').replace(/</g, '&lt;')}</a>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 window.generateNewsletters = async () => {
     const newsletterName = document.getElementById('newsletter-name')?.value || 'Newsletter';
     const statusEl = document.getElementById('generate-status');
     const uploadBtn = document.getElementById('btn-upload-newsletters');
-    if (statusEl) statusEl.textContent = 'Saving image copies on purablis.com…';
+    if (statusEl) statusEl.textContent = 'Linking images on purablis.com…';
+    try {
+        await ensureConfirmationPurablisUrls();
+    } catch (e) {
+        console.warn('resolve purablis URLs:', e);
+    }
+    if (statusEl) statusEl.textContent = 'Saving any missing images on purablis.com…';
     const publishResult = await ensureAllArticleImagesOnPurablis({ silent: true });
     if (publishResult.fail > 0) {
         const proceed = confirm(
@@ -2855,9 +3955,10 @@ window.generateNewsletters = async () => {
             return;
         }
         inspirationalImg = inspirationalImages && inspirationalImages[0]
-            ? getDownloadSafeAssetUrl(inspirationalImages[0])
+            ? getInspirationalDisplayUrl(inspirationalImages[0])
             : '';
     }
+    inspirationalImg = getInspirationalNewsletterUrl(inspirationalImg) || buildPublicInspirationalImageUrl(inspirationalImages[0]);
 
     const newsletters = {};
     const categories = ['MED', 'THC', 'CBD', 'INV'];
@@ -2960,7 +4061,7 @@ async function ensureInspirationalImageOnPurablis() {
         return raw;
     }
 
-    const published = await publishUrlToPurablis(raw, 'inspirational');
+    const published = unwrapPublishedResult(await publishUrlToPurablis(raw, 'inspirational'));
     inspirationalImages = [published];
     confirmationInspirationalImage = published;
     saveState();
@@ -2996,12 +4097,17 @@ async function ensureAllArticleImagesOnPurablis(options = {}) {
         const sourceUrl = a.originalImageUrl || a.image;
         if (!sourceUrl) continue;
         try {
-            const published = await publishUrlToPurablis(sourceUrl, 'article');
-            articles[idx].publishedImageUrl = published;
-            if (!articles[idx].originalImageUrl) articles[idx].originalImageUrl = sourceUrl;
-            articles[idx].image = published;
+            const pub = await publishUrlToPurablis(sourceUrl, 'article');
+            const published = typeof pub === 'string' ? pub : pub.url;
+            articles[idx].previewImageUrl = '';
+            articles[idx].originalImageUrl = '';
+            articles[idx].publishedImageUrl = (typeof pub === 'object' && pub.url) ? pub.url : published;
+            articles[idx].publicReachable = typeof pub === 'object' ? !!pub.publicReachable : false;
+            articles[idx].image = articles[idx].publishedImageUrl;
+            articles[idx].previewImageUrl = resolvePurablisImageUrl(articles[idx]);
+            articles[idx].originalImageUrl = articles[idx].previewImageUrl;
             ok++;
-            updateSelectedImageBox(idx, published, false);
+            updateSelectedImageBox(idx);
             saveState();
         } catch (e) {
             fail++;
@@ -3253,7 +4359,7 @@ function upsertImportedSession(name) {
     const sessions = getSavedSessions();
     sessions[name] = buildSessionPayload();
     saveSavedSessions(sessions);
-    currentSessionName = name;
+    setCurrentSessionName(name);
     populateSavedDropdown();
 }
 
@@ -3436,12 +4542,14 @@ function renderArticles() {
                             return `<div class="col-cat">
                                 <input
                                     type="text"
-                                    value="${rank}"
+                                    value="${escapeHtml(rank)}"
+                                    data-cat="${cat}"
                                     oninput="updateCategoryRank(${index}, '${cat}', this.value)"
+                                    onkeydown="handleCatRankKeydown(event, ${index}, '${cat}')"
                                     class="${disabledClass} cat-rank-input"
                                     ${disabledAttr}
                                     placeholder="#"
-                                    title="Rank for ${cat} (number, Y, YM)">
+                                    title="Rank for ${cat} (number, Y, YM). Tab moves to next column.">
                             </div>`;
                         }).join('');
                 const admonition = getHeadlineLengthAdmonition(article.title);
@@ -3651,33 +4759,52 @@ window.addArticleFromModal = () => {
     closeAddArticleModal();
 };
 
+const CATEGORY_RANK_ORDER = ['MED', 'THC', 'CBD', 'INV'];
+
+window.handleCatRankKeydown = (event, index, cat) => {
+    if (event.key !== 'Tab') return;
+    const row = event.target.closest('.article-row');
+    if (!row) return;
+    const order = CATEGORY_RANK_ORDER;
+    const pos = order.indexOf(cat);
+    if (pos < 0) return;
+    const nextCat = event.shiftKey ? order[pos - 1] : order[pos + 1];
+    if (!nextCat) return;
+    const nextInput = row.querySelector(`input.cat-rank-input[data-cat="${nextCat}"]`);
+    if (!nextInput || nextInput.disabled) return;
+    event.preventDefault();
+    nextInput.focus();
+    if (typeof nextInput.select === 'function') nextInput.select();
+};
+
 window.updateCategoryRank = (index, cat, value) => {
     const article = articles[index];
-    normalizeArticleDefaults(article);
-    if (!article.ranks) article.ranks = {};
+    if (!article) return;
+    if (!article.ranks || typeof article.ranks !== 'object') article.ranks = {};
+    if (!article.categories) article.categories = [];
 
-    const rank = value.trim();
+    const rank = String(value ?? '').trim();
     const key = String(cat).trim().toUpperCase();
 
     if (!rank) {
         delete article.ranks[key];
         delete article.ranks[cat];
-        if (article.categories) {
-            article.categories = article.categories.filter(
-                c => String(c).trim().toUpperCase() !== key,
-            );
+        if (article.useInNewsletter && typeof article.useInNewsletter === 'object') {
+            article.useInNewsletter[key] = false;
         }
+        article.categories = article.categories.filter(
+            (c) => String(c).trim().toUpperCase() !== key,
+        );
     } else {
         article.ranks[key] = rank;
-        if (!article.categories) article.categories = [];
         if (!articleHasCategory(article, key)) {
             article.categories.push(key);
         }
     }
 
+    normalizeArticleDefaults(article);
     saveState();
     updateStats();
-    renderArticles();
 };
 
 // Sort order for MED/THC/CBD/INV: lowest numbers first, then cool finds, then Y, YM, Maybe (M), No, then empty.
@@ -3924,8 +5051,6 @@ function saveSavedSessions(sessions) {
     });
 }
 
-let currentSessionName = '';
-
 window.saveSession = () => {
     const name = document.getElementById('newsletter-name').value.trim();
     if (!name) return alert('Please enter a newsletter name on the first page.');
@@ -3933,7 +5058,7 @@ window.saveSession = () => {
     const sessions = getSavedSessions();
     sessions[name] = buildSessionPayload();
     saveSavedSessions(sessions);
-    currentSessionName = name;
+    setCurrentSessionName(name);
     populateSavedDropdown();
     alert(`Saved "${name}" (${articles.length} articles).`);
 };
@@ -3967,13 +5092,21 @@ window.loadSession = () => {
         templates: nc.templates || { MED: '', THC: '', CBD: '', INV: '' },
         summaryRules: normalizeSummaryRules(nc.summaryRules),
         selectedGreeting: nc.selectedGreeting || DEFAULT_GREETING,
+        customGreetings: Array.isArray(nc.customGreetings) ? nc.customGreetings.filter(Boolean) : [],
         subjectPrompt: normalizeSubjectPrompt(nc.subjectPrompt),
         generatedSubjects: nc.generatedSubjects || { MED: '', THC: '', CBD: '', INV: '' },
         categoryPickOrder: nc.categoryPickOrder || { MED: '', THC: '', CBD: '', INV: '' },
+        publicImageBase: nc.publicImageBase || session.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE,
+        publicImageSubfolder: nc.publicImageSubfolder != null
+            ? nc.publicImageSubfolder
+            : (session.publicImageSubfolder != null ? session.publicImageSubfolder : DEFAULT_ARTICLE_PUBLIC_SUBFOLDER),
+        stateIconsPublicBase: nc.stateIconsPublicBase || DEFAULT_STATE_ICONS_PUBLIC_BASE,
+        inspirationalPublicBase: nc.inspirationalPublicBase || DEFAULT_INSPIRATIONAL_PUBLIC_BASE,
     };
+    inferPublicImageSettingsFromArticles();
+    syncPublicImageSettingsUi();
 
-    document.getElementById('newsletter-name').value = name;
-    currentSessionName = name;
+    setCurrentSessionName(name);
     if (typeof session.aiQuery === 'string') {
         setAiQuery(session.aiQuery);
     }
@@ -4026,11 +5159,9 @@ function populateSavedDropdown() {
         dropdownStep3.innerHTML = '<option value="">-- Select --</option>' + optionsHtml;
     }
 
-    const selectedName = currentSessionName || (nameInput ? nameInput.value.trim() : '');
+    const selectedName = currentSessionName || (nameInput ? nameInput.value.trim() : '') || localStorage.getItem(LAST_SESSION_NAME_KEY) || '';
     if (selectedName) {
-        if (dropdownStep1) dropdownStep1.value = selectedName;
-        if (dropdown) dropdown.value = selectedName;
-        if (dropdownStep3) dropdownStep3.value = selectedName;
+        setCurrentSessionName(selectedName);
     }
 
     const hintEl = document.getElementById('state-load-hint');
@@ -4126,7 +5257,8 @@ window.pushStateToServer = async function () {
         if (failed.length === 0) {
             persistWorkspaceLocal(workspace);
             localStorage.setItem('newsletter_saved_sessions', JSON.stringify(sessions));
-            currentSessionName = currentSessionName || document.getElementById('newsletter-name')?.value.trim() || '';
+            const pushedName = currentSessionName || document.getElementById('newsletter-name')?.value.trim() || '';
+            if (pushedName) setCurrentSessionName(pushedName);
             populateSavedDropdown();
             const generatedNote = lastGeneratedNewsletter ? ', generated newsletter synced' : '';
             const sessionNames = Object.keys(sessions).sort().join(', ');
@@ -4194,10 +5326,12 @@ window.refreshStateFromServer = async function () {
                     renderImagesView();
                 }
                 msg = (value.articles || []).length + ' articles in workspace. ';
-                const nameEl = document.getElementById('newsletter-name');
-                if (nameEl && nameEl.value.trim()) {
-                    currentSessionName = nameEl.value.trim();
+                if (value.currentSessionName) {
+                    setCurrentSessionName(value.currentSessionName);
+                } else if (!currentSessionName) {
+                    restoreLastSessionSelection();
                 }
+                syncSessionDropdownSelection(currentSessionName);
             }
         } else if (wrRes.status === 503) {
             msg = 'Server database not configured. ';
@@ -4560,7 +5694,7 @@ if (searchBtn) {
 
         saveRecentPrompt(prompt);
         setAiQuery(prompt);
-        currentSessionName = '';
+        if (newsletterName) setCurrentSessionName(newsletterName);
 
         console.log("Initiating AI Search...", { newsletterName, prompt, model });
 
@@ -4710,8 +5844,7 @@ if (savedSessionsDropdownStep1) {
     savedSessionsDropdownStep1.addEventListener('change', (e) => {
         const selectedName = e.target.value;
         if (selectedName) {
-            document.getElementById('newsletter-name').value = selectedName;
-            currentSessionName = selectedName;
+            setCurrentSessionName(selectedName);
         }
     });
 }
@@ -4719,9 +5852,6 @@ if (savedSessionsDropdownStep1) {
 const newsletterNameInput = document.getElementById('newsletter-name');
 if (newsletterNameInput) {
     newsletterNameInput.addEventListener('input', () => {
-        currentSessionName = newsletterNameInput.value.trim();
-        if (savedSessionsDropdownStep1) {
-            savedSessionsDropdownStep1.value = currentSessionName;
-        }
+        setCurrentSessionName(newsletterNameInput.value.trim());
     });
 }

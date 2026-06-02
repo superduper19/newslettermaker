@@ -54,6 +54,8 @@ router.get('/diagnostic', async (req, res) => {
         hasGeminiKey: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
         hasFreepikKey: !!process.env.FREEPIK_API_KEY,
         hasGoDaddyFtp: !!(process.env.GODADDY_FTP_HOST && process.env.GODADDY_FTP_USER && process.env.GODADDY_FTP_PASS),
+        godaddyPublicBaseUrl: require('../lib/purablis-public-url').getPublicBaseUrl(),
+        godaddyPublicSubfolder: process.env.GODADDY_PUBLIC_SUBFOLDER || null,
     });
 });
 

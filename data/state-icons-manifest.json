@@ -1,0 +1,606 @@
+{
+  "baseUrl": "/state_icons_dark",
+  "states": [
+    {
+      "name": "Alabama",
+      "abbrev": "AL",
+      "slug": "alabama",
+      "filename": "Alabama.png",
+      "url": "/state_icons_dark/Alabama.png",
+      "aliases": [
+        "alabama",
+        "alabama",
+        "al"
+      ]
+    },
+    {
+      "name": "Alaska",
+      "abbrev": "AK",
+      "slug": "alaska",
+      "filename": "Alaska.png",
+      "url": "/state_icons_dark/Alaska.png",
+      "aliases": [
+        "alaska",
+        "alaska",
+        "ak"
+      ]
+    },
+    {
+      "name": "Arizona",
+      "abbrev": "AZ",
+      "slug": "arizona",
+      "filename": "Arizona.png",
+      "url": "/state_icons_dark/Arizona.png",
+      "aliases": [
+        "arizona",
+        "arizona",
+        "az"
+      ]
+    },
+    {
+      "name": "Arkansas",
+      "abbrev": "AR",
+      "slug": "arkansas",
+      "filename": "Arkansas.png",
+      "url": "/state_icons_dark/Arkansas.png",
+      "aliases": [
+        "arkansas",
+        "arkansas",
+        "ar"
+      ]
+    },
+    {
+      "name": "California",
+      "abbrev": "CA",
+      "slug": "california",
+      "filename": "California.png",
+      "url": "/state_icons_dark/California.png",
+      "aliases": [
+        "california",
+        "california",
+        "ca"
+      ]
+    },
+    {
+      "name": "Colorado",
+      "abbrev": "CO",
+      "slug": "colorado",
+      "filename": "Colorado.png",
+      "url": "/state_icons_dark/Colorado.png",
+      "aliases": [
+        "colorado",
+        "colorado",
+        "co"
+      ]
+    },
+    {
+      "name": "Connecticut",
+      "abbrev": "CT",
+      "slug": "connecticut",
+      "filename": "Connecticut.png",
+      "url": "/state_icons_dark/Connecticut.png",
+      "aliases": [
+        "connecticut",
+        "connecticut",
+        "ct"
+      ]
+    },
+    {
+      "name": "Delaware",
+      "abbrev": "DE",
+      "slug": "delaware",
+      "filename": "Delaware.png",
+      "url": "/state_icons_dark/Delaware.png",
+      "aliases": [
+        "delaware",
+        "delaware",
+        "de"
+      ]
+    },
+    {
+      "name": "Florida",
+      "abbrev": "FL",
+      "slug": "florida",
+      "filename": "Florida.png",
+      "url": "/state_icons_dark/Florida.png",
+      "aliases": [
+        "florida",
+        "florida",
+        "fl"
+      ]
+    },
+    {
+      "name": "Georgia",
+      "abbrev": "GA",
+      "slug": "georgia",
+      "filename": "Georgia.png",
+      "url": "/state_icons_dark/Georgia.png",
+      "aliases": [
+        "georgia",
+        "georgia",
+        "ga"
+      ]
+    },
+    {
+      "name": "Hawaii",
+      "abbrev": "HI",
+      "slug": "hawaii",
+      "filename": "Hawaii.png",
+      "url": "/state_icons_dark/Hawaii.png",
+      "aliases": [
+        "hawaii",
+        "hawaii",
+        "hi"
+      ]
+    },
+    {
+      "name": "Idaho",
+      "abbrev": "ID",
+      "slug": "idaho",
+      "filename": "Idaho.png",
+      "url": "/state_icons_dark/Idaho.png",
+      "aliases": [
+        "idaho",
+        "idaho",
+        "id"
+      ]
+    },
+    {
+      "name": "Illinois",
+      "abbrev": "IL",
+      "slug": "illinois",
+      "filename": "Illinois.png",
+      "url": "/state_icons_dark/Illinois.png",
+      "aliases": [
+        "illinois",
+        "illinois",
+        "il"
+      ]
+    },
+    {
+      "name": "Indiana",
+      "abbrev": "IN",
+      "slug": "indiana",
+      "filename": "Indiana.png",
+      "url": "/state_icons_dark/Indiana.png",
+      "aliases": [
+        "indiana",
+        "indiana",
+        "in"
+      ]
+    },
+    {
+      "name": "Iowa",
+      "abbrev": "IA",
+      "slug": "iowa",
+      "filename": "Iowa.png",
+      "url": "/state_icons_dark/Iowa.png",
+      "aliases": [
+        "iowa",
+        "iowa",
+        "ia"
+      ]
+    },
+    {
+      "name": "Kansas",
+      "abbrev": "KS",
+      "slug": "kansas",
+      "filename": "Kansas.png",
+      "url": "/state_icons_dark/Kansas.png",
+      "aliases": [
+        "kansas",
+        "kansas",
+        "ks"
+      ]
+    },
+    {
+      "name": "Kentucky",
+      "abbrev": "KY",
+      "slug": "kentucky",
+      "filename": "Kentucky.png",
+      "url": "/state_icons_dark/Kentucky.png",
+      "aliases": [
+        "kentucky",
+        "kentucky",
+        "ky"
+      ]
+    },
+    {
+      "name": "Louisiana",
+      "abbrev": "LA",
+      "slug": "louisiana",
+      "filename": "Louisiana.png",
+      "url": "/state_icons_dark/Louisiana.png",
+      "aliases": [
+        "louisiana",
+        "louisiana",
+        "la"
+      ]
+    },
+    {
+      "name": "Maine",
+      "abbrev": "ME",
+      "slug": "maine",
+      "filename": "Maine.png",
+      "url": "/state_icons_dark/Maine.png",
+      "aliases": [
+        "maine",
+        "maine",
+        "me"
+      ]
+    },
+    {
+      "name": "Maryland",
+      "abbrev": "MD",
+      "slug": "maryland",
+      "filename": "Maryland.png",
+      "url": "/state_icons_dark/Maryland.png",
+      "aliases": [
+        "maryland",
+        "maryland",
+        "md"
+      ]
+    },
+    {
+      "name": "Massachusetts",
+      "abbrev": "MA",
+      "slug": "massachusetts",
+      "filename": "Massachusetts.png",
+      "url": "/state_icons_dark/Massachusetts.png",
+      "aliases": [
+        "massachusetts",
+        "massachusetts",
+        "ma"
+      ]
+    },
+    {
+      "name": "Michigan",
+      "abbrev": "MI",
+      "slug": "michigan",
+      "filename": "Michigan.png",
+      "url": "/state_icons_dark/Michigan.png",
+      "aliases": [
+        "michigan",
+        "michigan",
+        "mi"
+      ]
+    },
+    {
+      "name": "Minnesota",
+      "abbrev": "MN",
+      "slug": "minnesota",
+      "filename": "Minnesota.png",
+      "url": "/state_icons_dark/Minnesota.png",
+      "aliases": [
+        "minnesota",
+        "minnesota",
+        "mn"
+      ]
+    },
+    {
+      "name": "Mississippi",
+      "abbrev": "MS",
+      "slug": "mississippi",
+      "filename": "Mississippi.png",
+      "url": "/state_icons_dark/Mississippi.png",
+      "aliases": [
+        "mississippi",
+        "mississippi",
+        "ms"
+      ]
+    },
+    {
+      "name": "Missouri",
+      "abbrev": "MO",
+      "slug": "missouri",
+      "filename": "Missouri.png",
+      "url": "/state_icons_dark/Missouri.png",
+      "aliases": [
+        "missouri",
+        "missouri",
+        "mo"
+      ]
+    },
+    {
+      "name": "Montana",
+      "abbrev": "MT",
+      "slug": "montana",
+      "filename": "Montana.png",
+      "url": "/state_icons_dark/Montana.png",
+      "aliases": [
+        "montana",
+        "montana",
+        "mt"
+      ]
+    },
+    {
+      "name": "Nebraska",
+      "abbrev": "NE",
+      "slug": "nebraska",
+      "filename": "Nebraska.png",
+      "url": "/state_icons_dark/Nebraska.png",
+      "aliases": [
+        "nebraska",
+        "nebraska",
+        "ne"
+      ]
+    },
+    {
+      "name": "Nevada",
+      "abbrev": "NV",
+      "slug": "nevada",
+      "filename": "Nevada.png",
+      "url": "/state_icons_dark/Nevada.png",
+      "aliases": [
+        "nevada",
+        "nevada",
+        "nv"
+      ]
+    },
+    {
+      "name": "New Hampshire",
+      "abbrev": "NH",
+      "slug": "new-hampshire",
+      "filename": "New Hampshire.png",
+      "url": "/state_icons_dark/New%20Hampshire.png",
+      "aliases": [
+        "new hampshire",
+        "new-hampshire",
+        "nh"
+      ]
+    },
+    {
+      "name": "New Jersey",
+      "abbrev": "NJ",
+      "slug": "new-jersey",
+      "filename": "New Jersey.png",
+      "url": "/state_icons_dark/New%20Jersey.png",
+      "aliases": [
+        "new jersey",
+        "new-jersey",
+        "nj"
+      ]
+    },
+    {
+      "name": "New Mexico",
+      "abbrev": "NM",
+      "slug": "new-mexico",
+      "filename": "New Mexico.png",
+      "url": "/state_icons_dark/New%20Mexico.png",
+      "aliases": [
+        "new mexico",
+        "new-mexico",
+        "nm"
+      ]
+    },
+    {
+      "name": "New York",
+      "abbrev": "NY",
+      "slug": "new-york",
+      "filename": "New York.png",
+      "url": "/state_icons_dark/New%20York.png",
+      "aliases": [
+        "new york",
+        "new-york",
+        "ny"
+      ]
+    },
+    {
+      "name": "North Carolina",
+      "abbrev": "NC",
+      "slug": "north-carolina",
+      "filename": "North Carolina.png",
+      "url": "/state_icons_dark/North%20Carolina.png",
+      "aliases": [
+        "north carolina",
+        "north-carolina",
+        "nc"
+      ]
+    },
+    {
+      "name": "North Dakota",
+      "abbrev": "ND",
+      "slug": "north-dakota",
+      "filename": "North Dakota.png",
+      "url": "/state_icons_dark/North%20Dakota.png",
+      "aliases": [
+        "north dakota",
+        "north-dakota",
+        "nd"
+      ]
+    },
+    {
+      "name": "Ohio",
+      "abbrev": "OH",
+      "slug": "ohio",
+      "filename": "Ohio.png",
+      "url": "/state_icons_dark/Ohio.png",
+      "aliases": [
+        "ohio",
+        "ohio",
+        "oh"
+      ]
+    },
+    {
+      "name": "Oklahoma",
+      "abbrev": "OK",
+      "slug": "oklahoma",
+      "filename": "Oklahoma.png",
+      "url": "/state_icons_dark/Oklahoma.png",
+      "aliases": [
+        "oklahoma",
+        "oklahoma",
+        "ok"
+      ]
+    },
+    {
+      "name": "Oregon",
+      "abbrev": "OR",
+      "slug": "oregon",
+      "filename": "Oregon.png",
+      "url": "/state_icons_dark/Oregon.png",
+      "aliases": [
+        "oregon",
+        "oregon",
+        "or"
+      ]
+    },
+    {
+      "name": "Pennsylvania",
+      "abbrev": "PA",
+      "slug": "pennsylvania",
+      "filename": "Pennsylvania.png",
+      "url": "/state_icons_dark/Pennsylvania.png",
+      "aliases": [
+        "pennsylvania",
+        "pennsylvania",
+        "pa"
+      ]
+    },
+    {
+      "name": "Rhode Island",
+      "abbrev": "RI",
+      "slug": "rhode-island",
+      "filename": "Rhode Island.png",
+      "url": "/state_icons_dark/Rhode%20Island.png",
+      "aliases": [
+        "rhode island",
+        "rhode-island",
+        "ri"
+      ]
+    },
+    {
+      "name": "South Carolina",
+      "abbrev": "SC",
+      "slug": "south-carolina",
+      "filename": "South Carolina.png",
+      "url": "/state_icons_dark/South%20Carolina.png",
+      "aliases": [
+        "south carolina",
+        "south-carolina",
+        "sc"
+      ]
+    },
+    {
+      "name": "South Dakota",
+      "abbrev": "SD",
+      "slug": "south-dakota",
+      "filename": "South Dakota.png",
+      "url": "/state_icons_dark/South%20Dakota.png",
+      "aliases": [
+        "south dakota",
+        "south-dakota",
+        "sd"
+      ]
+    },
+    {
+      "name": "Tennessee",
+      "abbrev": "TN",
+      "slug": "tennessee",
+      "filename": "Tennessee.png",
+      "url": "/state_icons_dark/Tennessee.png",
+      "aliases": [
+        "tennessee",
+        "tennessee",
+        "tn"
+      ]
+    },
+    {
+      "name": "Texas",
+      "abbrev": "TX",
+      "slug": "texas",
+      "filename": "Texas.png",
+      "url": "/state_icons_dark/Texas.png",
+      "aliases": [
+        "texas",
+        "texas",
+        "tx"
+      ]
+    },
+    {
+      "name": "Utah",
+      "abbrev": "UT",
+      "slug": "utah",
+      "filename": "Utah.png",
+      "url": "/state_icons_dark/Utah.png",
+      "aliases": [
+        "utah",
+        "utah",
+        "ut"
+      ]
+    },
+    {
+      "name": "Vermont",
+      "abbrev": "VT",
+      "slug": "vermont",
+      "filename": "Vermont.png",
+      "url": "/state_icons_dark/Vermont.png",
+      "aliases": [
+        "vermont",
+        "vermont",
+        "vt"
+      ]
+    },
+    {
+      "name": "Virginia",
+      "abbrev": "VA",
+      "slug": "virginia",
+      "filename": "Virginia.png",
+      "url": "/state_icons_dark/Virginia.png",
+      "aliases": [
+        "virginia",
+        "virginia",
+        "va"
+      ]
+    },
+    {
+      "name": "Washington",
+      "abbrev": "WA",
+      "slug": "washington",
+      "filename": "Washington.png",
+      "url": "/state_icons_dark/Washington.png",
+      "aliases": [
+        "washington",
+        "washington",
+        "wa"
+      ]
+    },
+    {
+      "name": "West Virginia",
+      "abbrev": "WV",
+      "slug": "west-virginia",
+      "filename": "West Virginia.png",
+      "url": "/state_icons_dark/West%20Virginia.png",
+      "aliases": [
+        "west virginia",
+        "west-virginia",
+        "wv"
+      ]
+    },
+    {
+      "name": "Wisconsin",
+      "abbrev": "WI",
+      "slug": "wisconsin",
+      "filename": "Wisconsin.png",
+      "url": "/state_icons_dark/Wisconsin.png",
+      "aliases": [
+        "wisconsin",
+        "wisconsin",
+        "wi"
+      ]
+    },
+    {
+      "name": "Wyoming",
+      "abbrev": "WY",
+      "slug": "wyoming",
+      "filename": "Wyoming.png",
+      "url": "/state_icons_dark/Wyoming.png",
+      "aliases": [
+        "wyoming",
+        "wyoming",
+        "wy"
+      ]
+    }
+  ],
+  "updatedAt": "2026-05-26T04:40:12.932Z"
+}

@@ -5,6 +5,8 @@ const puppeteer = require('puppeteer');
         console.log('Launching browser...');
         const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
         const page = await browser.newPage();
+        page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+        page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
         
         console.log('Navigating to app...');
         await page.goto('http://localhost:5020/', { waitUntil: 'networkidle0' });
@@ -21,31 +23,41 @@ const puppeteer = require('puppeteer');
             }
         });
         
-        await page.waitForTimeout(2000); // wait for state to sync
+        await new Promise(r => setTimeout(r, 2000)); // wait for state to sync
         
         console.log('Opening confirmation tab...');
         await page.evaluate(() => {
-            document.querySelector('.tab-btn[onclick="switchTab(\\\'confirmation\\\')"]').click();
+            document.querySelector('#btn-next-step-6').click();
         });
         
-        await page.waitForTimeout(3000); // wait for ensureConfirmationPurablisUrls and render to finish
+        await new Promise(r => setTimeout(r, 3000)); // wait for render
         
-        console.log('Extracting iframe content...');
-        const iframeSrc = await page.evaluate(() => {
-            const iframe = document.querySelector('#confirmation-preview-frame-wrap iframe');
-            return iframe ? iframe.srcdoc : 'No iframe found';
-        });
-        
-        const urls = await page.evaluate(() => {
-            const iframe = document.querySelector('#confirmation-preview-frame-wrap iframe');
-            if (!iframe) return [];
-            const doc = new DOMParser().parseFromString(iframe.srcdoc, 'text/html');
-            return Array.from(doc.querySelectorAll('img.mcnImage, img')).map(img => img.src);
-        });
-        
-        console.log('URLs found in confirmation preview iframe:');
-        console.log(urls.join('\n'));
-        
+        const tabsToTest = ['MED', 'THC', 'CBD', 'INV'];
+        const fs = require('fs');
+
+        for (const tabName of tabsToTest) {
+            console.log(`Switching to ${tabName} sub-tab in confirmation...`);
+            await page.evaluate((name) => {
+                const tabs = Array.from(document.querySelectorAll('#step-6 button'));
+                const tab = tabs.find(t => t.textContent.trim() === name);
+                if (tab) tab.click();
+            }, tabName);
+            
+            await new Promise(r => setTimeout(r, 3000)); // wait for iframe to update
+            
+            const iframeSrc = await page.evaluate(() => {
+                const iframe = document.querySelector('#confirmation-preview-frame-wrap iframe');
+                return iframe ? iframe.srcdoc : null;
+            });
+            
+            if (iframeSrc) {
+                fs.writeFileSync(`newsletter_preview_${tabName}.html`, iframeSrc);
+                console.log(`Saved HTML to newsletter_preview_${tabName}.html`);
+            } else {
+                console.log(`Could not extract iframe srcdoc for ${tabName}`);
+            }
+        }
+
         await browser.close();
     } catch (e) {
         console.error(e);

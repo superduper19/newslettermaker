@@ -7,7 +7,7 @@ async function testSearch() {
             body: JSON.stringify({
                 prompt: 'recent cannabis rescheduling news',
                 newsletterName: 'Test Newsletter',
-                model: 'gemini-1.5-pro-latest', // Testing Gemini as alternative
+                model: 'gemini-flash-3-5', // Testing Gemini as alternative
             })
         });
 

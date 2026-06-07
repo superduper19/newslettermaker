@@ -143,6 +143,12 @@ let newsletterContent = {
     THC: { intro: '', outro: '' },
     CBD: { intro: '', outro: '' },
     INV: { intro: '', outro: '' },
+    selectedResults: {
+        MED: "A new study found cannabis products gave solid pain relief and better sleep, mental health, and quality of life for folks with fibromyalgia, rheumatoid arthritis, and osteoarthritis across all three formulations tested. UC Davis scientists cooked up a new class of psychedelic compounds that flip on the same serotonin receptor as classic psychedelics but skip the hallucinations in mice. That might lead to future reports saying the US still spends way more on healthcare than any peer nation, while around 27M Americans go uninsured, with lower life expectancy and higher avoidable deaths to show for it. So though Mexico, with all its issues, recently found a way to make free healthcare for everyone, the US politicians still can't (or won't) figure it out.",
+        THC: "California's licensed cannabis retailers pulled in $956.7M in Q1 2026, down a bit from $976.5M in the same period last year, marking another dip in the nation's largest cannabis market. Now that cannabis is federally considered medicine, a group of Democratic lawmakers and unions is pushing Trump to commute the sentences of federal prisoners locked up for nonviolent marijuana offenses. A new trial with chronic pain patients found that cannabis capsules containing various cannabinoid combos delivered significant improvements in pain, sleep, mental health, and quality of life across fibromyalgia, rheumatoid arthritis, and osteoarthritis sufferers, with effects ranging from small to large. Now, let's get those federal medicine sellers and users out of jail. :)",
+        CBD: "Scientists are cooking up a new class of psychedelic-like compounds that hit the same serotonin receptors as classic psychedelics but skip the hallucinations. They hope it will result in safer treatments for depression, PTSD, and addiction without the high. Matthew Perry's assistant got more than 3 years in prison for his central role in the actor's ketamine death and was admonished by the judge for getting the ketamine, administering it, and lying to police. Though honestly, would he have had the job if he wasn't going to follow Perry's requests? Minnesota's new cannabis law merges medical and recreational supply chains, creates a new \"macrobusiness\" license, and lets hemp producers jump into the adult-use market without shutting down their existing operations ahead of the federal hemp ban taking effect on November 12. As the administration creates definitions, states are shifting their classifications to protect local hemp businesses. There is a lot that can be done with full-spectrum CBD to work around the federal framework, just like cannabis states have been doing for decades. :)",
+        INV: "This week, we gave more info about Bryan Hubbard, a self-described psychedelics whisperer for Republicans, who helped catalyze Trump's recent executive order directing federal agencies to speed up research on psychedelics like ibogaine. On the cannabis front, while California sales dipped slightly again, New York's industry is still hot, hitting its 5-year anniversary with $3.3B in sales and 600 dispensaries. :)\nOver 200 people have now been killed in the U.S. military's boat strike campaign off South America, with coastal communities in Colombia and Ecuador abandoning fishing out of fear, while Guatemala pushed back on a report claiming it had agreed to let the U.S. carry out similar strikes on its territory, saying it wants security cooperation but never approved foreign military operations. During the Iran war, he also claimed that the two sides are close to a peace deal, while Iran denies it. I'm seeing a trend. Given that I heard lots of the artists, Trump said, who were committed to the 250th US celebration, claimed they were never invited and opted out, it does make me wonder something. When Donald Trump was in High School, did he ever announce to his classmates that the most beautiful girl in the class was his serious girlfriend while she denied it and said she had no idea what he was talking about? Also, did it work with her, finally succumbing to this PR pressure? If you know, email me. ;)"
+    },
     templates: { MED: '', THC: '', CBD: '', INV: '' },
     summaryRules: DEFAULT_SUMMARY_RULES,
     selectedGreeting: DEFAULT_GREETING,
@@ -313,14 +319,22 @@ function buildArticlePurablisFilename(article) {
 
 function extractDateSubfolderFromUrl(url) {
     const match = String(url || '').match(/\/(\d{2}-\d{2}-\d{2})\//);
-    return match ? match[1] : '';
+    if (match) return match[1];
+    const fnMatch = String(url || '').match(/(?:^|\/)(\d{2}-\d{2}-\d{2})-/);
+    return fnMatch ? fnMatch[1] : '';
 }
 
 function buildPurablisPublicUrlFromFilename(filename, originalUrl = '') {
     const fn = String(filename || '').trim().split('/').pop();
     if (!fn) return '';
     const base = (newsletterContent.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE).replace(/\/+$/, '');
-    const dateFolder = extractDateSubfolderFromUrl(originalUrl);
+    // Prefer a date subfolder already present in the URL path (e.g. .../06-01-26/filename.png)
+    let dateFolder = extractDateSubfolderFromUrl(originalUrl);
+    // Fallback: extract the date prefix from the filename itself (e.g. 06-01-26-freepik-123.png)
+    if (!dateFolder) {
+        const fnMatch = fn.match(/^(\d{2}-\d{2}-\d{2})-/);
+        if (fnMatch) dateFolder = fnMatch[1];
+    }
     const pathSegment = dateFolder ? `${dateFolder}/` : '';
     return `${base}/${pathSegment}${encodeURIComponent(fn)}`;
 }
@@ -390,7 +404,14 @@ function buildPublicImageUrlCandidates(filename) {
     if (!filename) return [];
     const { base, subfolder } = getPublicImageSettings();
     const encFile = encodeURIComponent(filename);
-    const encFolder = subfolder ? subfolder.split('/').map(encodeURIComponent).join('/') : '';
+    
+    let activeSubfolder = subfolder;
+    if (!activeSubfolder) {
+        const fnMatch = filename.match(/^(\d{2}-\d{2}-\d{2})-/);
+        if (fnMatch) activeSubfolder = fnMatch[1];
+    }
+    
+    const encFolder = activeSubfolder ? activeSubfolder.split('/').map(encodeURIComponent).join('/') : '';
     const roots = [...new Set([
         base,
         DEFAULT_PUBLIC_IMAGE_BASE,
@@ -398,9 +419,9 @@ function buildPublicImageUrlCandidates(filename) {
     ].filter(Boolean))];
     const out = [];
     roots.forEach((root) => {
-        if (subfolder) out.push(`${root}/${encFolder}/${encFile}`);
+        if (activeSubfolder) out.push(`${root}/${encFolder}/${encFile}`);
         out.push(`${root}/${encFile}`);
-        if (!subfolder) {
+        if (!activeSubfolder) {
             out.push(`${root}/all/${encFile}`);
             out.push(`${LEGACY_NEWSLETTER_IMAGES_BASE}/all/${encFile}`);
         }
@@ -426,12 +447,31 @@ function isLocalOrAppImageUrl(url) {
     return false;
 }
 
+function fullyDecodeURIComponent(str) {
+    let decoded = str;
+    let prev = '';
+    let iterations = 0;
+    while (decoded !== prev && iterations < 100) {
+        prev = decoded;
+        try {
+            decoded = decodeURIComponent(decoded);
+        } catch (e) {
+            break;
+        }
+        iterations++;
+    }
+    return decoded;
+}
+
 function buildPublicStateIconUrl(urlOrFilename) {
     const value = String(urlOrFilename || '').trim();
     let filename = extractImageFilenameFromUrl(value)
         || (value.match(/\/(?:all\/states|state_icons_dark)\/([^/?#]+)/i) || [])[1]
         || (/\.(png|jpe?g|gif|webp|svg)$/i.test(value) ? value.split('/').pop() : '');
     if (!filename) return '';
+    
+    filename = fullyDecodeURIComponent(filename);
+    
     if (/^state-/i.test(filename)) {
         const slug = filename.replace(/^state-/i, '').replace(/\.[a-z]+$/i, '');
         filename = `${slug.split('-').map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')}.png`;
@@ -465,6 +505,10 @@ function resolvePurablisImageUrl(articleOrUrl) {
         ]
         : [articleOrUrl];
 
+    const isStateArticle = typeof articleOrUrl === 'object' && articleOrUrl 
+        ? (isAppStateIconUrl(articleOrUrl.originalImageUrl || articleOrUrl.image || '') || /^state-/i.test(articleOrUrl.purablisFilename || '')) 
+        : false;
+
     for (const raw of urlFields) {
         let safe = String(raw || '').trim();
         if (safe && isPurablisUrl(safe) && !isLocalOrAppImageUrl(safe) && !isShortPurablisImageUrl(safe)) {
@@ -477,7 +521,7 @@ function resolvePurablisImageUrl(articleOrUrl) {
                     if (extractedFilename) {
                         if (safe.includes('inspiration1')) {
                             safe = buildPublicInspirationalImageUrl(extractedFilename);
-                        } else if (safe.includes('states') || safe.includes('state_icons')) {
+                        } else if (isStateArticle || safe.includes('states') || safe.includes('state_icons')) {
                             safe = buildPublicStateIconUrl(extractedFilename);
                         } else {
                             safe = buildPurablisPublicUrlFromFilename(extractedFilename, safe);
@@ -490,13 +534,21 @@ function resolvePurablisImageUrl(articleOrUrl) {
     }
 
     if (typeof articleOrUrl === 'object' && articleOrUrl) {
+        const legacyTarget = articleOrUrl.publishedImageUrl || articleOrUrl.image || articleOrUrl.originalImageUrl || articleOrUrl.uploadedImageUrl || '';
+        // If the article has no image at all, do not return a fake Purablis URL
+        if (!legacyTarget) {
+            return '';
+        }
         const exportName = buildArticlePurablisFilename(articleOrUrl);
-        const legacyTarget = articleOrUrl.publishedImageUrl || articleOrUrl.image || '';
         if (exportName) {
             let built = '';
-            if (legacyTarget.includes('inspiration1')) built = buildPublicInspirationalImageUrl(exportName);
-            else if (legacyTarget.includes('states') || legacyTarget.includes('state_icons')) built = buildPublicStateIconUrl(exportName);
-            else built = buildPurablisPublicUrlFromFilename(exportName, legacyTarget);
+            if (legacyTarget.includes('inspiration1')) {
+                built = buildPublicInspirationalImageUrl(exportName);
+            } else if (isStateArticle || legacyTarget.includes('states') || legacyTarget.includes('state_icons')) {
+                built = buildPublicStateIconUrl(legacyTarget);
+            } else {
+                built = buildPurablisPublicUrlFromFilename(exportName, legacyTarget);
+            }
             return built;
         }
     }
@@ -550,6 +602,9 @@ function repairMisplacedPurablisImageUrls() {
             const u = String(a[field] || '');
             if (!u || !/purablis\.com/i.test(u)) return;
             if (/News-roundup\/images/i.test(u)) return;
+            // Already on the correct base — preserve it as-is (including any date subfolder).
+            // Only rewrite legacy "Newsletter images" or other misplaced paths.
+            if (u.startsWith(DEFAULT_PUBLIC_IMAGE_BASE)) return;
             const stateMatch = u.match(/\/all\/states\/([^/?#]+)/i);
             if (stateMatch) {
                 articles[idx][field] = `${DEFAULT_STATE_ICONS_PUBLIC_BASE}/${encodeURIComponent(stateMatch[1])}`;
@@ -557,7 +612,8 @@ function repairMisplacedPurablisImageUrls() {
             }
             const fn = extractImageFilenameFromUrl(u);
             if (!fn) return;
-            articles[idx][field] = `${DEFAULT_PUBLIC_IMAGE_BASE}/${encodeURIComponent(fn)}`;
+            // Use buildPurablisPublicUrlFromFilename so the date subfolder is preserved/inferred
+            articles[idx][field] = buildPurablisPublicUrlFromFilename(fn, u);
         });
     });
 }

@@ -799,6 +799,7 @@ function buildSessionPayload() {
     return {
         articles: JSON.parse(JSON.stringify(articles)),
         archivedArticles: JSON.parse(JSON.stringify(archivedArticles)),
+        laterCoolArticles: JSON.parse(JSON.stringify(laterCoolArticles)),
         inspirationalImages: [...inspirationalImages],
         newsletterContent: JSON.parse(JSON.stringify(newsletterContent)),
         aiQuery: getAiQuery(),
@@ -1047,19 +1048,29 @@ function showAiFailureAlert(context, dataOrMessage) {
     const msg = isAnthropicCreditsApiResponse(data)
         ? ANTHROPIC_CREDITS_USER_MESSAGE
         : (extractApiErrorMessage(data) || 'Unknown error');
-    alert(`${context}\n\n${msg}`);
+    const modelLine = data.model ? `Model: ${data.model}\n` : '';
+    alert(`${context}\n\n${modelLine}${msg}`);
 }
 
 function extractApiErrorMessage(data) {
     if (isAnthropicCreditsApiResponse(data)) {
         return ANTHROPIC_CREDITS_USER_MESSAGE;
     }
-    const primary = String(data?.error || '').trim();
-    if (primary && !/^failed to /i.test(primary)) {
+    let primaryRaw = data?.error;
+    if (typeof primaryRaw === 'object' && primaryRaw !== null) {
+        primaryRaw = primaryRaw.message || JSON.stringify(primaryRaw);
+    }
+    const primary = String(primaryRaw || '').trim();
+    if (primary && !/^failed to /i.test(primary) && primary !== '[object Object]') {
         return primary;
     }
-    const details = String(data?.details || '').trim();
-    if (!details) return primary;
+    const detailsRaw = data?.details;
+    let detailsStr = detailsRaw;
+    if (typeof detailsRaw === 'object' && detailsRaw !== null) {
+        detailsStr = detailsRaw.message || JSON.stringify(detailsRaw);
+    }
+    const details = String(detailsStr || '').trim();
+    if (!details || details === '[object Object]') return primary;
     if (isAnthropicCreditError(details)) {
         return ANTHROPIC_CREDITS_USER_MESSAGE;
     }
@@ -1245,7 +1256,7 @@ window.startNewWeek = async () => {
 
     articles = [];
     archivedArticles = [];
-    laterCoolArticles = [];
+    // laterCoolArticles intentionally preserved — they carry forward to the next week
     inspirationalImages = [];
     confirmationInspirationalImage = '';
     lastGeneratedNewsletter = null;
@@ -4354,13 +4365,14 @@ window.downloadAllImagesZip = async () => {
 };
 
 window.exportArticlesXls = () => {
-    if (articles.length === 0) return alert('No articles to export.');
+    const allArticles = [...articles, ...archivedArticles, ...laterCoolArticles];
+    if (allArticles.length === 0) return alert('No articles to export.');
     const headers = ['Title', 'URL', 'Description', 'Date', 'Status', 'Paywall', 'MED', 'THC', 'CBD', 'INV', 'Notes', 'Image URL'];
     const optionalCell = (value) => {
         const text = String(value ?? '').trim();
         return text ? text : undefined;
     };
-    const rows = articles.map(a => ([
+    const rows = allArticles.map(a => ([
         a.title || '',
         a.url || '',
         optionalCell(a.description),
@@ -5136,6 +5148,7 @@ window.loadSession = () => {
         if (!a.addedAt) a.addedAt = savedAt;
     });
     archivedArticles = session.archivedArticles || [];
+    laterCoolArticles = session.laterCoolArticles || [];
     inspirationalImages = session.inspirationalImages || [];
     const nc = session.newsletterContent || {
         MED: { intro: '', outro: '' },

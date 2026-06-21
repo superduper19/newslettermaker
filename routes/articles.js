@@ -402,8 +402,8 @@ const MODEL_MAPPING = {
     'claude-opus-4-6-extended': 'claude-opus-4-6',
     'claude-sonnet-4-6': 'claude-sonnet-4-6',
     'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
-    'gemini-flash-3-0': 'gemini-3-flash-preview',
-    'gemini-3-1-pro': 'gemini-3.1-pro-preview',
+    'gemini-flash-3-0': 'gemini-3.0-flash',
+    'gemini-3-1-pro': 'gemini-3.1-pro',
     'gemini-flash-3-5': 'gemini-3.5-flash',
 };
 

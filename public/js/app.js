@@ -645,7 +645,7 @@ async function ensureConfirmationPurablisUrls() {
     const relevant = articles.filter((a) => {
         if (a.publishImage === false) return false;
         if (a.image || a.publishedImageUrl || a.originalImageUrl) return true;
-        return ['Y', 'YM', 'COOL FINDS', 'M'].includes(a.status)
+        return ['Y', 'YM', 'COOL FINDS'].includes(a.status)
             || ['MED', 'THC', 'CBD', 'INV'].some((cat) => isCategoryRankIncluded(a, cat));
     });
     if (!relevant.length) return { reachable: 0, checked: 0 };
@@ -1361,7 +1361,7 @@ window.toggleAllArticles = (select) => {
 };
 
 window.toggleAllImagePublish = (select) => {
-    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
+    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
     relevant.forEach(a => {
         a.publishImage = select;
     });
@@ -1379,7 +1379,7 @@ window.renderImagesView = () => {
     }
 
     const relevantArticles = articles
-        .filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M'))
+        .filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS'))
         .slice();
 
     if (imageViewSortOrder === 'az' || imageViewSortOrder === 'za') {
@@ -1495,7 +1495,7 @@ window.renderImagesView = () => {
                             Search
                         </button>
                     </div>
-                    <div class="border-t border-[#eee] pt-1.5">
+                    <div class="border-t border-[#eee] pt-1.5 flex flex-wrap gap-2 items-center">
                         <input
                             type="file"
                             accept="image/*"
@@ -1504,9 +1504,14 @@ window.renderImagesView = () => {
                             onchange="uploadArticleImage(${originalIndex}, this)">
                         <label
                             for="img-upload-input-${originalIndex}"
-                            class="btn btn-sm btn-secondary cursor-pointer m-0 text-[0.78rem] py-1 px-2.5">
+                            class="btn btn-sm btn-secondary cursor-pointer m-0 text-[0.78rem] py-1 px-2.5 whitespace-nowrap">
                             Upload File
                         </label>
+                        <button
+                            class="btn btn-sm btn-outline cursor-pointer m-0 text-[0.78rem] py-1 px-2.5 border-[#2f6e63] text-[#2f6e63] whitespace-nowrap"
+                            onclick="openPastIconsModal(${originalIndex})">
+                            Browse Past Icons
+                        </button>
                     </div>
                 </div>
                 <div class="img-col-selected" id="selected-img-${originalIndex}">
@@ -1539,7 +1544,7 @@ window.renderImagesView = () => {
 function updateImageViewStats() {
     const statsEl = document.getElementById('image-view-stats');
     if (!statsEl) return;
-    const relevantArticles = articles.filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M'));
+    const relevantArticles = articles.filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS'));
     const counts = getSelectedRankCounts();
     let selectedCount = 0;
     relevantArticles.forEach(a => {
@@ -1692,6 +1697,111 @@ window.updateImageSearchEssence = function (index, value) {
     saveState();
 };
 
+// --- Past Icons Modal ---
+let pastIconsData = [];
+let currentPastIconArticleIndex = null;
+
+window.openPastIconsModal = async function(articleIndex) {
+    currentPastIconArticleIndex = articleIndex;
+    const modal = document.getElementById('past-icons-modal');
+    const content = document.getElementById('past-icons-modal-content');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    
+    if (pastIconsData.length === 0) {
+        await fetchPastIcons();
+    } else {
+        renderPastIcons();
+    }
+};
+
+window.closePastIconsModal = function() {
+    const modal = document.getElementById('past-icons-modal');
+    const content = document.getElementById('past-icons-modal-content');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+    currentPastIconArticleIndex = null;
+};
+
+window.fetchPastIcons = async function() {
+    const gallery = document.getElementById('past-icons-gallery');
+    try {
+        const res = await fetch('/api/images/past-icons');
+        const data = await res.json();
+        if (data.success && data.images) {
+            // Sort by name for now, as FTP might not reliably provide dates
+            pastIconsData = data.images.sort((a, b) => b.name.localeCompare(a.name));
+            renderPastIcons();
+        } else {
+            gallery.innerHTML = '<div class="text-[#c62828] text-sm font-medium">Failed to load past icons.</div>';
+        }
+    } catch (e) {
+        console.error('Past icons fetch error:', e);
+        gallery.innerHTML = '<div class="text-[#c62828] text-sm font-medium">Error loading past icons.</div>';
+    }
+};
+
+window.filterPastIcons = function() {
+    const query = document.getElementById('past-icons-search-input').value.toLowerCase().trim();
+    renderPastIcons(query);
+};
+
+window.renderPastIcons = function(query = '') {
+    const gallery = document.getElementById('past-icons-gallery');
+    
+    let filtered = pastIconsData;
+    if (query) {
+        filtered = pastIconsData.filter(img => {
+            const name = String(img.name || '').toLowerCase();
+            return name.includes(query);
+        });
+    }
+    
+    if (filtered.length === 0) {
+        gallery.innerHTML = '<div class="text-[#666] text-sm mt-10 text-center font-medium">No past icons match your search.</div>';
+        return;
+    }
+    
+    // Grid layout with responsive columns
+    let html = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 p-2">';
+    
+    filtered.forEach(img => {
+        const url = img.url;
+        const name = escapeHtml(img.name || 'icon');
+        const thumbSrc = resolvePurablisImageUrl(url) || url;
+        html += `
+            <div class="relative group cursor-pointer border-2 border-transparent hover:border-[#2f6e63] rounded-lg overflow-hidden bg-white shadow-sm transition-all"
+                 onclick="selectPastIconAndClose('${escapeHtml(url)}')"
+                 title="${name}">
+                <div class="aspect-square flex items-center justify-center bg-[#f8f9fa] p-2">
+                    <img src="${thumbSrc}" alt="${name}" class="max-w-full max-h-full object-contain" loading="lazy">
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 bg-[rgba(255,255,255,0.95)] p-1 text-[0.65rem] truncate text-center text-[#444] font-medium border-t border-[#eee]">
+                    ${name}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    gallery.innerHTML = html;
+};
+
+window.selectPastIconAndClose = function(url) {
+    if (currentPastIconArticleIndex !== null) {
+        selectImage(currentPastIconArticleIndex, url);
+    }
+    closePastIconsModal();
+};
+
 // Search Images
 window.searchArticleImages = async (index) => {
     const article = articles[index];
@@ -1767,6 +1877,13 @@ window.searchArticleImages = async (index) => {
             stateImages.forEach((img) => appendResultThumb(img, true));
             freepikImages.slice(0, 8).forEach((img) => appendResultThumb(img, false));
 
+            if (data.freepikSkipped && data.freepikError) {
+                const errDiv = document.createElement('div');
+                errDiv.className = 'text-[0.75rem] text-[#c62828] mt-2 text-center w-full col-span-full';
+                errDiv.innerHTML = `⚠️ Freepik/Flaticon search skipped. API error: ${data.freepikError}. (Check FREEPIK_API_KEY in server .env)`;
+                grid.appendChild(errDiv);
+            }
+
             if (freepikImages.length > 0) {
                 const navDiv = document.createElement('div');
                 navDiv.className = 'img-page-nav';
@@ -1785,7 +1902,11 @@ window.searchArticleImages = async (index) => {
             const stateHint = essence.length >= 2
                 ? ' For a US state, type the full state name (e.g. Virginia, New York).'
                 : '';
-            grid.innerHTML = `<div class="grid-placeholder">No icons found${tried}.${stateHint} Try a simpler keyword (e.g. cannabis, hemp, veto).</div>`;
+            let skipMsg = '';
+            if (data.freepikSkipped && data.freepikError) {
+                skipMsg = `<div class="text-[0.75rem] text-[#c62828] mt-2">⚠️ Freepik/Flaticon API error: ${data.freepikError}. (Check FREEPIK_API_KEY in server .env)</div>`;
+            }
+            grid.innerHTML = `<div class="grid-placeholder">No icons found${tried}.${stateHint} Try a simpler keyword (e.g. cannabis, hemp, veto).${skipMsg}</div>`;
         }
     } catch (e) {
         console.error(e);
@@ -1796,7 +1917,7 @@ window.searchArticleImages = async (index) => {
 window.searchAllArticleImages = async () => {
     const relevantIndexes = articles
         .map((article, index) => ({ article, index }))
-        .filter(({ article }) => (article.categories && article.categories.length > 0) || article.status === 'COOL FINDS' || article.status === 'M')
+        .filter(({ article }) => (article.categories && article.categories.length > 0) || article.status === 'COOL FINDS')
         .map(({ index }) => index);
 
     if (relevantIndexes.length === 0) {
@@ -1983,6 +2104,7 @@ window.uploadArticleImage = async (index, input) => {
             articles[index].image = data.published ? imageUrl : null;
             articles[index].previewImageUrl = data.published ? resolvePurablisImageUrl(articles[index]) : '';
             articles[index].originalImageUrl = articles[index].previewImageUrl;
+            articles[index].publishImage = true;
             saveState();
             updateSelectedImageBox(index, { publishing: !data.published });
 
@@ -2462,6 +2584,7 @@ function ensureUseInNewsletter(article) {
 
 /** Category column (MED/THC/CBD/INV) has Y, YM, or a numeric rank — used for Confirmation & summaries */
 function isCategoryRankIncluded(article, category) {
+    if (!['Y', 'YM'].includes(article.status)) return false;
     const rank = String(getRankForSort(article, category)).trim().toUpperCase();
     if (!rank) return false;
     if (/^\d+$/.test(rank)) return true;
@@ -2479,7 +2602,8 @@ function getArticlesForCategory(category) {
             if (a.selected === false) return false;
             normalizeArticleDefaults(a);
             return isCategoryRankIncluded(a, category);
-        }).sort((a, b) => {
+        })
+        .sort((a, b) => {
             const rA = rankToSortValue(getRankForSort(a, category));
             const rB = rankToSortValue(getRankForSort(b, category));
             if (rA !== rB) return rA - rB;
@@ -3278,7 +3402,7 @@ function getMainArticlesForCategory(category) {
 
 function getInterestingFindsArticles() {
     return articles
-        .filter(a => a.status === 'COOL FINDS' && isIncludedInConfirmation(a))
+        .filter(a => a.status === 'COOL FINDS')
         .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 }
 
@@ -3439,7 +3563,7 @@ function buildFallbackConfirmationHtml(category) {
         const url = article.url || '#';
         const source = escapeHtml(getSourceLabel(article.url || ''));
         const image = getArticleImageUrl(article);
-        const imgTag = image
+        const imgTag = image && article.publishImage !== false
             ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(article.title || '')}" width="60" style="display:block;border:0;max-width:60px;width:60px;height:auto;object-fit:cover;border-radius:6px;">`
             : '';
         return `<div style="display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eee;">
@@ -3551,7 +3675,7 @@ function buildArticleTableHtml(sampleHtml, article) {
 
     const imageEl = table.querySelector('img.mcnImage, img');
     if (imageEl) {
-        if (image) {
+        if (image && article.publishImage !== false) {
             setArticleImageSrcWithFallback(imageEl, article, image);
         } else {
             imageEl.removeAttribute('src');
@@ -4057,7 +4181,7 @@ window.generateNewsletters = async () => {
         newsletters[cat] = {
             html,
             resultText,
-            articles: articles.filter(a => ['Y', 'YM', 'COOL FINDS'].includes(a.status) && a.categories && a.categories.includes(cat)),
+            articles: articles.filter(a => ['Y', 'YM'].includes(a.status) && a.categories && a.categories.includes(cat)),
             inspirationalImage: inspirationalImg,
         };
     }
@@ -4138,7 +4262,7 @@ async function ensureInspirationalImageOnPurablis() {
 
 async function ensureAllArticleImagesOnPurablis(options = {}) {
     const { silent = false } = options;
-    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
+    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
     const withImages = relevant.filter(a => {
         const hasImage = a.image || a.originalImageUrl;
         const wantsPublish = a.publishImage !== false;
@@ -4197,7 +4321,7 @@ window.publishAllImagesToPurablis = async () => {
         btn.textContent = 'Publish Selected to purablis';
     }
     if (result.ok === 0 && result.fail === 0) {
-        const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS' || a.status === 'M');
+        const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
         const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && isPurablisUrl(a.publishedImageUrl)));
         alert(allPublished ? 'All images are already on purablis.com.' : 'No images to publish. Select images for articles first.');
         return;
@@ -4218,8 +4342,7 @@ window.downloadAllImagesZip = async () => {
         articles
             .filter(a =>
                 (a.categories && a.categories.length > 0) ||
-                a.status === 'COOL FINDS' ||
-                a.status === 'M',
+                a.status === 'COOL FINDS',
             ).filter(a => a.image || a.originalImageUrl);
 
     if (withImages.length === 0) {
@@ -4603,23 +4726,24 @@ function renderArticles() {
                 const disabledAttr = isStatusValid ? '' : 'disabled';
                 const disabledClass = isStatusValid ? '' : 'opacity-50 cursor-not-allowed';
 
-                const categoryInputs =
+                const categoryInputs = `<div class="col-ranks pt-1 flex items-center justify-center gap-1 w-full flex-wrap">` +
                     ['MED', 'THC', 'CBD', 'INV']
                         .map(cat => {
                             const rank = getRankForSort(article, cat);
-                            return `<div class="col-cat">
+                            return `<div class="flex flex-col items-center gap-0.5 w-[45%]">
+                                <label class="text-[0.55rem] text-[#888] font-bold tracking-wide">${cat}</label>
                                 <input
                                     type="text"
                                     value="${escapeHtml(rank)}"
                                     data-cat="${cat}"
                                     oninput="updateCategoryRank(${index}, '${cat}', this.value)"
                                     onkeydown="handleCatRankKeydown(event, ${index}, '${cat}')"
-                                    class="${disabledClass} cat-rank-input"
+                                    class="${disabledClass} cat-rank-input w-full text-center px-0.5 py-1 text-[0.75rem] border border-[#d8dee8] rounded"
                                     ${disabledAttr}
                                     placeholder="#"
                                     title="Rank for ${cat} (number, Y, YM). Tab moves to next column.">
                             </div>`;
-                        }).join('');
+                        }).join('') + `</div>`;
                 const admonition = getHeadlineLengthAdmonition(article.title);
 
                 return `<div class="article-row">
@@ -4729,16 +4853,40 @@ function highlightLongTitles() {
 }
 
 // Update Article Field
-window.updateArticleField = (index, field, value) => {
+window.updateArticleField = async (index, field, value) => {
     if (field === 'status' && value === 'LATER COOL') {
         const article = articles[index];
         article.status = 'LATER COOL';
-        laterCoolArticles.push(article);
-        articles.splice(index, 1);
-        saveState();
-        renderArticles();
-        const activeStep = document.querySelector('.step.active');
-        if (activeStep && activeStep.getAttribute('data-step') === '3') renderImagesView();
+        
+        try {
+            // Get global Later Cool bucket
+            const res = await fetch('/api/state?key=later_cool');
+            let globalLaterCool = [];
+            if (res.ok) {
+                const data = await res.json();
+                if (data.value && Array.isArray(data.value)) {
+                    globalLaterCool = data.value;
+                }
+            }
+            
+            globalLaterCool.push(article);
+            
+            await fetch('/api/state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'later_cool', value: globalLaterCool })
+            });
+            
+            articles.splice(index, 1);
+            saveState();
+            renderArticles();
+            const activeStep = document.querySelector('.step.active');
+            if (activeStep && activeStep.getAttribute('data-step') === '3') renderImagesView();
+            alert('Article moved to your Later Cool Finds vault!');
+        } catch (e) {
+            console.error(e);
+            alert('Failed to save to Later Cool vault: ' + e.message);
+        }
         return;
     }
     articles[index][field] = value;
@@ -4905,7 +5053,6 @@ function getRankForSort(article, cat) {
     let r = String(
         article.ranks[key] ?? article.ranks[cat] ?? article.ranks[key.toLowerCase()] ?? '',
     ).trim();
-    if (!r && articleHasCategory(article, key)) r = 'Y';
     return r;
 }
 
@@ -5009,12 +5156,16 @@ function getSummaryArticlesForCategory(category) {
 }
 
 function getSelectedRankCounts() {
-    return {
-        MED: getArticlesForCategory('MED').length,
-        THC: getArticlesForCategory('THC').length,
-        CBD: getArticlesForCategory('CBD').length,
-        INV: getArticlesForCategory('INV').length,
-    };
+    let counts = { MED: 0, THC: 0, CBD: 0, INV: 0 };
+    articles.forEach(a => {
+        ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
+            let r = String((a.ranks && a.ranks[cat]) || '').trim().toUpperCase();
+            if (r === 'Y' || r === 'YM' || /^\d+$/.test(r)) {
+                counts[cat]++;
+            }
+        });
+    });
+    return counts;
 }
 
 function updateStats() {
@@ -5062,6 +5213,70 @@ window.removeSelectedArticles = () => {
     const activeStep = document.querySelector('.step.active');
     if (activeStep && activeStep.getAttribute('data-step') === '3') {
         renderImagesView();
+    }
+};
+
+window.openSelectedArticles = () => {
+    const toOpen = articles.filter((a) => a.selected !== false);
+    if (!toOpen.length) {
+        alert('No articles checked. Use the Select column checkboxes, then click Open selected.');
+        return;
+    }
+    if (!confirm(`You are about to open ${toOpen.length} tabs. Your browser's pop-up blocker may prevent this unless you "Allow Pop-ups" for this site. Continue?`)) {
+        return;
+    }
+    toOpen.forEach(a => {
+        if (a.url && a.url.startsWith('http')) {
+            window.open(a.url, '_blank');
+        }
+    });
+};
+
+window.fixRedirectLinks = async () => {
+    const urlsToFix = articles
+        .filter(a => a.url && a.url.includes('vertexaisearch.cloud.google.com'))
+        .map(a => a.url);
+
+    if (urlsToFix.length === 0) {
+        alert('No Google Redirect (vertexaisearch) URLs found in the current articles.');
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="fixRedirectLinks()"]');
+    const originalText = btn.innerText;
+    btn.innerText = 'Fixing...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/articles/resolve-urls', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: urlsToFix })
+        });
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        
+        if (data.success && data.resolved) {
+            let fixedCount = 0;
+            articles.forEach(a => {
+                if (data.resolved[a.url] && data.resolved[a.url] !== a.url) {
+                    a.url = data.resolved[a.url];
+                    fixedCount++;
+                }
+            });
+            saveState();
+            renderArticles();
+            alert(`Successfully resolved ${fixedCount} redirect URLs to direct links!`);
+        } else {
+            alert('Failed to resolve URLs.');
+        }
+    } catch (e) {
+        console.error('Error fixing links:', e);
+        alert('An error occurred while fixing the links.');
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
 };
 
@@ -5352,25 +5567,57 @@ window.pushStateToServer = async function () {
 
 window.getLaterCoolFinds = async function () {
     try {
-        const res = await fetch('/api/state?key=workspace');
-        const wr = res.ok ? await res.json() : {};
-        const value = wr.value || {};
-        const fromServer = value.laterCoolArticles || [];
+        const res = await fetch('/api/state?key=later_cool');
+        let globalLaterCool = [];
+        if (res.ok) {
+            const data = await res.json();
+            if (data.value && Array.isArray(data.value)) {
+                globalLaterCool = data.value;
+            }
+        }
+        
+        // Also grab any legacy local ones just in case
         const fromLocal = laterCoolArticles || [];
-        const toAdd = fromServer.length ? fromServer : fromLocal;
-        if (toAdd.length === 0) {
-            alert('No Later Cool finds saved.');
+        let toAdd = [...globalLaterCool, ...fromLocal];
+        
+        // Deduplicate by URL
+        const uniqueToAdd = [];
+        const seenUrls = new Set(articles.map(a => a.url)); // Don't add if already in current active articles
+        
+        toAdd.forEach(a => {
+            if (a.url && !seenUrls.has(a.url)) {
+                uniqueToAdd.push(a);
+                seenUrls.add(a.url);
+            }
+        });
+
+        if (uniqueToAdd.length === 0) {
+            alert('No new Later Cool finds saved in your vault.');
             return;
         }
+        
         const addedAt = new Date().toISOString();
-        toAdd.forEach(a => {
+        uniqueToAdd.forEach(a => {
             a.addedAt = a.addedAt || addedAt;
+            // Ensure status is forced to LATER COOL so it's obvious when they pop in
+            a.status = 'LATER COOL';
         });
-        articles = [...toAdd, ...articles];
+        
+        articles = [...uniqueToAdd, ...articles];
+        
+        // Clear local legacy bucket
         laterCoolArticles = [];
+        
+        // Clear global DB bucket now that we've pulled them to the active workspace
+        await fetch('/api/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'later_cool', value: [] })
+        });
+        
         saveState();
         renderArticles();
-        alert('Added ' + toAdd.length + ' Later Cool find(s) to the top.');
+        alert('Pulled ' + uniqueToAdd.length + ' Later Cool find(s) from your vault to the top of your list.');
     } catch (e) {
         alert('Failed to get Later Cool finds: ' + (e.message || 'network error'));
     }
@@ -5785,7 +6032,12 @@ if (searchBtn) {
 
             if (data.success) {
                 console.log("AI Search Results:", data.articles);
+                const now = new Date().toISOString();
+                data.articles.forEach(a => {
+                    if (!a.addedAt) a.addedAt = now;
+                });
                 articles = data.articles; // Store in state
+                batchFilter = null; // Clear batch filter so new articles show up
                 renderArticles(); // Render to grid
 
                 // Stay on page, show success message and next button
@@ -5924,3 +6176,229 @@ if (newsletterNameInput) {
         setCurrentSessionName(newsletterNameInput.value.trim());
     });
 }
+
+// ----------------------------------------------------
+// Archive Search Logic (Past Newsletters)
+// ----------------------------------------------------
+
+let cachedSessionsForSearch = null;
+let archiveSearchDebounceTimer = null;
+
+window.openArchiveSearch = async function() {
+    const modal = document.getElementById('archive-search-modal');
+    const content = document.getElementById('archive-search-modal-content');
+    const input = document.getElementById('archive-search-input');
+    const stats = document.getElementById('archive-search-stats');
+    
+    if (!modal || !content) return;
+    
+    // Show modal and start animations
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    
+    if (input) input.focus();
+    
+    // Add Esc key listener
+    window.addEventListener('keydown', handleArchiveSearchEscKey);
+
+    // Lazy-load sessions if not already cached
+    if (!cachedSessionsForSearch) {
+        stats.textContent = "Loading previous newsletters database...";
+        try {
+            const res = await fetch('/api/state?key=sessions');
+            if (res.ok) {
+                const { value } = await res.json();
+                cachedSessionsForSearch = value || {};
+                stats.textContent = "Newsletter database loaded. Ready to search.";
+            } else {
+                throw new Error("Server responded with " + res.status);
+            }
+        } catch (e) {
+            console.warn("Failed to fetch sessions from server, falling back to local storage:", e);
+            cachedSessionsForSearch = JSON.parse(localStorage.getItem('newsletter_saved_sessions') || '{}');
+            stats.textContent = "Offline newsletter database loaded.";
+        }
+        
+        // Trigger search on whatever is currently typed in
+        if (input && input.value.trim()) {
+            performArchiveSearch();
+        }
+    }
+};
+
+window.closeArchiveSearch = function() {
+    const modal = document.getElementById('archive-search-modal');
+    const content = document.getElementById('archive-search-modal-content');
+    if (!modal || !content) return;
+    
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 200);
+    
+    window.removeEventListener('keydown', handleArchiveSearchEscKey);
+};
+
+function handleArchiveSearchEscKey(event) {
+    if (event.key === 'Escape') {
+        closeArchiveSearch();
+    }
+}
+
+window.debounceArchiveSearch = function() {
+    clearTimeout(archiveSearchDebounceTimer);
+    archiveSearchDebounceTimer = setTimeout(() => {
+        performArchiveSearch();
+    }, 250);
+};
+
+window.performArchiveSearch = function() {
+    const query = document.getElementById('archive-search-input').value.trim();
+    const container = document.getElementById('archive-search-results-container');
+    const stats = document.getElementById('archive-search-stats');
+    
+    if (!container) return;
+    
+    if (!query) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-[350px] text-gray-400 gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-[#2f6e632d]">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253" />
+                </svg>
+                <span class="text-sm text-[#555] font-medium">Type a word above to search previous newsletters...</span>
+            </div>
+        `;
+        if (stats) stats.textContent = "No search query entered.";
+        return;
+    }
+    
+    if (!cachedSessionsForSearch) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-[350px] text-[#856404] bg-[#fff3cd] border border-[#fbc02d] rounded-xl p-5 gap-2">
+                <span class="font-bold">Database is loading...</span>
+                <span class="text-xs">Your past newsletter data is loading from Supabase. Search will automatically execute once ready.</span>
+            </div>
+        `;
+        return;
+    }
+    
+    const results = [];
+    const lowerQuery = query.toLowerCase();
+    
+    // Sort sessions in reverse chronological order (newest sessions first)
+    const sortedSessions = Object.entries(cachedSessionsForSearch).sort((a, b) => {
+        const aName = a[0];
+        const bName = b[0];
+        
+        // Custom extract number helper (e.g. "Week 19" -> 19)
+        const aNum = parseInt(aName.replace(/\D/g, '')) || 0;
+        const bNum = parseInt(bName.replace(/\D/g, '')) || 0;
+        
+        if (aNum !== bNum) return bNum - aNum;
+        return bName.localeCompare(aName);
+    });
+    
+    for (const [sessionName, sessionData] of sortedSessions) {
+        const sessionArticles = sessionData.articles || [];
+        for (const article of sessionArticles) {
+            if (article.title && article.title.toLowerCase().includes(lowerQuery)) {
+                // Determine category ranks (must be 'Y', 'YM', or numerical rank to be considered "included")
+                const activeCategories = [];
+                ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
+                    const r = String((article.ranks && article.ranks[cat]) || '').trim().toUpperCase();
+                    if (r === 'Y' || r === 'YM' || /^\\d+$/.test(r)) {
+                        activeCategories.push(cat);
+                    }
+                });
+                
+                // Fallback check
+                if (activeCategories.length === 0 && Array.isArray(article.categories)) {
+                    article.categories.forEach(cat => {
+                        if (['MED', 'THC', 'CBD', 'INV'].includes(cat) && (article.status === 'Y' || article.status === 'YM')) {
+                            activeCategories.push(cat);
+                        }
+                    });
+                }
+                
+                results.push({
+                    title: article.title,
+                    url: article.url || '#',
+                    date: article.date || (article.addedAt ? article.addedAt.substring(0, 10) : '') || (sessionData.savedAt ? sessionData.savedAt.substring(0, 10) : '') || 'Unknown Date',
+                    session: sessionName,
+                    categories: [...new Set(activeCategories)],
+                });
+            }
+        }
+    }
+    
+    if (stats) {
+        stats.textContent = `Found ${results.length} matching articles in previous issues.`;
+    }
+    
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-[350px] text-gray-500 gap-3 bg-gray-50/50 rounded-2xl border border-dashed border-[#84725322]">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-gray-300">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm font-semibold">No matches found</span>
+                <span class="text-xs text-[#777] text-center max-w-[320px]">"${query}" was not found in any article titles of previous newsletters. Feel free to use this topic!</span>
+            </div>
+        `;
+        return;
+    }
+    
+    // Highlight helper
+    const highlightMatches = (text, search) => {
+        if (!search) return text;
+        const regex = new RegExp(`(${search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, `<mark class="bg-[#ffeb3b80] text-[#16423c] font-semibold px-0.5 rounded">$1</mark>`);
+    };
+    
+    container.innerHTML = results.map(res => {
+        const catBadges = res.categories.length > 0 
+            ? res.categories.map(cat => {
+                let badgeClass = 'bg-gray-100 text-gray-700';
+                if (cat === 'MED') badgeClass = 'bg-[#e8eaf6] text-[#0d47a1] border border-[#0d47a118]';
+                else if (cat === 'THC') badgeClass = 'bg-[#e8f5e9] text-[#1b5e20] border border-[#1b5e2018]';
+                else if (cat === 'CBD') badgeClass = 'bg-[#fff3e0] text-[#e65100] border border-[#e6510018]';
+                else if (cat === 'INV') badgeClass = 'bg-[#f3e5f5] text-[#4a148c] border border-[#4a148c18]';
+                return `<span class="px-2 py-0.5 text-[0.7rem] font-bold rounded-md ${badgeClass}">${cat}</span>`;
+            }).join(' ')
+            : `<span class="px-2 py-0.5 text-[0.7rem] font-medium rounded-md bg-gray-100 text-gray-500 border border-gray-200">UNRANKED</span>`;
+
+        return `
+            <div class="p-4 mb-3 rounded-2xl border border-[#8472531e] bg-white hover:border-[#2f6e6377] hover:shadow-[0_4px_20px_rgba(22,34,30,0.04)] transition-all flex flex-col gap-2">
+                <div class="flex justify-between items-start gap-4">
+                    <a href="${res.url}" target="_blank" rel="noopener" class="text-[0.95rem] font-serif font-bold text-[#16423c] hover:text-[#2f6e63] hover:underline leading-snug break-words">
+                        ${highlightMatches(res.title, query)}
+                    </a>
+                    <span class="shrink-0 text-[0.75rem] font-semibold text-[#666] bg-[#84725310] px-2.5 py-1 rounded-full border border-[#84725315]">
+                        📅 ${res.date}
+                    </span>
+                </div>
+                
+                <div class="text-[0.75rem] text-[#22554e] truncate break-all opacity-85">
+                    <a href="${res.url}" target="_blank" rel="noopener" class="hover:underline">
+                        ${res.url}
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                    <span class="text-[0.7rem] font-bold tracking-wider text-[#7c6953] uppercase mr-1">Appeared in:</span>
+                    <span class="px-2.5 py-0.75 text-[0.75rem] font-bold rounded-lg bg-[#eddab82f] text-[#715734] border border-[#8472531a] shadow-sm">${res.session}</span>
+                    <div class="flex items-center gap-1.5 ml-2">
+                        ${catBadges}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};

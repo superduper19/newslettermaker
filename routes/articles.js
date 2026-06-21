@@ -86,14 +86,14 @@ const verifyAndAnalyzeUrl = async (url) => {
         // 404/410 are definitely dead.
         if (response.status === 404 || response.status === 410) {
             console.log(`URL ${url} returned ${response.status}. Invalid.`);
-            return { isValid: false, content: '' };
+            return { isValid: false, content: '', finalUrl: response.url };
         }
 
         // 403/401/429/5xx might be valid URLs blocking bots.
         // We'll mark them valid but content-less so we don't discard real news.
         if (!response.ok) {
             console.log(`URL ${url} returned ${response.status}. Treating as valid but unreadable.`);
-            return { isValid: true, isReadable: false, content: '' };
+            return { isValid: true, isReadable: false, content: '', finalUrl: response.url };
         }
 
         const text = await response.text();
@@ -105,11 +105,11 @@ const verifyAndAnalyzeUrl = async (url) => {
                             .trim()
                             .substring(0, 15000); // Limit to 15k chars for LLM
 
-        return { isValid: true, isReadable: true, content };
+        return { isValid: true, isReadable: true, content, finalUrl: response.url };
     } catch (error) {
         console.error(`Verification failed for ${url}:`, error.message);
         // If it's a timeout, maybe we should be lenient? For now, treat as invalid if we can't reach it.
-        return { isValid: false, isReadable: false, content: '' };
+        return { isValid: false, isReadable: false, content: '', finalUrl: url };
     }
 };
 
@@ -393,15 +393,16 @@ const extractJSON = (text) => {
 
 // Shared Model Mapping
 const MODEL_MAPPING = {
+    'claude-opus-4-8': 'claude-opus-4-8',
     'claude-opus-4-7': 'claude-opus-4-7',
     'claude-opus-4-7-extended': 'claude-opus-4-7',
     'claude-opus-4-6': 'claude-opus-4-6',
     'claude-opus-4-6-extended': 'claude-opus-4-6',
     'claude-sonnet-4-6': 'claude-sonnet-4-6',
     'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
-    'gemini-flash-3-0': 'gemini-3-flash-preview',
-    'gemini-flash-3-1-pro': 'gemini-3.1-pro-preview',
-    'gemini-flash-3-5': 'gemini-3.5-flash',
+    'gemini-flash-3-0': 'gemini-1.5-flash',
+    'gemini-3-1-pro': 'gemini-1.5-pro',
+    'gemini-flash-3-5': 'gemini-2.0-flash',
 };
 
 // Helper to get API Model ID
@@ -417,15 +418,15 @@ function getAnthropicSearchConfig(userModel) {
     const extended = isExtendedModel(userModel);
     const maxWebUses = parseInt(
         process.env[extended ? 'ARTICLE_SEARCH_MAX_WEB_USES_EXTENDED' : 'ARTICLE_SEARCH_MAX_WEB_USES']
-            || (extended ? '20' : '10'),
+            || (extended ? '40' : '25'),
         10,
     );
     const maxTokens = parseInt(
         process.env[extended ? 'ARTICLE_SEARCH_MAX_TOKENS_EXTENDED' : 'ARTICLE_SEARCH_MAX_TOKENS']
-            || (extended ? '16000' : '8000'),
+            || (extended ? '32000' : '16000'),
         10,
     );
-    const useDynamicWebSearch = /opus-4-[67]|sonnet-4-6/.test(apiModel);
+    const useDynamicWebSearch = /opus-4-[678]|sonnet-4-6/.test(apiModel);
     const request = {
         model: apiModel,
         max_tokens: maxTokens,
@@ -435,10 +436,10 @@ function getAnthropicSearchConfig(userModel) {
             max_uses: maxWebUses,
         }],
     };
-    if (extended && /opus-4-[67]|sonnet-4-6/.test(apiModel)) {
+    if (extended && /opus-4-[678]|sonnet-4-6/.test(apiModel)) {
         request.thinking = { type: 'adaptive' };
         request.output_config = {
-            effort: apiModel.includes('opus-4-7') ? 'xhigh' : 'high',
+            effort: /opus-4-[78]/.test(apiModel) ? 'xhigh' : 'high',
         };
     }
     return request;
@@ -464,13 +465,15 @@ function sanitizeArticlesForModify(articles) {
 function resolveAiProvider(model) {
     const apiModel = getApiModelId(model);
     const isGemini = apiModel.toLowerCase().includes('gemini');
-    if (isGemini) {
-        if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
-            return {
-                error: 'GEMINI_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
-            };
-        }
-    } else if (!process.env.ANTHROPIC_API_KEY) {
+    
+    // We now require Gemini for Phase 1 web searching regardless of the selected model
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+        return {
+            error: 'GEMINI_API_KEY is not configured on the server. It is required for the web search engine. Add it in Vercel.',
+        };
+    }
+    
+    if (!isGemini && !process.env.ANTHROPIC_API_KEY) {
         return {
             error: 'ANTHROPIC_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
         };
@@ -520,12 +523,18 @@ function parseAIError(error) {
     return message;
 }
 
-function buildAiErrorResponse(error) {
+function buildAiErrorResponse(error, model) {
     const message = parseAIError(error);
-    const body = { error: message, details: error.message };
+    const modelLabel = model ? ` [model: ${model}]` : '';
+    const body = { error: message, details: error.message, model: model || null };
     if (/credit balance is too low/i.test(message)) {
         body.errorCode = 'anthropic_credits_low';
-        body.error = 'Anthropic (Claude) API credits are too low. Add credits at https://console.anthropic.com/settings/billing or switch to a Gemini model in the AI Model dropdown.';
+        body.error = `Anthropic (Claude) API credits are too low${modelLabel}. Add credits at https://console.anthropic.com/settings/billing or switch to a Gemini model in the AI Model dropdown.`;
+    } else if (/quota exceeded/i.test(message)) {
+        body.errorCode = 'quota_exceeded';
+        body.error = `API quota exceeded${modelLabel}. Switch to a different model in the AI Model dropdown or check your GCP quota.`;
+    } else if (error.status === 429) {
+        body.error = `Rate limit or quota exceeded${modelLabel}. Try a different model or wait a moment.`;
     }
     return body;
 }
@@ -565,52 +574,86 @@ router.post('/search', async (req, res) => {
 
         let content = '';
 
-        const systemPrompt = `You are a research assistant. Search the web for articles matching the user's request. Your ENTIRE response must be a single valid JSON array — nothing else. No markdown, no headers, no commentary, no explanation before or after.
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // --- PHASE 1: WEB SEARCH (GEMINI) ---
+        console.log("Phase 1: Fetching raw search results using Gemini 3.5 Flash");
+        let rawSearchResults = "";
+        try {
+            const searchModel = genAI.getGenerativeModel({
+                model: 'gemini-3.5-flash',
+                tools: [{ googleSearch: {} }],
+            });
+            
+            const searchPrompt = `You are a research assistant. Today's date is ${today}. 
+Search the web for news articles matching the following user request: "${prompt}"
+
+CRITICAL DATE RULE: If the user specifies a date range or cutoff (e.g. "after June 1st, 2026"), you MUST strictly enforce it. Only include articles published within that date range. Do NOT include articles outside that range. Verify the publication date before including each article.
+
+CRITICAL URL RULE: Provide the direct, original deep-link URL to the specific article on the publisher's website. DO NOT just provide the root domain (e.g., do NOT just return "https://hemptoday.net/", return the full path to the article). DO NOT use or output "vertexaisearch.cloud.google.com" links or any other Google redirect links. If you only have a redirect link or root domain, try to find the real full URL, or exclude the article.
+
+SOURCE & DIVERSITY RULE: Prioritize checking well-known industry sources such as mjbizdaily.com, norml.org, and ganjapreneur.com. However, ensure source diversity. Do not include more than 2-3 articles from any single source unless the information is highly unique and cannot be found elsewhere.
+
+Please return a comprehensive list of the articles you found, including their titles, original direct deep-link URLs, a short description of each, and their publication dates.`;
+
+            const searchResult = await searchModel.generateContent(searchPrompt);
+            console.log("Gemini search response object:", JSON.stringify(searchResult.response, null, 2));
+            rawSearchResults = await searchResult.response.text();
+            console.log("Phase 1 Complete. Raw search results fetched.");
+        } catch (searchErr) {
+            console.error('Phase 1 Search Error:', searchErr);
+            return res.status(500).json(buildAiErrorResponse(searchErr));
+        }
+
+        // --- PHASE 2: JSON EXTRACTION (SELECTED MODEL) ---
+        console.log(`Phase 2: Extracting JSON using model ${model}`);
+        const extractPrompt = `You are a data extraction assistant. I have performed a web search for articles based on this user request: "${prompt}"
+        
+Here are the raw search results:
+---
+${rawSearchResults}
+---
+
+Your task is to parse these results and return a single valid JSON array containing the articles. 
+No markdown, no headers, no commentary, no explanation before or after.
 
 Each object in the array must have exactly these keys:
 - "title": article headline
-- "url": full article URL
+- "url": full article URL (use the exact URL provided in the search results)
 - "description": 1-2 sentence summary
-- "date": publication date in MM/DD/YY format
+- "date": publication date in MM/DD/YY format (leave empty string if unknown)
 
 Example format:
-[{"title":"...","url":"https://...","description":"...","date":"02/25/26"}]`;
+[{"title":"...","url":"https://...","description":"...","date":"06/05/26"}]`;
 
         if (isGemini) {
             try {
-                const geminiModel = genAI.getGenerativeModel({
-                    model: apiModel,
-                    tools: [{ googleSearch: {} }],
-                });
-
-                const geminiPrompt = `${systemPrompt}\n\nUser request: ${prompt}`;
-
-                const result = await geminiModel.generateContent(geminiPrompt);
-                const response = await result.response;
-                content = response.text();
+                const geminiModel = genAI.getGenerativeModel({ model: apiModel });
+                const result = await geminiModel.generateContent(extractPrompt);
+                content = await result.response.text();
             } catch (geminiError) {
                 console.error('Gemini API Error:', geminiError);
                 return res.status(500).json(buildAiErrorResponse(geminiError));
             }
         } else {
-            const searchConfig = getAnthropicSearchConfig(model);
-            console.log(
-                `Anthropic search profile: model=${searchConfig.model}, max_tokens=${searchConfig.max_tokens}, `
-                + `web_search=${searchConfig.tools[0].type}, max_uses=${searchConfig.tools[0].max_uses}, `
-                + `extended=${isExtendedModel(model)}`,
-            );
-            const message = await anthropic.messages.create({
-                ...searchConfig,
-                system: systemPrompt,
-                messages: [
-                    { role: 'user', content: prompt },
-                ],
-            });
+            try {
+                const message = await anthropic.messages.create({
+                    model: apiModel,
+                    max_tokens: 8000,
+                    system: "You are a data extraction assistant that only outputs valid JSON arrays. No markdown, no conversational text.",
+                    messages: [
+                        { role: 'user', content: extractPrompt },
+                    ],
+                });
 
-            content = message.content
-                .filter(block => block.type === 'text')
-                .map(block => block.text)
-                .join('\n');
+                content = message.content
+                    .filter(block => block.type === 'text')
+                    .map(block => block.text)
+                    .join('\n');
+            } catch (anthropicError) {
+                console.error('Anthropic API Error:', anthropicError);
+                return res.status(500).json(buildAiErrorResponse(anthropicError));
+            }
         }
 
         let rawArticles = [];
@@ -647,11 +690,15 @@ Example format:
                 return null;
             }
 
-            const { isValid, isReadable, content } = await verifyAndAnalyzeUrl(cleaned.url);
+            const { isValid, isReadable, content, finalUrl } = await verifyAndAnalyzeUrl(cleaned.url);
 
             if (!isValid) {
                 console.log(`Skipping invalid URL (failed verification): ${cleaned.url}`);
                 return null;
+            }
+            
+            if (finalUrl) {
+                cleaned.url = finalUrl;
             }
 
             // Simple check: does content length > 300 chars?
@@ -697,8 +744,7 @@ Example format:
 
     } catch (error) {
         console.error('Error with AI Search:', error);
-        // Propagate specific API errors (like credit balance)
-        res.status(500).json(buildAiErrorResponse(error));
+        res.status(500).json(buildAiErrorResponse(error, model));
     }
 });
 
@@ -773,7 +819,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 content = response.text();
             } catch (geminiError) {
                 console.error('Gemini API Error:', geminiError);
-                return res.status(500).json(buildAiErrorResponse(geminiError));
+                return res.status(500).json(buildAiErrorResponse(geminiError, apiModel));
             }
         } else {
             try {
@@ -793,7 +839,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                 }
             } catch (anthropicError) {
                 console.error('Anthropic API Error:', anthropicError);
-                return res.status(500).json(buildAiErrorResponse(anthropicError));
+                return res.status(500).json(buildAiErrorResponse(anthropicError, apiModel));
             }
         }
 
@@ -833,6 +879,20 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
             }
         }
 
+        modifiedArticles = modifiedArticles.map(a => {
+            const normalized = { ...a };
+            if (!normalized.title) {
+                const altTitleKey = Object.keys(normalized).find(k => k.toLowerCase().includes('title') || k.toLowerCase().includes('headline'));
+                if (altTitleKey) normalized.title = normalized[altTitleKey];
+            }
+            if (!normalized.description && !titleFocused) {
+                const altDescKey = Object.keys(normalized).find(k => k.toLowerCase().includes('description') || k.toLowerCase().includes('summary'));
+                if (altDescKey) normalized.description = normalized[altDescKey];
+            }
+            return normalized;
+        });
+
+
         const sourceArticles = sanitizeArticlesForModify(articles);
 
         console.log(`Successfully modified ${modifiedArticles.length} articles.`);
@@ -855,7 +915,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
 
     } catch (error) {
         console.error('Error modifying articles:', error);
-        res.status(500).json(buildAiErrorResponse(error));
+        res.status(500).json(buildAiErrorResponse(error, model));
     }
 });
 
@@ -1013,6 +1073,7 @@ Use only the provided articles.
 Use suitable emojis as separators between the main hooks.
 Keep each subject on a single line.
 Make each subject concise and compelling.
+Format the text of the subjects in Title Case.
 If the same article or same core story appears in multiple categories, use the same wording and emoji treatment for that repeated idea.
 Return only valid JSON with keys MED, THC, CBD, INV.`;
 
@@ -1074,6 +1135,35 @@ router.get('/error-log/:logId', async (req, res) => {
     } catch (error) {
         console.error('Error reading AI parse log:', error);
         return res.status(500).json({ error: 'Failed to read log file' });
+    }
+});
+
+// Route to resolve existing vertexaisearch URLs
+router.post('/resolve-urls', express.json(), async (req, res) => {
+    try {
+        const { urls } = req.body;
+        if (!Array.isArray(urls)) {
+            return res.status(400).json({ error: 'urls must be an array' });
+        }
+
+        const resolved = {};
+        await Promise.all(urls.map(async (url) => {
+            if (url.includes('vertexaisearch.cloud.google.com')) {
+                try {
+                    const response = await fetch(url, { method: 'HEAD' });
+                    resolved[url] = response.url;
+                } catch (e) {
+                    resolved[url] = url;
+                }
+            } else {
+                resolved[url] = url;
+            }
+        }));
+
+        res.json({ success: true, resolved });
+    } catch (error) {
+        console.error('Error resolving urls:', error);
+        res.status(500).json({ error: 'Failed to resolve URLs' });
     }
 });
 

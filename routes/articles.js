@@ -584,7 +584,6 @@ router.post('/search', async (req, res) => {
         try {
             const searchModel = genAI.getGenerativeModel({
                 model: 'gemini-3.5-flash',
-                tools: [{ googleSearch: {} }],
             });
             
             const searchPrompt = `You are a research assistant. Today's date is ${today}. 

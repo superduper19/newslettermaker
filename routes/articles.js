@@ -16,8 +16,10 @@ const anthropic = new Anthropic({
 });
 
 // Initialize Google Generative AI Client
-// Assumes GEMINI_API_KEY or GOOGLE_API_KEY is in env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+// Helper to clean API keys (removes quotes and whitespace)
+const cleanKey = (key) => (key || '').replace(/^["']|["']$/g, '').trim();
+
+const genAI = new GoogleGenerativeAI(cleanKey(process.env.GEMINI_API_KEY) || cleanKey(process.env.GOOGLE_API_KEY));
 
 // Normalize Excel row: accept many column name variants
 const getCell = (row, ...keys) => {

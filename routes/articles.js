@@ -579,11 +579,11 @@ router.post('/search', async (req, res) => {
         const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
         // --- PHASE 1: WEB SEARCH (GEMINI) ---
-        console.log("Phase 1: Fetching raw search results using Gemini 3.5 Flash");
+        console.log(`Phase 1: Fetching raw search results using ${apiModel}`);
         let rawSearchResults = "";
         try {
             const searchModel = genAI.getGenerativeModel({
-                model: 'gemini-3.5-flash',
+                model: apiModel,
                 tools: [{ googleSearch: {} }],
             });
             

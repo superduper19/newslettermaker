@@ -531,12 +531,12 @@ function buildAiErrorResponse(error, model) {
     const body = { error: message, details: error.message, model: model || null };
     if (/credit balance is too low/i.test(message)) {
         body.errorCode = 'anthropic_credits_low';
-        body.error = `Anthropic (Claude) API credits are too low${modelLabel}. Add credits at https://console.anthropic.com/settings/billing or switch to a Gemini model in the AI Model dropdown.`;
+        body.error = `Anthropic (Claude) API credits are too low${modelLabel}. Add credits at https://console.anthropic.com/settings/billing.`;
     } else if (/quota exceeded/i.test(message)) {
         body.errorCode = 'quota_exceeded';
-        body.error = `API quota exceeded${modelLabel}. Switch to a different model in the AI Model dropdown or check your GCP quota.`;
+        body.error = `API quota exceeded${modelLabel}. Please check your API quota or billing limits.`;
     } else if (error.status === 429) {
-        body.error = `Rate limit or quota exceeded${modelLabel}. Try a different model or wait a moment.`;
+        body.error = `Rate limit or quota exceeded${modelLabel}. Please wait a moment before trying again.`;
     }
     return body;
 }
@@ -584,6 +584,7 @@ router.post('/search', async (req, res) => {
         try {
             const searchModel = genAI.getGenerativeModel({
                 model: 'gemini-3.5-flash',
+                tools: [{ googleSearch: {} }],
             });
             
             const searchPrompt = `You are a research assistant. Today's date is ${today}. 

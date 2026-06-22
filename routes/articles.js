@@ -531,12 +531,12 @@ function buildAiErrorResponse(error, model) {
     const body = { error: message, details: error.message, model: model || null };
     if (/credit balance is too low/i.test(message)) {
         body.errorCode = 'anthropic_credits_low';
-        body.error = `Anthropic (Claude) API credits are too low${modelLabel}. Add credits at https://console.anthropic.com/settings/billing.`;
+        body.error = `Anthropic (Claude) API credits are too low${modelLabel}.`;
     } else if (/quota exceeded/i.test(message)) {
         body.errorCode = 'quota_exceeded';
-        body.error = `API quota exceeded${modelLabel}. Please check your API quota or billing limits.`;
+        body.error = `API quota exceeded${modelLabel}.`;
     } else if (error.status === 429) {
-        body.error = `Rate limit or quota exceeded${modelLabel}. Please wait a moment before trying again.`;
+        body.error = `Rate limit or quota exceeded${modelLabel}.`;
     }
     return body;
 }

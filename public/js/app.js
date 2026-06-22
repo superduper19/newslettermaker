@@ -4726,11 +4726,11 @@ function renderArticles() {
                 const disabledAttr = isStatusValid ? '' : 'disabled';
                 const disabledClass = isStatusValid ? '' : 'opacity-50 cursor-not-allowed';
 
-                const categoryInputs = `<div class="col-ranks pt-1 flex items-center justify-center gap-1 w-full flex-wrap">` +
+                const categoryInputs = `<div class="col-ranks pt-1 flex items-center justify-center gap-1 w-full flex-nowrap">` +
                     ['MED', 'THC', 'CBD', 'INV']
                         .map(cat => {
                             const rank = getRankForSort(article, cat);
-                            return `<div class="flex flex-col items-center gap-0.5 w-[45%]">
+                            return `<div class="flex flex-col items-center gap-0.5 flex-1 min-w-0">
                                 <label class="text-[0.55rem] text-[#888] font-bold tracking-wide">${cat}</label>
                                 <input
                                     type="text"
@@ -4757,8 +4757,7 @@ function renderArticles() {
                     <div class="col-article">
                         <div class="flex items-start gap-2">
                             <textarea
-                                class="title-edit font-[inherit] flex-1 min-w-30"
-                                rows="2"
+                                class="title-edit font-[inherit] shrink-0 resize-y" cols="44" rows="2"
                                 onchange="updateArticleField(${index}, 'title', this.value)">${article.title}</textarea>
                             <div class="flex flex-col" id="admonition-container-${index}">
                                 <span
@@ -4773,13 +4772,12 @@ function renderArticles() {
                             ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
                         </p>
 
-                        <div class="flex items-center gap-1.25">
-                            <input
-                                type="text"
-                                class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63]"
-                                value="${article.url}"
-                                onchange="updateArticleField(${index}, 'url', this.value)">
-                            <a href="${article.url}" target="_blank" title="Open Link" class="no-underline">🔗</a>
+                        <div class="flex items-start gap-1.25">
+                            <textarea
+                                class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63] resize-y"
+                                rows="2"
+                                onchange="updateArticleField(${index}, 'url', this.value)">${article.url}</textarea>
+                            <a href="${article.url}" target="_blank" title="Open Link" class="no-underline mt-1">🔗</a>
                         </div>
                     </div>
 
@@ -4895,6 +4893,13 @@ window.updateArticleField = async (index, field, value) => {
     if (field === 'status') {
         if (!['Y', 'YM', 'COOL FINDS'].includes(value)) {
             articles[index].categories = [];
+        }
+        if (value === 'NO') {
+            if (!articles[index].ranks) articles[index].ranks = {};
+            articles[index].ranks.MED = '';
+            articles[index].ranks.THC = '';
+            articles[index].ranks.CBD = '';
+            articles[index].ranks.INV = '';
         }
         // Re-render to update disabled states and unchecked boxes
         renderArticles();

@@ -1770,8 +1770,8 @@ window.renderPastIcons = function(query = '') {
         return;
     }
     
-    // Grid layout with responsive columns
-    let html = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 p-2">';
+    // Grid layout with responsive columns, increased columns for smaller thumbnails
+    let html = '<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 p-2">';
     
     filtered.forEach(img => {
         const url = img.url;

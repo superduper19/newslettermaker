@@ -28,7 +28,7 @@ const fs = require('fs');
 const os = require('os');
 
 // Freepik API Configuration
-const FREEPIK_ICONS_URL = 'https://api.freepik.com/v1/icons';
+const FREEPIK_ICONS_URL = 'https://api.magnific.com/v1/icons';
 const API_KEY = process.env.FREEPIK_API_KEY;
 const FREEPIK_SEARCH_TIMEOUT_MS = 15000;
 
@@ -611,6 +611,138 @@ router.delete('/inspirational-library', async (req, res) => {
     }
 });
 
+const PAST_ICONS_LIBRARY_KEY = 'past_icons_library';
+
+function isArticleIconFilename(name) {
+    const n = String(name || '').trim();
+    if (!n || !isImageFile(n)) return false;
+    const lower = n.toLowerCase();
+    // Exclude inspirational images which usually start with insp- or have insp in the name.
+    if (lower.startsWith('insp-') || lower.includes('_insp_') || lower.includes('insp_')) {
+        return false;
+    }
+    return true;
+}
+
+async function listPastIconsFromFtp() {
+    const ftp = getFtpConfig();
+
+    if (ftp.host && ftp.user && ftp.password) {
+        const { Client } = require('basic-ftp');
+        const client = new Client();
+        client.ftp.verbose = false;
+        try {
+            await client.access({
+                host: ftp.host,
+                port: ftp.port,
+                user: ftp.user,
+                password: ftp.password,
+                secure: true,
+                secureOptions: { rejectUnauthorized: false },
+            });
+
+            const { getFtpRemoteDir } = require('../lib/purablis-public-url');
+            const baseDir = getFtpRemoteDir('');
+
+            const entries = await client.list(baseDir);
+            const allImages = [];
+
+            for (const entry of entries) {
+                if (entry.isDirectory && /^\d{2}-\d{2}-\d{2}$/.test(entry.name)) {
+                    const subPathInfo = getRemotePath(entry.name);
+                    try {
+                        const subEntries = await client.list(subPathInfo.remoteDir);
+                        const imgs = subEntries
+                            .filter((e) => e.isFile && isArticleIconFilename(e.name))
+                            .map((e) => ({
+                                name: e.name,
+                                url: `${subPathInfo.publicUrlBase}/${e.name}`,
+                                source: 'ftp',
+                            }));
+                        allImages.push(...imgs);
+                    } catch (subErr) {
+                        console.warn(`Failed to list dir ${subPathInfo.remoteDir}:`, subErr.message);
+                    }
+                }
+            }
+
+            return allImages.sort((a, b) => b.name.localeCompare(a.name)); // Newest first
+        } catch (err) {
+            console.error('FTP list error:', err.message);
+        } finally {
+            client.close();
+        }
+    }
+    return [];
+}
+
+async function getPastIconsLibraryFromDb() {
+    const client = getSupabase();
+    if (!client) return null;
+
+    const { data, error } = await client
+        .from(STATE_TABLE)
+        .select('value')
+        .eq('key', PAST_ICONS_LIBRARY_KEY)
+        .maybeSingle();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data ? normalizeLibraryImages(data.value) : null;
+}
+
+async function savePastIconsLibraryToDb(images) {
+    const client = getSupabase();
+    if (!client) return false;
+
+    const normalized = normalizeLibraryImages(images);
+    const { error } = await client
+        .from(STATE_TABLE)
+        .upsert(
+            { key: PAST_ICONS_LIBRARY_KEY, value: normalized, updated_at: new Date().toISOString() },
+            { onConflict: 'key' },
+        );
+
+    if (error) {
+        throw new Error(error.message);
+    }
+    return true;
+}
+
+// GET /api/images/past-icons - list previously uploaded article icons
+router.get('/past-icons', async (req, res) => {
+    try {
+        let images = [];
+        try {
+            const fromDb = await getPastIconsLibraryFromDb();
+            if (fromDb) images = fromDb;
+        } catch (dbErr) {
+            console.warn('Past icons DB read failed:', dbErr.message);
+        }
+        
+        try {
+            const fromFtp = await listPastIconsFromFtp();
+            images = normalizeLibraryImages([...images, ...(fromFtp || [])]);
+        } catch (ftpErr) {
+            console.warn('Past icons FTP list failed:', ftpErr.message);
+        }
+        
+        images = normalizeLibraryImages(images);
+        
+        try {
+            await savePastIconsLibraryToDb(images);
+        } catch (dbErr) {
+            console.warn('Past icons DB save failed:', dbErr.message);
+        }
+        
+        res.json({ success: true, images });
+    } catch (error) {
+        console.error('Past icons list error:', error);
+        res.status(500).json({ error: 'Failed to load past icons' });
+    }
+});
+
 /** Prefer "essence flat" queries; fall back to one keyword for legacy input. */
 function buildIconSearchTerm(query) {
     const raw = String(query || '').trim().toLowerCase();
@@ -632,7 +764,7 @@ async function fetchFreepikIcons(searchTerm, page) {
     try {
         const response = await fetch(url, {
             headers: {
-                'X-Freepik-API-Key': API_KEY,
+                'X-Magnific-API-Key': API_KEY,
                 'Accept-Language': 'en-US',
             },
             signal: controller.signal,
@@ -673,25 +805,31 @@ router.post('/search', async (req, res) => {
 
         const stateImages = matchStateIcons(query, 8);
         const searchTerm = buildIconSearchTerm(query);
-        console.log(`Searching Flaticon (Freepik API) for: "${searchTerm}" (from "${query}", page ${page})`);
-
-        let result = await fetchFreepikIcons(searchTerm, page);
+        
+        let result = { error: 'Skipped', images: [] };
         let usedFallback = false;
-        if (result.error && result.status === 504 && searchTerm !== 'cannabis') {
-            console.warn(`Freepik timed out for "${searchTerm}", retrying with "cannabis"`);
-            const fallback = await fetchFreepikIcons('cannabis', page);
-            if (!fallback.error && fallback.images.length > 0) {
-                result = fallback;
-                usedFallback = true;
+        let freepikError = null;
+
+        // If we found a matching state icon, skip the Freepik API call to save credits
+        if (stateImages && stateImages.length > 0) {
+            console.log(`Found ${stateImages.length} state icon(s) for "${query}", skipping Flaticon/Freepik API call.`);
+        } else {
+            console.log(`Searching Flaticon (Freepik API) for: "${searchTerm}" (from "${query}", page ${page})`);
+            result = await fetchFreepikIcons(searchTerm, page);
+            
+            if (result.error && result.status === 504 && searchTerm !== 'cannabis') {
+                console.warn(`Freepik timed out for "${searchTerm}", retrying with "cannabis"`);
+                const fallback = await fetchFreepikIcons('cannabis', page);
+                if (!fallback.error && fallback.images.length > 0) {
+                    result = fallback;
+                    usedFallback = true;
+                }
             }
-        }
-        if (result.error && !stateImages.length) {
-            return res.status(result.status || 500).json({
-                error: result.error,
-                details: result.details,
-                searchTerm,
-                stateImages,
-            });
+            
+            if (result.error) {
+                console.warn(`Freepik search skipped: ${result.error}`, result.details || '');
+                freepikError = result.error;
+            }
         }
 
         const freepikImages = result.error ? [] : result.images.slice(0, 9);
@@ -705,6 +843,7 @@ router.post('/search', async (req, res) => {
             originalQuery: query,
             usedFallback,
             freepikSkipped: !!result.error,
+            freepikError,
         });
 
     } catch (error) {
@@ -714,10 +853,21 @@ router.post('/search', async (req, res) => {
 });
 
 // POST /api/images/upload - Upload a local image file (local only, no FTP)
-router.post('/upload', uploadMiddleware.single('image'), (req, res) => {
+router.post('/upload', uploadMiddleware.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
+        }
+        const localPath = req.file.path;
+        try {
+            const buffer = fs.readFileSync(localPath);
+            const resizedBuffer = await sharp(buffer)
+                .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
+                .withMetadata({ density: 72 })
+                .toBuffer();
+            fs.writeFileSync(localPath, resizedBuffer);
+        } catch (err) {
+            console.warn('Failed to resize uploaded image:', err.message);
         }
         const url = `/uploads/${req.file.filename}`;
         console.log(`Image uploaded: ${req.file.filename}`);
@@ -753,6 +903,18 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
         }
         const localPath = req.file.path;
         const filename = req.file.filename;
+
+        try {
+            const buffer = fs.readFileSync(localPath);
+            const resizedBuffer = await sharp(buffer)
+                .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
+                .withMetadata({ density: 72 })
+                .toBuffer();
+            fs.writeFileSync(localPath, resizedBuffer);
+        } catch (err) {
+            console.warn('Failed to resize uploaded article image:', err.message);
+        }
+
         const localUrl = `/uploads/${filename}`;
         const inlineUrl = filePathToDataUrl(localPath, req.file.mimetype || getMimeTypeFromName(filename));
 

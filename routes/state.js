@@ -95,8 +95,8 @@ router.post('/', async (req, res) => {
     if (!key || value === undefined) {
         return res.status(400).json({ error: 'Missing key or value' });
     }
-    if (key !== 'workspace' && key !== 'sessions') {
-        return res.status(400).json({ error: 'key must be workspace or sessions' });
+    if (key !== 'workspace' && key !== 'sessions' && key !== 'later_cool' && key !== 'inspirational_library') {
+        return res.status(400).json({ error: 'key must be workspace, sessions, later_cool, or inspirational_library' });
     }
 
     const client = getSupabase();

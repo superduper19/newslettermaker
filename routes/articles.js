@@ -4,6 +4,7 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const OpenAI = require('openai');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,6 +14,16 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Initialize Anthropic Client
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+// Initialize OpenRouter (OpenAI SDK)
+const openrouter = new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+        'HTTP-Referer': process.env.GODADDY_PUBLIC_BASE_URL || 'https://purablis.com',
+        'X-Title': 'Newsletter Maker',
+    }
 });
 
 // Initialize Google Generative AI Client
@@ -465,7 +476,14 @@ function sanitizeArticlesForModify(articles) {
 }
 
 function resolveAiProvider(model) {
-    const apiModel = getApiModelId(model);
+    let apiModel = getApiModelId(model);
+    let isOpenRouter = false;
+
+    if (apiModel.startsWith('openrouter-')) {
+        isOpenRouter = true;
+        apiModel = apiModel.replace('openrouter-', '');
+    }
+
     const isGemini = apiModel.toLowerCase().includes('gemini');
     
     // We now require Gemini for Phase 1 web searching regardless of the selected model
@@ -475,12 +493,18 @@ function resolveAiProvider(model) {
         };
     }
     
-    if (!isGemini && !process.env.ANTHROPIC_API_KEY) {
+    if (isOpenRouter && !process.env.OPENROUTER_API_KEY) {
+        return {
+            error: 'OPENROUTER_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
+        };
+    }
+
+    if (!isGemini && !isOpenRouter && !process.env.ANTHROPIC_API_KEY) {
         return {
             error: 'ANTHROPIC_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
         };
     }
-    return { apiModel, isGemini };
+    return { apiModel, isGemini, isOpenRouter };
 }
 
 async function mapWithConcurrency(items, limit, fn) {
@@ -544,7 +568,7 @@ function buildAiErrorResponse(error, model) {
 // POST /api/articles/search - AI Search & Filtering
 router.post('/search', async (req, res) => {
     try {
-        const { prompt, newsletterName, model } = req.body || {};
+        const { prompt, newsletterName, model, existingUrls } = req.body || {};
         if (!prompt || !String(prompt).trim()) {
             return res.status(400).json({ error: 'Please enter a search prompt.' });
         }
@@ -579,24 +603,30 @@ router.post('/search', async (req, res) => {
         const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
         // --- PHASE 1: WEB SEARCH (GEMINI) ---
-        console.log(`Phase 1: Fetching raw search results using ${apiModel}`);
+        console.log(`Phase 1: Fetching raw search results using Gemini Search Engine`);
         let rawSearchResults = "";
         try {
+            // Phase 1 ALWAYS uses Gemini for Google Search Grounding.
+            // We use the 'gemini-3.1-pro-preview' equivalent for this step since it supports tools.
             const searchModel = genAI.getGenerativeModel({
-                model: apiModel,
+                model: 'gemini-3.1-pro-preview',
                 tools: [{ googleSearch: {} }],
             });
-            
+            let existingUrlText = '';
+            if (existingUrls && existingUrls.length > 0) {
+                existingUrlText = `\nCRITICAL ANTI-DUPLICATION RULE: The user already has the following articles in their newsletter. You MUST NOT include these articles, and you MUST NOT include any articles from different publishers that cover the exact same story/topic. Find NEW stories only:\n${existingUrls.join('\n')}\n`;
+            }
+
             const searchPrompt = `You are a research assistant. Today's date is ${today}. 
 Search the web for news articles matching the following user request: "${prompt}"
-
+${existingUrlText}
 CRITICAL DATE RULE: If the user specifies a date range or cutoff (e.g. "after June 1st, 2026"), you MUST strictly enforce it. Only include articles published within that date range. Do NOT include articles outside that range. Verify the publication date before including each article.
 
-CRITICAL URL RULE: Provide the direct, original deep-link URL to the specific article on the publisher's website. DO NOT just provide the root domain (e.g., do NOT just return "https://hemptoday.net/", return the full path to the article). DO NOT use or output "vertexaisearch.cloud.google.com" links or any other Google redirect links. If you only have a redirect link or root domain, try to find the real full URL, or exclude the article.
+CRITICAL URL RULE: You MUST provide the full, raw URL string starting with http:// or https://. DO NOT use citation footnotes like [1] or [2]. If the Google Search tool provides a "vertexaisearch.cloud.google.com" redirect link, YOU MUST USE THAT EXACT LINK. DO NOT try to guess, hallucinate, or reverse-engineer the original publisher URL, as that leads to broken links. Output the vertexaisearch link exactly as you received it.
 
 SOURCE & DIVERSITY RULE: Prioritize checking well-known industry sources such as mjbizdaily.com, norml.org, and ganjapreneur.com. However, ensure source diversity. Do not include more than 2-3 articles from any single source unless the information is highly unique and cannot be found elsewhere.
 
-Please return a comprehensive list of the articles you found, including their titles, original direct deep-link URLs, a short description of each, and their publication dates.`;
+Please return a comprehensive list of the articles you found, including their titles, exact URLs from the search results, a short description of each, and their publication dates.`;
 
             const searchResult = await searchModel.generateContent(searchPrompt);
             console.log("Gemini search response object:", JSON.stringify(searchResult.response, null, 2));
@@ -637,6 +667,20 @@ Example format:
                 console.error('Gemini API Error:', geminiError);
                 return res.status(500).json(buildAiErrorResponse(geminiError));
             }
+        } else if (provider.isOpenRouter) {
+            try {
+                const response = await openrouter.chat.completions.create({
+                    model: apiModel,
+                    messages: [
+                        { role: 'system', content: "You are a data extraction assistant that only outputs valid JSON arrays. No markdown, no conversational text." },
+                        { role: 'user', content: extractPrompt }
+                    ],
+                }, { timeout: 300000 });
+                content = response.choices[0]?.message?.content || '';
+            } catch (openrouterError) {
+                console.error('OpenRouter API Error:', openrouterError);
+                return res.status(500).json(buildAiErrorResponse(openrouterError));
+            }
         } else {
             try {
                 const message = await anthropic.messages.create({
@@ -646,7 +690,7 @@ Example format:
                     messages: [
                         { role: 'user', content: extractPrompt },
                     ],
-                });
+                }, { timeout: 300000 });
 
                 content = message.content
                     .filter(block => block.type === 'text')
@@ -813,7 +857,21 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
 
         let content = '';
 
-        if (isGemini) {
+        if (provider.isOpenRouter) {
+            try {
+                const response = await openrouter.chat.completions.create({
+                    model: apiModel,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userMessage }
+                    ],
+                }, { timeout: 300000 });
+                content = response.choices[0]?.message?.content || '';
+            } catch (openrouterError) {
+                console.error('OpenRouter API Error:', openrouterError);
+                return res.status(500).json(buildAiErrorResponse(openrouterError, apiModel));
+            }
+        } else if (isGemini) {
             try {
                 const geminiModel = genAI.getGenerativeModel({ model: apiModel });
                 const result = await geminiModel.generateContent(`${systemPrompt}\n\n${userMessage}`);
@@ -832,7 +890,7 @@ Do not add or remove articles. No markdown, no code fences, no commentary.`;
                     messages: [
                         { role: 'user', content: userMessage },
                     ],
-                });
+                }, { timeout: 300000 });
                 content = getAnthropicTextContent(message);
                 if (!content.trim()) {
                     return res.status(500).json({
@@ -933,18 +991,13 @@ router.post('/summarize', async (req, res) => {
             return res.status(400).json({ error: 'Articles are required for category summary generation' });
         }
 
-        const useGemini = (model && String(model).toLowerCase().includes('gemini')) || (!process.env.ANTHROPIC_API_KEY && (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY));
-        const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
-        const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
-
-        if (useGemini && !hasGemini) {
-            return res.status(503).json({ error: 'GEMINI_API_KEY not configured. Add it in .env or use Claude (ANTHROPIC_API_KEY).' });
+        const provider = resolveAiProvider(model);
+        if (provider.error) {
+            return res.status(503).json({ error: provider.error });
         }
-        if (!useGemini && !hasAnthropic) {
-            return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured. Add it in .env or use Gemini (GEMINI_API_KEY).' });
-        }
+        const { apiModel, isGemini, isOpenRouter } = provider;
 
-        console.log(`Generating summaries for ${category} with rules: ${useRules} (${useGemini ? 'Gemini' : 'Claude'})`);
+        console.log(`Generating summaries for ${category} with rules: ${useRules} (${isGemini ? 'Gemini' : (isOpenRouter ? 'OpenRouter' : 'Claude')})`);
 
         // Load base prompt from config file (editable via UI) with hardcoded fallback
         let systemPrompt;
@@ -1013,14 +1066,23 @@ router.post('/summarize', async (req, res) => {
         ].join('\n');
 
         let content = '';
-        if (useGemini) {
-            const geminiModel = genAI.getGenerativeModel({ model: getApiModelId(model || 'gemini-flash-3-0') });
+        if (isGemini) {
+            const geminiModel = genAI.getGenerativeModel({ model: apiModel });
             const fullPrompt = `${systemPrompt}\n\nUser content to summarize:\n\n${userMessage}`;
             const result = await geminiModel.generateContent(fullPrompt);
             content = result.response.text();
+        } else if (isOpenRouter) {
+            const response = await openrouter.chat.completions.create({
+                model: apiModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userMessage }
+                ],
+            });
+            content = response.choices[0]?.message?.content || '';
         } else {
             const message = await anthropic.messages.create({
-                model: getApiModelId(model || 'claude-opus-4-6'),
+                model: apiModel,
                 max_tokens: 4000,
                 system: systemPrompt,
                 messages: [

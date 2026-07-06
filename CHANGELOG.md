@@ -13,10 +13,15 @@ This file serves as a persistent record of changes made to this project and cruc
 
 ### Added
 - Created this `CHANGELOG.md` file to maintain a source of truth for future AI interactions.
+- **OpenRouter Integration**: Integrated OpenAI SDK to support OpenRouter models (`isOpenRouter`). Added `OPENROUTER_API_KEY` to `.env`.
+- **GLM 5.2 Integration**: Added `GLM 5.2 (OpenRouter)` to the global AI Model dropdown in `index.html`.
 
 ### Fixed
+- **OpenRouter Bug Fix**: Added timeout constraints (45s) to OpenRouter and Anthropic API calls to prevent the server from hanging indefinitely when processing large payloads (e.g. Zhipu GLM 5.2 taking too long for Phase 2 Extraction).
+- **Modify Route Fix**: Added missing `isOpenRouter` handler to `/api/articles/modify` so OpenRouter models work for article modifications.
+- **Search Model Bug Fix**: Updated Phase 1 search to use `gemini-3.1-pro-preview` as `gemini-1.5-pro` is no longer supported on the `v1beta` endpoint, resolving the 404 error during Google Search Grounding., resulting in a 404 error. Hardcoded Phase 1 to use `gemini-1.5-pro` since Gemini is strictly required for the web search capability.
 - **API Key Formatting**: Fixed an issue where Vercel-injected `GEMINI_API_KEY` contained hidden quotation marks causing a `400 Bad Request: API key not valid` error. Added `cleanKey` helper to strip quotes and whitespace.
 - **Gemini Model Identifiers**: Reverted Gemini 3.1 Pro model identifiers to include the `-preview` suffix (`gemini-3.1-pro-preview`) as Google's v1beta API does not yet support the stable version endpoints, which was causing `404 Not Found` errors.
-- **URL Hallucination & Web Search Tool**: Re-enabled the `googleSearch` tool for Gemini in `routes/articles.js`. Previously, the tool was removed due to suspected billing errors, which forced Gemini to rely on internal training data and hallucinate fake URLs. Re-enabling the tool ensures live, accurate web links.
+- **URL Hallucination Fix**: Removed the strict prompt rule that forbade Gemini from using `vertexaisearch.cloud.google.com` links during Phase 1. Forbidding those links forced the AI to guess and hallucinate fake publisher URLs (e.g., for HighTimes). The AI is now instructed to use the exact Google redirect links, which the backend's `verifyAndAnalyzeUrl` function naturally follows to arrive at the true, correct publisher URLs.
+- **Anti-Duplication in Search**: When finding more articles via the "Find More Articles" search query, the frontend now passes a list of all currently loaded `existingUrls` to the backend. The backend dynamically injects a `CRITICAL ANTI-DUPLICATION RULE` into the Gemini Phase 1 search prompt to actively force the AI to ignore stories/publishers that are already in the newsletter workspace.
 - **Removed Fallback Logic**: Modified backend logic to prevent silent fallback to internal data or different LLMs when search or billing fails.
-

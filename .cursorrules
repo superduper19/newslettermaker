@@ -1,3 +1,7 @@
 create logs only in folder "logs"
 dont change the original language of code
 always modify in a way that it runs local and published both.
+
+# CRITICAL AI INSTRUCTIONS
+ALWAYS read CHANGELOG.md at the start of a session to learn the project rules and history.
+ALWAYS update CHANGELOG.md when you make structural or significant logic changes.

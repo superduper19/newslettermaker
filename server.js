@@ -158,10 +158,12 @@ app.get('/', (req, res) => {
 
 // For Vercel: export the app so it runs as a serverless function. Do not call listen.
 if (process.env.VERCEL !== '1') {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
+    // Set Node HTTP Server timeout to 5 minutes (300,000ms) to allow large Claude payloads
+    server.setTimeout(300000);
 }
 
 module.exports = app;

@@ -1778,13 +1778,13 @@ window.renderPastIcons = function(query = '') {
         const name = escapeHtml(img.name || 'icon');
         const thumbSrc = resolvePurablisImageUrl(url) || url;
         html += `
-            <div class="relative group cursor-pointer border-2 border-transparent hover:border-[#2f6e63] rounded-lg overflow-hidden bg-white shadow-sm transition-all"
+            <div class="group flex flex-col cursor-pointer border-2 border-transparent hover:border-[#2f6e63] rounded-lg overflow-hidden bg-white shadow-sm transition-all"
                  onclick="selectPastIconAndClose('${escapeHtml(url)}')"
                  title="${name}">
-                <div class="aspect-square flex items-center justify-center bg-[#f8f9fa] p-2">
-                    <img src="${thumbSrc}" alt="${name}" class="max-w-full max-h-full object-contain" loading="lazy">
+                <div class="aspect-square flex items-center justify-center bg-[#f8f9fa] p-2 relative">
+                    <img src="${thumbSrc}" alt="${name}" class="w-full h-full object-contain" loading="lazy">
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 bg-[rgba(255,255,255,0.95)] p-1 text-[0.65rem] truncate text-center text-[#444] font-medium border-t border-[#eee]">
+                <div class="bg-[rgba(255,255,255,0.95)] p-1.5 text-[0.65rem] truncate text-center text-[#444] font-medium border-t border-[#eee]">
                     ${name}
                 </div>
             </div>
@@ -2516,6 +2516,7 @@ function normalizeArticleStatus(status) {
     const s = String(status ?? '').trim().toUpperCase();
     if (!s) return 'Y';
     if (s === 'N') return 'NO';
+    if (s === 'M') return 'YM';
     return s;
 }
 
@@ -2534,10 +2535,12 @@ function normalizeArticleDefaults(article) {
     // Legacy: checkbox picks without rank → keep as Y in column data
     ['MED', 'THC', 'CBD', 'INV'].forEach((cat) => {
         const key = String(cat).trim().toUpperCase();
-        const rank = String(article.ranks[key] ?? article.ranks[cat] ?? '').trim();
+        const rank = String(article.ranks[key] ?? article.ranks[cat] ?? '').trim().toUpperCase();
         if (!rank && article.useInNewsletter && article.useInNewsletter[key] === true) {
             article.ranks[key] = 'Y';
             if (!articleHasCategory(article, key)) article.categories.push(key);
+        } else if (rank === 'M') {
+            article.ranks[key] = 'YM';
         }
     });
 }
@@ -2584,11 +2587,11 @@ function ensureUseInNewsletter(article) {
 
 /** Category column (MED/THC/CBD/INV) has Y, YM, or a numeric rank — used for Confirmation & summaries */
 function isCategoryRankIncluded(article, category) {
-    if (!['Y', 'YM'].includes(article.status)) return false;
+    if (!isArticleEligibleForCategoryPicks(article)) return false;
     const rank = String(getRankForSort(article, category)).trim().toUpperCase();
     if (!rank) return false;
     if (/^\d+$/.test(rank)) return true;
-    return rank === 'Y' || rank === 'YM';
+    return ['Y', 'YM', 'M'].includes(rank);
 }
 
 /** Article is included when the category column has any non-empty rank (legacy / stats). */
@@ -2679,12 +2682,52 @@ window.syncCategoryPrompt = (category) => {
     syncSummaryArticlesFromPicks(category);
 };
 
+function mergeArticlesOnlyBlock(category, existingText) {
+    const categoryArticles = getArticlesByPickOrder(category);
+    if (categoryArticles.length === 0) {
+        return '';
+    }
+    
+    const urlChunks = {};
+    if (existingText) {
+        const chunks = existingText.split(/\n\n+/);
+        chunks.forEach(chunk => {
+            const match = chunk.match(/(https?:\/\/[^\s]+)/);
+            if (match) {
+                const url = match[1].trim();
+                urlChunks[url] = chunk;
+            }
+        });
+    }
+
+    return categoryArticles.map((article, index) => {
+        const url = (article.url || '').trim();
+        const defaultTitle = article.title || 'Untitled';
+        const rank = getRankForSort(article, category);
+        const prefix = `${index + 1}. [${rank}]`;
+        
+        if (url && urlChunks[url]) {
+            let existingChunk = urlChunks[url];
+            if (existingChunk.match(/^\d+\.\s*\[[^\]]+\]\s*/)) {
+                existingChunk = existingChunk.replace(/^\d+\.\s*\[[^\]]+\]\s*/, prefix + ' ');
+            } else {
+                existingChunk = prefix + ' ' + existingChunk;
+            }
+            return existingChunk;
+        } else {
+            return `${prefix} ${defaultTitle}\n${url}`;
+        }
+    }).join('\n\n');
+}
+
 window.syncSummaryArticlesFromPicks = function syncSummaryArticlesFromPicks(category) {
     const content = newsletterContent[category] || (newsletterContent[category] = {
         intro: '',
         outro: '',
     });
-    const block = buildArticlesOnlyBlock(category);
+    
+    // Smart merge to preserve user edits while recalibrating links and ordering
+    const block = mergeArticlesOnlyBlock(category, content.summaryArticlesText);
     content.summaryArticlesText = block;
 
     const articlesEl = document.getElementById('editor-summary-articles');
@@ -2876,8 +2919,8 @@ window.renderEditorContent = () => {
                 </div>
 
                 <div class="flex items-center gap-2.5 mt-2 mb-4">
-                    <button class="btn btn-secondary btn-sm" onclick="syncSummaryArticlesFromPicks('${currentEditorTab}')">Sync from Article View picks</button>
-                    <span class="text-[0.8rem] text-[#777]">Rebuilds this list from rank # assignments in Article View.</span>
+                    <button class="btn btn-secondary btn-sm" onclick="syncSummaryArticlesFromPicks('${currentEditorTab}')">Recalibrate Links from Article View</button>
+                    <span class="text-[0.8rem] text-[#777]">Updates this list with your latest selections and ranks. Preserves your manual text edits.</span>
                 </div>
 
                 <div class="flex items-center gap-4 mb-5 justify-between flex-wrap">
@@ -3212,11 +3255,27 @@ function getAllGreetingOptions() {
     return merged.sort((a, b) => a.localeCompare(b));
 }
 
+const GREETING_DATES = {
+    'I hope you have a productive week!': '03-30-2026',
+    'Thanks and have an amazing week!': '04-13-2026',
+    'Happy 420,': '04-27-2026',
+    'Have a magnificent week!': '05-02-2026',
+    'Have a dynamite week!': '05-18-2026',
+    'Have a brilliant week!': '05-25-2026',
+    'I hope you had a great Memorial Day!': '05-26-2026',
+    'Have a relaxing week,': '06-02-2026',
+    'Have a fantastic week and stay safe,': '06-21-2026',
+    'Have a wonderful week!': '06-29-2026'
+};
+
 function buildGreetingOptionsHtml(selectedGreeting) {
     const selected = selectedGreeting || DEFAULT_GREETING;
-    return getAllGreetingOptions().map((greeting) => `
-        <option value="${escapeHtml(greeting)}" ${greeting === selected ? 'selected' : ''}>${escapeHtml(greeting)}</option>
-    `).join('');
+    return getAllGreetingOptions().map((greeting) => {
+        const dateStr = GREETING_DATES[greeting] ? ` (${GREETING_DATES[greeting]})` : '';
+        return `
+        <option value="${escapeHtml(greeting)}" ${greeting === selected ? 'selected' : ''}>${escapeHtml(greeting)}${dateStr}</option>
+        `;
+    }).join('');
 }
 
 window.updateSelectedGreeting = (value) => {
@@ -4726,11 +4785,10 @@ function renderArticles() {
                 const disabledAttr = isStatusValid ? '' : 'disabled';
                 const disabledClass = isStatusValid ? '' : 'opacity-50 cursor-not-allowed';
 
-                const categoryInputs = `<div class="col-ranks pt-1 flex items-center justify-center gap-1 w-full flex-nowrap">` +
-                    ['MED', 'THC', 'CBD', 'INV']
+                const categoryInputs = ['MED', 'THC', 'CBD', 'INV']
                         .map(cat => {
                             const rank = getRankForSort(article, cat);
-                            return `<div class="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                            return `<div class="col-cat col-cat-pick flex flex-col items-center gap-0.5 min-w-0 w-full">
                                 <label class="text-[0.55rem] text-[#888] font-bold tracking-wide">${cat}</label>
                                 <input
                                     type="text"
@@ -4743,7 +4801,7 @@ function renderArticles() {
                                     placeholder="#"
                                     title="Rank for ${cat} (number, Y, YM). Tab moves to next column.">
                             </div>`;
-                        }).join('') + `</div>`;
+                        }).join('');
                 const admonition = getHeadlineLengthAdmonition(article.title);
 
                 return `<div class="article-row">
@@ -4771,14 +4829,6 @@ function renderArticles() {
                         <p class="my-1.25 text-[0.85rem] text-[#666]">
                             ${article.description ? article.description.substring(0, 120) + '...' : 'No description'}
                         </p>
-
-                        <div class="flex items-start gap-1.25">
-                            <textarea
-                                class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63] resize-y"
-                                rows="2"
-                                onchange="updateArticleField(${index}, 'url', this.value)">${article.url}</textarea>
-                            <a href="${article.url}" target="_blank" title="Open Link" class="no-underline mt-1">🔗</a>
-                        </div>
                     </div>
 
                     <div class="col-date">
@@ -4829,6 +4879,15 @@ function renderArticles() {
                             onclick="removeArticle(${index})">
                             Remove
                         </button>
+                    </div>
+                    
+                    <div class="col-span-full flex items-start gap-1.25 mt-2 border-t border-dashed border-[#e2e8f0] pt-2">
+                        <span class="text-[0.7rem] font-bold text-[#64748b] pt-1">URL:</span>
+                        <textarea
+                            class="url-edit text-[0.8rem] py-0.5 px-1.25 w-full text-[#2f6e63] resize-y"
+                            rows="2"
+                            onchange="updateArticleField(${index}, 'url', this.value)">${article.url}</textarea>
+                        <a href="${article.url}" target="_blank" title="Open Link" class="no-underline mt-1">🔗</a>
                     </div>
                 </div>`;
             }).join('');
@@ -4896,10 +4955,11 @@ window.updateArticleField = async (index, field, value) => {
         }
         if (value === 'NO') {
             if (!articles[index].ranks) articles[index].ranks = {};
-            articles[index].ranks.MED = '';
-            articles[index].ranks.THC = '';
-            articles[index].ranks.CBD = '';
-            articles[index].ranks.INV = '';
+            ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
+                articles[index].ranks[cat] = '';
+                delete articles[index][cat];
+                delete articles[index][cat.toLowerCase()];
+            });
         }
         // Re-render to update disabled states and unchecked boxes
         renderArticles();
@@ -5735,10 +5795,11 @@ async function searchMoreArticles() {
     hideWithClass(status);
 
     try {
+        const existingUrls = articles.map(a => a.url).filter(Boolean);
         const response = await fetch('/api/articles/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, newsletterName, model }),
+            body: JSON.stringify({ prompt, newsletterName, model, existingUrls }),
         });
 
         const data = await parseJsonResponse(

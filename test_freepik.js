@@ -4,50 +4,47 @@ const API_KEY = process.env.FREEPIK_API_KEY;
 const QUERY = 'cannabis'; // Use a relevant query
 
 async function testFreepik() {
-    console.log('Testing Freepik API...');
+    console.log('Testing Freepik/Magnific API...');
 
-    // Check if fetch is available globally
     if (typeof fetch === 'undefined') {
-        console.error('Native fetch not found. Using dynamic import...');
         global.fetch = (await import('node-fetch')).default;
     }
 
-    // Test 1: Freepik Vectors
-    // The user mentioned "flaticon".
-    // Flaticon is mainly for icons.
-    // Freepik API has an endpoint for icons: https://api.freepik.com/v1/icons
+    const testHeaders = [
+        { 'x-freepik-api-key': API_KEY },
+        { 'X-Freepik-API-Key': API_KEY },
+        { 'x-magnific-api-key': API_KEY },
+        { 'X-Magnific-API-Key': API_KEY }
+    ];
 
-    console.log('--- Testing Vectors (Freepik) ---');
-    const urlVectors = `https://api.freepik.com/v1/resources?locale=en-US&page=1&limit=3&term=${QUERY}&filters[content_type.vector]=1`;
-    try {
-        const res = await fetch(urlVectors, {
-            headers: { 'X-Freepik-API-Key': API_KEY }
-        });
-        if (!res.ok) console.log('Vector Error:', res.status, await res.text());
-        else {
-            const data = await res.json();
-            console.log(`Found ${data.data.length} vectors.`);
-            if (data.data.length > 0) console.log('Sample Vector URL:', data.data[0].image.source.url);
-        }
-    } catch (e) {
-        console.error(e);
-    }
+    const urls = [
+        'https://api.freepik.com/v1/icons?locale=en-US&page=1&limit=3&term=' + QUERY,
+        'https://api.magnific.com/v1/icons?locale=en-US&page=1&limit=3&term=' + QUERY
+    ];
 
-    console.log('\n--- Testing Icons (Flaticon) ---');
-    const urlIcons = `https://api.freepik.com/v1/icons?locale=en-US&page=1&limit=3&term=${QUERY}`;
-    try {
-        const res = await fetch(urlIcons, {
-            headers: { 'X-Freepik-API-Key': API_KEY }
-        });
-        if (!res.ok) console.log('Icon Error:', res.status, await res.text());
-        else {
-            const data = await res.json();
-            console.log(`Found ${data.data.length} icons.`);
-            // Inspect structure
-            if (data.data.length > 0) console.log('Sample Icon:', JSON.stringify(data.data[0].images, null, 2));
+    for (const url of urls) {
+        console.log(`\n--- Testing URL: ${url} ---`);
+        for (const headers of testHeaders) {
+            const headerName = Object.keys(headers)[0];
+            console.log(`Trying header "${headerName}":`);
+            try {
+                const res = await fetch(url, { headers });
+                console.log(`Response Status: ${res.status}`);
+                const text = await res.text();
+                if (res.ok) {
+                    console.log(`✅ Success! Response preview: ${text.substring(0, 200)}`);
+                    try {
+                        const data = JSON.parse(text);
+                        console.log(`Found ${data.data?.length || 0} items.`);
+                    } catch(e) {}
+                    return; // Exit on first success
+                } else {
+                    console.log(`❌ Error ${res.status}: ${text}`);
+                }
+            } catch (e) {
+                console.error(`Network Error:`, e.message);
+            }
         }
-    } catch (e) {
-        console.error(e);
     }
 }
 

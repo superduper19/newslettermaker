@@ -41,6 +41,7 @@
                 <option value="gemini-flash-3-5">Gemini 3.5 Flash</option>
                 <option value="gemini-flash-3-0">Gemini 3.0 Flash</option>
                 <option value="gemini-3-1-pro">Gemini 3.1 Pro</option>
+                <option value="openrouter-z-ai/glm-5.2">GLM 5.2 (OpenRouter)</option>
               </select>
             </div>
             <div id="ai-credit-warning" class="hidden absolute top-[calc(100%+5px)] right-0 z-[100] w-64 text-[0.8rem] text-[#856404] bg-[#fff3cd] border border-[#fbc02d] rounded-md p-2 shadow-lg" role="alert">
@@ -214,16 +215,16 @@
             <option value="oldnew">Old to New</option>
             <option value="newold">New to Old</option>
           </select>
-          <div class="flex items-center gap-2 flex-wrap ml-auto" id="category-pick-order-row" title="Comma-separated rank numbers from each column — order for subject lines and template">
+          <div class="flex items-center gap-1.5 flex-nowrap ml-auto overflow-x-auto" id="category-pick-order-row" title="Comma-separated rank numbers from each column — order for subject lines and template">
             <span class="text-[0.75rem] text-[#666] whitespace-nowrap hidden lg:inline">Subject / template order:</span>
-            <label class="text-[0.75rem] font-semibold text-[#0d47a1]">MED</label>
-            <input type="text" id="pick-order-MED" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('MED', this.value)">
-            <label class="text-[0.75rem] font-semibold text-[#1b5e20]">THC</label>
-            <input type="text" id="pick-order-THC" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('THC', this.value)">
-            <label class="text-[0.75rem] font-semibold text-[#e65100]">CBD</label>
-            <input type="text" id="pick-order-CBD" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('CBD', this.value)">
-            <label class="text-[0.75rem] font-semibold text-[#4a148c]">INV</label>
-            <input type="text" id="pick-order-INV" class="pick-order-input w-24 min-w-24 py-1 px-2 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('INV', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#0d47a1] whitespace-nowrap">MED</label>
+            <input type="text" id="pick-order-MED" class="pick-order-input w-[12ch] min-w-[12ch] py-1 px-1.5 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('MED', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#1b5e20] whitespace-nowrap">THC</label>
+            <input type="text" id="pick-order-THC" class="pick-order-input w-[12ch] min-w-[12ch] py-1 px-1.5 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('THC', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#e65100] whitespace-nowrap">CBD</label>
+            <input type="text" id="pick-order-CBD" class="pick-order-input w-[12ch] min-w-[12ch] py-1 px-1.5 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('CBD', this.value)">
+            <label class="text-[0.75rem] font-semibold text-[#4a148c] whitespace-nowrap">INV</label>
+            <input type="text" id="pick-order-INV" class="pick-order-input w-[12ch] min-w-[12ch] py-1 px-1.5 text-[0.8rem] border border-[#ccc] rounded" placeholder="1,2,3" oninput="updateCategoryPickOrder('INV', this.value)">
           </div>
         </div>
         <!-- Articles Table Header -->
@@ -249,14 +250,17 @@
           <div class="col-status header-sort" onclick="sortArticles('status')">
             <div class="header-label">Status</div>
           </div>
-          <div class="col-ranks flex flex-col justify-center items-center">
-            <div class="header-label text-center mb-1">Ranks</div>
-            <div class="flex gap-2 text-[0.6rem] text-[#888] font-semibold w-full justify-center">
-              <span class="header-sort cursor-pointer hover:text-[#0d47a1]" onclick="sortArticles('MED')" title="Sort MED">MED</span>
-              <span class="header-sort cursor-pointer hover:text-[#1b5e20]" onclick="sortArticles('THC')" title="Sort THC">THC</span>
-              <span class="header-sort cursor-pointer hover:text-[#e65100]" onclick="sortArticles('CBD')" title="Sort CBD">CBD</span>
-              <span class="header-sort cursor-pointer hover:text-[#4a148c]" onclick="sortArticles('INV')" title="Sort INV">INV</span>
-            </div>
+          <div class="col-cat flex justify-center items-center">
+            <span class="header-label header-sort cursor-pointer hover:text-[#0d47a1] text-center w-full" onclick="sortArticles('MED')" title="Sort MED">MED</span>
+          </div>
+          <div class="col-cat flex justify-center items-center">
+            <span class="header-label header-sort cursor-pointer hover:text-[#1b5e20] text-center w-full" onclick="sortArticles('THC')" title="Sort THC">THC</span>
+          </div>
+          <div class="col-cat flex justify-center items-center">
+            <span class="header-label header-sort cursor-pointer hover:text-[#e65100] text-center w-full" onclick="sortArticles('CBD')" title="Sort CBD">CBD</span>
+          </div>
+          <div class="col-cat flex justify-center items-center">
+            <span class="header-label header-sort cursor-pointer hover:text-[#4a148c] text-center w-full" onclick="sortArticles('INV')" title="Sort INV">INV</span>
           </div>
           <div class="col-keyword">
             <div class="header-label">Notes</div>

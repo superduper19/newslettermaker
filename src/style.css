@@ -556,11 +556,11 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .mini-grid {
-  @apply grid grid-cols-4 grid-rows-[repeat(2,60px)] gap-1.25;
+  @apply grid grid-cols-4 grid-rows-[repeat(2,72px)] gap-1.25;
 }
 
 .mini-grid img {
-  @apply w-full h-15 object-cover rounded-lg shadow-[0_3px_12px_rgba(15,23,42,0.08)];
+  @apply w-full h-[72px] object-contain rounded-lg shadow-[0_3px_12px_rgba(15,23,42,0.08)];
 }
 
 .img-page-nav {
@@ -572,7 +572,7 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .mini-grid-item {
-  @apply w-full h-full object-cover rounded-[3px] cursor-pointer border-2 border-solid border-transparent hover:border-(--primary);
+  @apply w-full h-full object-contain rounded-[3px] cursor-pointer border-2 border-solid border-transparent hover:border-(--primary);
 }
 
 .state-icon-wrap {
@@ -589,7 +589,7 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .thumbnail-img {
-  @apply w-25 h-25 object-cover rounded-sm cursor-pointer border-2 border-solid border-transparent hover:border-(--primary);
+  @apply w-[110px] h-[110px] object-contain rounded-sm cursor-pointer border-2 border-solid border-transparent hover:border-(--primary);
 }
 
 .image-grid-compact {

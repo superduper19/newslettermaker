@@ -345,6 +345,7 @@ async function resolveUrlToLocalFile(url, target = 'article') {
         try {
             outBuf = await sharp(buf)
                 .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 80 })
                 .toBuffer();
         } catch (err) {
             console.warn('Failed to resize inspirational image:', err.message);
@@ -864,6 +865,7 @@ router.post('/upload', uploadMiddleware.single('image'), async (req, res) => {
             const resizedBuffer = await sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
                 .withMetadata({ density: 72 })
+                .jpeg({ quality: 80 })
                 .toBuffer();
             fs.writeFileSync(localPath, resizedBuffer);
         } catch (err) {
@@ -909,6 +911,7 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
             const resizedBuffer = await sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
                 .withMetadata({ density: 72 })
+                .jpeg({ quality: 80 })
                 .toBuffer();
             fs.writeFileSync(localPath, resizedBuffer);
         } catch (err) {
@@ -1027,6 +1030,7 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
         try {
             outBuffer = await sharp(buffer)
                 .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 80 })
                 .toBuffer();
         } catch (err) {
             console.warn('Failed to resize uploaded inspirational image:', err.message);

@@ -498,7 +498,7 @@
 
 <!-- Archive Search Modal Overlay -->
 <div id="archive-search-modal" onclick="if (event.target===this) closeArchiveSearch()" class="hidden fixed inset-0 bg-[rgba(22,34,30,0.5)] z-[2000] items-center justify-center p-4 backdrop-blur-md transition-all duration-300">
-  <div class="bg-[#fffffffb] rounded-[24px] p-6 max-w-2xl w-full max-h-[85vh] shadow-[0_20px_50px_rgba(22,34,30,0.18)] border border-[#84725333] flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="archive-search-modal-content">
+  <div onclick="event.stopPropagation()" class="bg-[#fffffffb] rounded-[24px] p-6 max-w-2xl w-full max-h-[85vh] shadow-[0_20px_50px_rgba(22,34,30,0.18)] border border-[#84725333] flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="archive-search-modal-content">
     
     <!-- Modal Header -->
     <div class="flex justify-between items-start pb-4 border-b border-[#84725322]">

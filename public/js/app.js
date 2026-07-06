@@ -126,9 +126,9 @@ function normalizeSummaryRules(value) {
 const LEGACY_DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 const DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 
-const DEFAULT_PUBLIC_IMAGE_BASE = 'https://purablis.com/purablis.com/newsletter';
-const DEFAULT_INSPIRATIONAL_PUBLIC_BASE = 'https://purablis.com/purablis.com/newsletter/inspiration1';
-const DEFAULT_STATE_ICONS_PUBLIC_BASE = 'https://purablis.com/purablis.com/newsletter/states';
+const DEFAULT_PUBLIC_IMAGE_BASE = 'https://purablis.com/Newsletter%20images/all';
+const DEFAULT_INSPIRATIONAL_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/inspirational';
+const DEFAULT_STATE_ICONS_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/all/states';
 const DEFAULT_ARTICLE_PUBLIC_SUBFOLDER = '';
 const LEGACY_NEWSLETTER_IMAGES_BASE = 'https://purablis.com/News-roundup/images';
 

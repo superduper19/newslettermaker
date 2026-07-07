@@ -5307,7 +5307,9 @@ function isPrioritySummaryRank(rank) {
 
 // Articles used for Text summaries (respects pick-order boxes when set).
 function getSummaryArticlesForCategory(category) {
-    return getArticlesByPickOrder(category);
+    const allArticles = getArticlesByPickOrder(category);
+    // Only return top 3 for summarization
+    return allArticles.slice(0, 3);
 }
 
 function getSelectedRankCounts() {

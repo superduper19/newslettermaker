@@ -3181,6 +3181,26 @@ window.uploadAllTemplates = () => {
 // Store modal state globally to avoid onclick parameter issues
 let currentManualContentState = null;
 
+// Manual content cache (by article URL)
+let manualContentCache = (() => {
+    try {
+        return JSON.parse(localStorage.getItem('manual_article_content_cache') || '{}');
+    } catch {
+        return {};
+    }
+})();
+
+window.saveCachedContent = (url, content) => {
+    if (url && content.trim()) {
+        manualContentCache[url] = content.trim();
+        localStorage.setItem('manual_article_content_cache', JSON.stringify(manualContentCache));
+    }
+};
+
+window.getCachedContent = (url) => {
+    return manualContentCache[url] || null;
+};
+
 window.showManualContentModal = (category, unreadableArticles, allArticles, isUseRules, summaryRules) => {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-[rgba(22,34,30,0.5)] z-[2000] flex items-center justify-center p-4 backdrop-blur-md';
@@ -3194,11 +3214,16 @@ window.showManualContentModal = (category, unreadableArticles, allArticles, isUs
     `;
 
     unreadableArticles.forEach((article, idx) => {
+        const cachedContent = getCachedContent(article.url);
+        const isCached = !!cachedContent;
         html += `
             <div class="mb-6 pb-4 border-b border-gray-200">
-                <h3 class="font-semibold text-sm mb-2">${article.index}. ${article.title}</h3>
+                <div class="flex items-center gap-2 mb-2">
+                    <h3 class="font-semibold text-sm">${article.index}. ${article.title}</h3>
+                    ${isCached ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Cached</span>' : ''}
+                </div>
                 <p class="text-xs text-gray-500 mb-2">${article.url}</p>
-                <textarea id="manual-content-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none"></textarea>
+                <textarea id="manual-content-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${isCached ? cachedContent : ''}</textarea>
             </div>
         `;
     });
@@ -3243,7 +3268,10 @@ window.submitManualContent = async () => {
     unreadableArticles.forEach((article, idx) => {
         const textarea = document.getElementById(`manual-content-${idx}`);
         if (textarea && textarea.value.trim()) {
-            manualContent[article.index - 1] = textarea.value.trim();
+            const content = textarea.value.trim();
+            manualContent[article.index - 1] = content;
+            // Save to cache for future use in other categories
+            saveCachedContent(article.url, content);
         }
     });
 

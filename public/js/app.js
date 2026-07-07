@@ -3181,6 +3181,8 @@ window.uploadAllTemplates = () => {
 window.generateSummary = async (category) => {
     const articlesEl = document.getElementById('editor-summary-articles');
     const articlesText = articlesEl ? articlesEl.value.trim() : '';
+    const resultEl = document.getElementById('editor-result');
+    const currentResult = resultEl ? resultEl.value.trim() : '';
     const rulesOnEl = document.getElementById(`rules-on-${category}`);
     const isUseRules = rulesOnEl ? rulesOnEl.checked : true;
     const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
@@ -3204,6 +3206,7 @@ window.generateSummary = async (category) => {
                 articles: categoryArticles,
                 model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
             }),
+            timeout: 60000,
         });
         const data = await res.json();
 
@@ -3211,14 +3214,14 @@ window.generateSummary = async (category) => {
             const resultText = data.resultText || '';
             newsletterContent[category].result = resultText;
             saveState();
-            const resultEl = document.getElementById('editor-result');
             if (resultEl) resultEl.value = resultText;
         } else {
             alert('Generation failed: ' + (data.error || 'Unknown error') + (data.details ? '\n' + data.details : ''));
         }
     } catch (e) {
-        console.error(e);
-        alert('Error generating summary: ' + e.message);
+        console.error('Summary generation error:', e);
+        const errMsg = e.message || 'Unknown error';
+        alert(`Error generating summary: ${errMsg}\n\nYour manual edits are preserved. Check that:\n- API keys are configured\n- Articles are accessible\n- You have API credits remaining`);
     } finally {
         btnText.textContent = 'Generate Summary';
     }

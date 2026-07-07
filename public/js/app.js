@@ -5307,9 +5307,27 @@ function isPrioritySummaryRank(rank) {
 
 // Articles used for Text summaries (respects pick-order boxes when set).
 function getSummaryArticlesForCategory(category) {
-    const allArticles = getArticlesByPickOrder(category);
-    // Only return top 3 for summarization
-    return allArticles.slice(0, 3);
+    const eligible = getArticlesForCategory(category);
+    const orderKeys = parseCategoryPickOrder(category);
+
+    // Only return articles specified in pick order, not all eligible articles
+    if (orderKeys.length === 0) return eligible.slice(0, 3); // Default to first 3 if no pick order
+
+    const result = [];
+    const used = new Set();
+    orderKeys.forEach((key) => {
+        const keyNorm = key.toUpperCase();
+        const match = eligible.find((a) => {
+            const r = String(getRankForSort(a, category)).trim().toUpperCase();
+            return r === keyNorm;
+        });
+        if (!match) return;
+        const id = match.url || match.title || String(match.id);
+        if (used.has(id)) return;
+        used.add(id);
+        result.push(match);
+    });
+    return result;
 }
 
 function getSelectedRankCounts() {

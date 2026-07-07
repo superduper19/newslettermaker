@@ -3178,6 +3178,90 @@ window.uploadAllTemplates = () => {
     }
 };
 
+window.showManualContentModal = (category, unreadableArticles, allArticles, isUseRules, summaryRules) => {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-[rgba(22,34,30,0.5)] z-[2000] flex items-center justify-center p-4 backdrop-blur-md';
+    modal.onclick = (e) => e.target === modal && modal.remove();
+
+    let html = `
+        <div onclick="event.stopPropagation()" class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Missing Article Content</h2>
+            <p class="text-sm text-gray-600 mb-4">${unreadableArticles.length} article(s) couldn't be fetched. Please paste their content below:</p>
+    `;
+
+    unreadableArticles.forEach((article, idx) => {
+        html += `
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <h3 class="font-semibold text-sm mb-2">${article.index}. ${article.title}</h3>
+                <p class="text-xs text-gray-500 mb-2">${article.url}</p>
+                <textarea id="manual-content-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none"></textarea>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="flex gap-3 justify-end">
+            <button onclick="this.closest('.fixed').remove()" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button onclick="submitManualContent('${category}', ${JSON.stringify(unreadableArticles)}, ${JSON.stringify(allArticles)}, ${isUseRules}, '${summaryRules}')" class="btn btn-primary px-4 py-2">Generate with Manual Content</button>
+        </div>
+    `;
+
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+};
+
+window.submitManualContent = async (category, unreadableArticles, allArticles, isUseRules, summaryRules) => {
+    const manualContent = {};
+    unreadableArticles.forEach((article, idx) => {
+        const textarea = document.getElementById(`manual-content-${idx}`);
+        if (textarea && textarea.value.trim()) {
+            manualContent[article.index - 1] = textarea.value.trim();
+        }
+    });
+
+    // Close modal
+    document.querySelector('.fixed').remove();
+
+    const btnText = document.getElementById(`gen-btn-text-${category}`);
+    btnText.textContent = 'Generating...';
+
+    try {
+        const articlesEl = document.getElementById('editor-summary-articles');
+        const articlesText = articlesEl ? articlesEl.value.trim() : '';
+
+        const res = await fetch('/api/articles/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: `Category: ${category}\n\nArticles to summarize:\n\n${articlesText}`,
+                useRules: isUseRules,
+                summaryRules,
+                category,
+                articles: allArticles,
+                model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
+                manualContent,
+            }),
+            timeout: 60000,
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            const resultText = data.resultText || '';
+            newsletterContent[category].result = resultText;
+            saveState();
+            const resultEl = document.getElementById('editor-result');
+            if (resultEl) resultEl.value = resultText;
+        } else {
+            alert('Generation failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (e) {
+        console.error('Summary generation error:', e);
+        alert('Error generating summary: ' + (e.message || 'Unknown error'));
+    } finally {
+        btnText.textContent = 'Generate Summary';
+    }
+};
+
 window.generateSummary = async (category) => {
     const articlesEl = document.getElementById('editor-summary-articles');
     const articlesText = articlesEl ? articlesEl.value.trim() : '';
@@ -3215,6 +3299,9 @@ window.generateSummary = async (category) => {
             newsletterContent[category].result = resultText;
             saveState();
             if (resultEl) resultEl.value = resultText;
+        } else if (data.needsManualContent && data.unreadableArticles) {
+            // Show modal for unreadable articles
+            showManualContentModal(category, data.unreadableArticles, categoryArticles, isUseRules, summaryRules);
         } else {
             alert('Generation failed: ' + (data.error || 'Unknown error') + (data.details ? '\n' + data.details : ''));
         }

@@ -1045,16 +1045,44 @@ router.post('/summarize', async (req, res) => {
             };
         }));
 
-        const articlePayload = fetchedArticles.map((article, index) => ({
-            index: index + 1,
-            title: article.title,
-            url: article.url,
-            date: article.date,
-            description: article.description,
-            accessible: article.accessible,
-            readable: article.readable,
-            content: article.content ? article.content.substring(0, 6000) : '',
-        }));
+        // Check for unreadable articles and accept manual content override
+        const { manualContent } = req.body;
+        const unreadableArticles = fetchedArticles
+            .map((article, index) => ({
+                ...article,
+                index: index + 1,
+            }))
+            .filter(article => !article.readable);
+
+        // If there are unreadable articles and no manual content provided, ask the user to provide it
+        if (unreadableArticles.length > 0 && !manualContent) {
+            return res.status(400).json({
+                success: false,
+                error: `${unreadableArticles.length} article(s) could not be fetched`,
+                unreadableArticles: unreadableArticles.map(a => ({
+                    index: a.index,
+                    title: a.title,
+                    url: a.url,
+                    date: a.date,
+                })),
+                needsManualContent: true,
+            });
+        }
+
+        // Merge manual content with fetched content
+        const articlePayload = fetchedArticles.map((article, index) => {
+            const manualEntry = manualContent && manualContent[index];
+            return {
+                index: index + 1,
+                title: article.title,
+                url: article.url,
+                date: article.date,
+                description: article.description,
+                accessible: article.accessible,
+                readable: article.readable,
+                content: manualEntry || (article.content ? article.content.substring(0, 6000) : ''),
+            };
+        });
 
         const userMessage = [
             `Category: ${category}`,

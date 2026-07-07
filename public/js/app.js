@@ -2608,6 +2608,8 @@ function getArticlesForCategory(category) {
             if (a.selected === false) return false;
             // Exclude cool finds - they go in their own section only
             if (coolFindUrls.has(a.url)) return false;
+            // Also exclude articles marked with COOL FINDS status
+            if (a.status === 'COOL FINDS') return false;
             normalizeArticleDefaults(a);
             return isCategoryRankIncluded(a, category);
         })

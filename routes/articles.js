@@ -1054,12 +1054,17 @@ router.post('/summarize', async (req, res) => {
             }))
             .filter(article => !article.readable);
 
-        // If there are unreadable articles and no manual content provided, ask the user to provide it
-        if (unreadableArticles.length > 0 && !manualContent) {
+        // Only ask for manual content for unreadable articles that are in the selected articles list
+        const unreadableSelectedArticles = unreadableArticles.filter(article =>
+            articles.some(a => a.url === article.url)
+        );
+
+        // If there are unreadable selected articles and no manual content provided, ask the user to provide it
+        if (unreadableSelectedArticles.length > 0 && !manualContent) {
             return res.status(400).json({
                 success: false,
-                error: `${unreadableArticles.length} article(s) could not be fetched`,
-                unreadableArticles: unreadableArticles.map(a => ({
+                error: `${unreadableSelectedArticles.length} selected article(s) could not be fetched`,
+                unreadableArticles: unreadableSelectedArticles.map(a => ({
                     index: a.index,
                     title: a.title,
                     url: a.url,

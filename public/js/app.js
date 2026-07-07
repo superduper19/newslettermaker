@@ -2600,9 +2600,14 @@ function isUseInNewsletter(article, category) {
 }
 
 function getArticlesForCategory(category) {
+    // Get article URLs in laterCoolArticles to exclude them from main articles
+    const coolFindUrls = new Set(laterCoolArticles.map(a => a.url));
+
     return articles
         .filter(a => {
             if (a.selected === false) return false;
+            // Exclude cool finds - they go in their own section only
+            if (coolFindUrls.has(a.url)) return false;
             normalizeArticleDefaults(a);
             return isCategoryRankIncluded(a, category);
         })

@@ -3178,10 +3178,14 @@ window.uploadAllTemplates = () => {
     }
 };
 
+// Store modal state globally to avoid onclick parameter issues
+let currentManualContentState = null;
+
 window.showManualContentModal = (category, unreadableArticles, allArticles, isUseRules, summaryRules) => {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-[rgba(22,34,30,0.5)] z-[2000] flex items-center justify-center p-4 backdrop-blur-md';
-    modal.onclick = (e) => e.target === modal && modal.remove();
+    modal.id = 'manual-content-modal';
+    modal.onclick = (e) => e.target === modal && closeManualContentModal();
 
     let html = `
         <div onclick="event.stopPropagation()" class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-lg">
@@ -3201,17 +3205,41 @@ window.showManualContentModal = (category, unreadableArticles, allArticles, isUs
 
     html += `
         <div class="flex gap-3 justify-end">
-            <button onclick="this.closest('.fixed').remove()" class="btn btn-secondary px-4 py-2">Cancel</button>
-            <button onclick="submitManualContent('${category}', ${JSON.stringify(unreadableArticles)}, ${JSON.stringify(allArticles)}, ${isUseRules}, '${summaryRules}')" class="btn btn-primary px-4 py-2">Generate with Manual Content</button>
+            <button onclick="closeManualContentModal()" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button onclick="submitManualContent()" class="btn btn-primary px-4 py-2">Generate with Manual Content</button>
         </div>
     `;
 
     modal.innerHTML = html;
+
+    // Store state in global variable
+    currentManualContentState = {
+        category,
+        unreadableArticles,
+        allArticles,
+        isUseRules,
+        summaryRules,
+        modal
+    };
+
     document.body.appendChild(modal);
 };
 
-window.submitManualContent = async (category, unreadableArticles, allArticles, isUseRules, summaryRules) => {
+window.closeManualContentModal = () => {
+    const modal = document.getElementById('manual-content-modal');
+    if (modal) modal.remove();
+    currentManualContentState = null;
+};
+
+window.submitManualContent = async () => {
+    if (!currentManualContentState) {
+        alert('Modal state lost. Please try again.');
+        return;
+    }
+
+    const { category, unreadableArticles, allArticles, isUseRules, summaryRules, modal } = currentManualContentState;
     const manualContent = {};
+
     unreadableArticles.forEach((article, idx) => {
         const textarea = document.getElementById(`manual-content-${idx}`);
         if (textarea && textarea.value.trim()) {
@@ -3220,10 +3248,10 @@ window.submitManualContent = async (category, unreadableArticles, allArticles, i
     });
 
     // Close modal
-    document.querySelector('.fixed').remove();
+    closeManualContentModal();
 
     const btnText = document.getElementById(`gen-btn-text-${category}`);
-    btnText.textContent = 'Generating...';
+    if (btnText) btnText.textContent = 'Generating...';
 
     try {
         const articlesEl = document.getElementById('editor-summary-articles');
@@ -3258,7 +3286,7 @@ window.submitManualContent = async (category, unreadableArticles, allArticles, i
         console.error('Summary generation error:', e);
         alert('Error generating summary: ' + (e.message || 'Unknown error'));
     } finally {
-        btnText.textContent = 'Generate Summary';
+        if (btnText) btnText.textContent = 'Generate Summary';
     }
 };
 

@@ -25,3 +25,15 @@ This file serves as a persistent record of changes made to this project and cruc
 - **URL Hallucination Fix**: Removed the strict prompt rule that forbade Gemini from using `vertexaisearch.cloud.google.com` links during Phase 1. Forbidding those links forced the AI to guess and hallucinate fake publisher URLs (e.g., for HighTimes). The AI is now instructed to use the exact Google redirect links, which the backend's `verifyAndAnalyzeUrl` function naturally follows to arrive at the true, correct publisher URLs.
 - **Anti-Duplication in Search**: When finding more articles via the "Find More Articles" search query, the frontend now passes a list of all currently loaded `existingUrls` to the backend. The backend dynamically injects a `CRITICAL ANTI-DUPLICATION RULE` into the Gemini Phase 1 search prompt to actively force the AI to ignore stories/publishers that are already in the newsletter workspace.
 - **Removed Fallback Logic**: Modified backend logic to prevent silent fallback to internal data or different LLMs when search or billing fails.
+
+## [2026-07-13] - Vercel Build and Startup Fixes, Confirmation & Icon UI Enhancements
+
+### Added
+- **API Key Fallbacks**: Added `'missing_key'` fallback initializers for Anthropic, OpenAI (OpenRouter), and Google Generative AI clients. This prevents the serverless functions from crashing on startup when some keys are not yet configured in Vercel.
+
+### Fixed
+- **Vercel Build Fix**: Switched project package management from `pnpm` back to standard `npm` (removed `"packageManager"` field from `package.json` and deleted the outdated `pnpm-lock.yaml` file) to resolve Vercel build errors that prevented code updates for the last 21 days.
+- **Vercel Startup Crash**: Resolved the `500 INTERNAL_SERVER_ERROR / FUNCTION_INVOCATION_FAILED` crash on Vercel caused by OpenAI client complaining about missing `OPENROUTER_API_KEY` credentials on boot.
+- **Article Category Ranks**: Updated confirmation logic to Permissively include 'COOL FINDS' and 'M' (mapped to 'YM') in counts, ensuring the tallies match expectations of "even numbers" on the confirmation screen.
+- **Icon Visibility**: Adjusted past icons display to show 100% of images and made them slightly larger.
+- **Date labels**: Added last used dates next to the endings in the endings dropdown on the Text page.

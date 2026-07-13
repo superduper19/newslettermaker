@@ -13,13 +13,13 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Initialize Anthropic Client
 const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+    apiKey: process.env.ANTHROPIC_API_KEY || 'missing_key',
 });
 
 // Initialize OpenRouter (OpenAI SDK)
 const openrouter = new OpenAI({
     baseURL: 'https://openrouter.ai/api/v1',
-    apiKey: process.env.OPENROUTER_API_KEY,
+    apiKey: process.env.OPENROUTER_API_KEY || 'missing_key',
     defaultHeaders: {
         'HTTP-Referer': process.env.GODADDY_PUBLIC_BASE_URL || 'https://purablis.com',
         'X-Title': 'Newsletter Maker',
@@ -30,7 +30,8 @@ const openrouter = new OpenAI({
 // Helper to clean API keys (removes quotes and whitespace)
 const cleanKey = (key) => (key || '').replace(/^["']|["']$/g, '').trim();
 
-const genAI = new GoogleGenerativeAI(cleanKey(process.env.GEMINI_API_KEY) || cleanKey(process.env.GOOGLE_API_KEY));
+const geminiKey = cleanKey(process.env.GEMINI_API_KEY) || cleanKey(process.env.GOOGLE_API_KEY) || 'missing_key';
+const genAI = new GoogleGenerativeAI(geminiKey);
 
 // Normalize Excel row: accept many column name variants
 const getCell = (row, ...keys) => {

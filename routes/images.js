@@ -213,8 +213,9 @@ async function listInspirationalLibraryFromFtp() {
                     name: entry.name,
                     url: `${publicUrlBase}/${entry.name}`,
                     source: 'ftp',
+                    modifiedAt: entry.modifiedAt,
                 }))
-                .sort((a, b) => a.name.localeCompare(b.name));
+                .sort((a, b) => b.modifiedAt ? (b.modifiedAt - a.modifiedAt) : a.name.localeCompare(b.name));
         } finally {
             client.close();
         }
@@ -226,12 +227,17 @@ async function listInspirationalLibraryFromFtp() {
 
     return fs.readdirSync(uploadDir)
         .filter(name => isImageFile(name))
-        .map(name => ({
-            name,
-            url: filePathToDataUrl(path.join(uploadDir, name), getMimeTypeFromName(name)),
-            source: 'inline',
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .map(name => {
+            const fullPath = path.join(uploadDir, name);
+            const stats = fs.statSync(fullPath);
+            return {
+                name,
+                url: filePathToDataUrl(fullPath, getMimeTypeFromName(name)),
+                source: 'inline',
+                modifiedAt: stats.mtime,
+            };
+        })
+        .sort((a, b) => b.modifiedAt ? (b.modifiedAt - a.modifiedAt) : a.name.localeCompare(b.name));
 }
 
 async function listInspirationalLibrary() {
@@ -344,7 +350,8 @@ async function resolveUrlToLocalFile(url, target = 'article') {
     if (target === 'inspirational') {
         try {
             const metadata = await sharp(buf).metadata();
-            const hasAlpha = metadata.hasAlpha || ext.includes('svg');
+            const isTransparentFormat = ext.includes('png') || ext.includes('gif') || ext.includes('webp') || ext.includes('svg');
+            const hasAlpha = metadata.hasAlpha || isTransparentFormat;
             
             let sharpChain = sharp(buf)
                 .resize(300, 300, { fit: 'inside', withoutEnlargement: true });
@@ -352,7 +359,7 @@ async function resolveUrlToLocalFile(url, target = 'article') {
             if (hasAlpha) {
                 sharpChain = sharpChain.png({ palette: false, compressionLevel: 9 });
             } else {
-                sharpChain = sharpChain.jpeg({ quality: 80 });
+                sharpChain = sharpChain.flatten({ background: '#ffffff' }).jpeg({ quality: 80 });
             }
             outBuf = await sharpChain.toBuffer();
         } catch (err) {
@@ -416,7 +423,8 @@ function normalizeLibraryImages(images) {
                 name,
                 url,
                 source: item.source || 'db',
-                metadata: item.metadata || null
+                metadata: item.metadata || null,
+                modifiedAt: item.modifiedAt || null
             };
         });
 
@@ -915,7 +923,8 @@ router.post('/upload', uploadMiddleware.single('image'), async (req, res) => {
             const mimetype = String(req.file.mimetype || '').toLowerCase();
             const originalName = String(req.file.originalname || '').toLowerCase();
             const metadata = await sharp(buffer).metadata();
-            const hasAlpha = metadata.hasAlpha || mimetype.includes('svg') || originalName.endsWith('.svg');
+            const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || originalName.endsWith('.png') || originalName.endsWith('.gif') || originalName.endsWith('.webp') || originalName.endsWith('.svg');
+            const hasAlpha = metadata.hasAlpha || isTransparentFormat;
 
             let sharpChain = sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
@@ -924,7 +933,7 @@ router.post('/upload', uploadMiddleware.single('image'), async (req, res) => {
             if (hasAlpha) {
                 sharpChain = sharpChain.png({ palette: false, compressionLevel: 9 });
             } else {
-                sharpChain = sharpChain.jpeg({ quality: 80 });
+                sharpChain = sharpChain.flatten({ background: '#ffffff' }).jpeg({ quality: 80 });
             }
 
             const resizedBuffer = await sharpChain.toBuffer();
@@ -972,7 +981,8 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
             const mimetype = String(req.file.mimetype || '').toLowerCase();
             const originalName = String(req.file.originalname || '').toLowerCase();
             const metadata = await sharp(buffer).metadata();
-            const hasAlpha = metadata.hasAlpha || mimetype.includes('svg') || originalName.endsWith('.svg');
+            const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || originalName.endsWith('.png') || originalName.endsWith('.gif') || originalName.endsWith('.webp') || originalName.endsWith('.svg');
+            const hasAlpha = metadata.hasAlpha || isTransparentFormat;
 
             let sharpChain = sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
@@ -981,7 +991,7 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
             if (hasAlpha) {
                 sharpChain = sharpChain.png({ palette: false, compressionLevel: 9 });
             } else {
-                sharpChain = sharpChain.jpeg({ quality: 80 });
+                sharpChain = sharpChain.flatten({ background: '#ffffff' }).jpeg({ quality: 80 });
             }
 
             const resizedBuffer = await sharpChain.toBuffer();
@@ -1100,7 +1110,8 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
 
         const metadata = await sharp(buffer).metadata();
         const mimetype = String(req.file.mimetype || '').toLowerCase();
-        const hasAlpha = metadata.hasAlpha || mimetype.includes('svg') || originalName.toLowerCase().endsWith('.svg');
+        const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || originalName.toLowerCase().endsWith('.png') || originalName.toLowerCase().endsWith('.gif') || originalName.toLowerCase().endsWith('.webp') || originalName.toLowerCase().endsWith('.svg');
+        const hasAlpha = metadata.hasAlpha || isTransparentFormat;
 
         let outBuffer = buffer;
         try {
@@ -1110,7 +1121,7 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
             if (hasAlpha) {
                 sharpChain = sharpChain.png({ palette: false, compressionLevel: 9 });
             } else {
-                sharpChain = sharpChain.jpeg({ quality: 80 });
+                sharpChain = sharpChain.flatten({ background: '#ffffff' }).jpeg({ quality: 80 });
             }
 
             outBuffer = await sharpChain.toBuffer();

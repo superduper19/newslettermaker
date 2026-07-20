@@ -9,6 +9,11 @@ This file serves as a persistent record of changes made to this project and cruc
 3. **EXPLICIT ERRORS OVER FALLBACKS**: If an LLM encounters a billing issue, quota limit, or missing capability, the system MUST explicitly report the exact error to the user. Do NOT automatically silently switch to another LLM to hide the error. 
 4. **STRICT MODEL NAMES**: Do not alter model names based on assumptions of what "should" exist. Ensure the exact model identifiers expected by the APIs (e.g., `gemini-3.1-pro-preview`) are used, even if a stable version "should" be out.
 
+## [2026-07-20] - Image Upload Transparency Fixes
+
+### Fixed
+- **Transparent Image Background Bug**: Fixed a bug where transparent PNG images uploaded by users (e.g. icons from Freepik) would be rendered with a black background in the app. The issue was traced to `sharp` image processing on serverless environments converting PNGs to JPEGs when file extensions/mimetypes were omitted by the browser/OS, and losing alpha channels when compressed using `pngquant`. The image upload endpoints (`/upload`, `/upload-article`, `/upload-inspirational`) have been updated to rely completely on `sharp(buffer).metadata().hasAlpha` instead of guessing from file extensions, and the `quality: 80` setting was removed from the `png()` output format to bypass `pngquant` which can break transparency on some environments.
+
 ## [2026-06-21] - API Keys, Search Grounding, and Hallucination Fixes
 
 ### Added
@@ -110,3 +115,4 @@ This file serves as a persistent record of changes made to this project and cruc
 ### Fixed
 - **AI Search Timeout & Article Drops**: Resolved the issue where searching for articles returned too few or zero results. Increased the redirect resolution timeout inside `verifyAndAnalyzeUrl` from 2000ms to 8000ms to prevent slow network responses from timing out and throwing abort errors.
 - **Search Link Leniency**: Updated the error handling inside `verifyAndAnalyzeUrl` so that if a Google redirect URL fails to resolve in the backend, the system treats it as valid instead of discarding it. This ensures that 100% of discovered articles with high-quality titles and descriptions from Gemini are successfully returned to the workspace.
+- **Flaticon & External Image Transparency Preservation**: Resolved a critical bug in `resolveUrlToLocalFile` inside `routes/images.js` where downloading external images with the target `'inspirational'` (such as transparent PNG icons from Flaticon or Freepik) unconditionally converted them to JPEG. This conversion stripped the alpha channel and filled their transparent backgrounds with solid black. Added extension-based format checking (`ext.includes('png') || ext.includes('gif') || ext.includes('webp') || ext.includes('svg')`) to output a transparent PNG instead, ensuring perfect transparency in both light and dark mode emails.

@@ -80,11 +80,20 @@ const cleanArticleData = (row, index) => {
 };
 
 // Helper to verify URL and fetch content
-const verifyAndAnalyzeUrl = async (url) => {
+const verifyAndAnalyzeUrl = async (url, skipScraping = false) => {
     if (!url) return { isValid: false, content: '' };
+
+    // If we want to skip scraping, and the URL is already a final publisher URL (not a google search redirect),
+    // we don't need to perform any network request at all! This saves massive amount of time.
+    const isGoogleRedirect = url.includes('vertexaisearch.cloud.google.com');
+    if (skipScraping && !isGoogleRedirect) {
+        return { isValid: true, isReadable: false, content: '', finalUrl: url };
+    }
+
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout (Vercel-friendly)
+        // Google redirect resolution can sometimes take slightly longer on slower networks, so use 8000ms.
+        const timeout = setTimeout(() => controller.abort(), skipScraping ? 8000 : 15000);
 
         const response = await fetch(url, {
             method: 'GET',
@@ -103,6 +112,12 @@ const verifyAndAnalyzeUrl = async (url) => {
             return { isValid: false, content: '', finalUrl: response.url };
         }
 
+        // If we are skipping scraping, we are only here to resolve the google search redirect to the final URL.
+        // We do not need to download the HTML body or scrape the page.
+        if (skipScraping) {
+            return { isValid: true, isReadable: false, content: '', finalUrl: response.url };
+        }
+
         // 403/401/429/5xx might be valid URLs blocking bots.
         // We'll mark them valid but content-less so we don't discard real news.
         if (!response.ok) {
@@ -110,7 +125,25 @@ const verifyAndAnalyzeUrl = async (url) => {
             return { isValid: true, isReadable: false, content: '', finalUrl: response.url };
         }
 
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        const isBinaryType = contentType.includes('application/pdf') ||
+                             contentType.includes('image/') ||
+                             contentType.includes('audio/') ||
+                             contentType.includes('video/') ||
+                             contentType.includes('application/zip') ||
+                             contentType.includes('application/octet-stream') ||
+                             url.toLowerCase().endsWith('.pdf') ||
+                             url.toLowerCase().includes('.pdf?');
+        if (isBinaryType) {
+            console.log(`URL ${url} is a PDF or binary media file (Content-Type: ${contentType}). Treating as unreadable.`);
+            return { isValid: true, isReadable: false, content: '', finalUrl: response.url };
+        }
+
         const text = await response.text();
+        if (text.startsWith('%PDF-') || text.includes('PDF-1.') || text.substring(0, 100).includes('%PDF')) {
+            console.log(`URL ${url} returned binary PDF content. Treating as unreadable.`);
+            return { isValid: true, isReadable: false, content: '', finalUrl: response.url };
+        }
         // Simple extraction of body text (stripping tags)
         const content = text.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '')
                             .replace(/<style[^>]*>([\S\s]*?)<\/style>/gmi, '')
@@ -119,20 +152,37 @@ const verifyAndAnalyzeUrl = async (url) => {
                             .trim()
                             .substring(0, 15000); // Limit to 15k chars for LLM
 
-        return { isValid: true, isReadable: true, content, finalUrl: response.url };
+        const cleanedContent = content.trim();
+        const lowerContent = cleanedContent.toLowerCase();
+
+        // Check for bot blocking / CAPTCHA / generic JS require content
+        const isBotBlocked = lowerContent.includes('cloudflare') ||
+                             lowerContent.includes('captcha') ||
+                             lowerContent.includes('robot check') ||
+                             lowerContent.includes('enable javascript') ||
+                             lowerContent.includes('access denied') ||
+                             lowerContent.includes('forbidden') ||
+                             lowerContent.includes('just a moment');
+
+        // Check if there is enough content to be considered a readable article (at least 200 chars)
+        const isTooShort = cleanedContent.length < 200;
+
+        const isReadable = !isBotBlocked && !isTooShort;
+
+        return { isValid: true, isReadable, content: cleanedContent, finalUrl: response.url };
     } catch (error) {
         console.error(`Verification failed for ${url}:`, error.message);
-        // If it's a timeout, maybe we should be lenient? For now, treat as invalid if we can't reach it.
-        return { isValid: false, isReadable: false, content: '', finalUrl: url };
+        // Be lenient: if a redirect fails to resolve due to network issues, preserve the article rather than dropping it.
+        return { isValid: true, isReadable: false, content: '', finalUrl: url };
     }
 };
 
 // Helper to categorize article based on content (implements newsletter_categorization_brief.md)
 const categorizeArticle = (article, content) => {
-    if (!content) return article;
+    const text = (content || article.description || '').toLowerCase();
+    if (!text && !article.title) return article;
 
-    const text = content.toLowerCase();
-    const title = article.title.toLowerCase();
+    const title = (article.title || '').toLowerCase();
     const fullText = title + ' ' + text;
 
     // Initialize categories and ranks
@@ -732,12 +782,12 @@ Example format:
             // Clean first
             let cleaned = cleanArticleData(article, 0);
 
-            // 1. Verify URL
+            // 1. Verify URL (skipScraping = true, which resolves redirects instantly but skips downloading body)
             if (!cleaned.url || cleaned.url.includes('example.com') || cleaned.url === '#') {
                 return null;
             }
 
-            const { isValid, isReadable, content, finalUrl } = await verifyAndAnalyzeUrl(cleaned.url);
+            const { isValid, isReadable, content, finalUrl } = await verifyAndAnalyzeUrl(cleaned.url, true);
 
             if (!isValid) {
                 console.log(`Skipping invalid URL (failed verification): ${cleaned.url}`);
@@ -748,24 +798,12 @@ Example format:
                 cleaned.url = finalUrl;
             }
 
-            // Simple check: does content length > 300 chars?
-            if (isReadable && content.length < 300) {
-                 console.log(`Skipping thin content (${content.length} chars): ${cleaned.url}`);
-                 return null;
-            }
+            // 2. Categorize (and apply rejection rules from brief, using description fallback if unreadable/skipped)
+            cleaned = categorizeArticle(cleaned, content);
 
-            // 2. Categorize (and apply rejection rules from brief)
-            if (isReadable) {
-                // categorizeArticle now implements the brief's logic
-                cleaned = categorizeArticle(cleaned, content);
-
-                if (!cleaned) {
-                    console.log(`Skipping rejected article (rule violation): ${article.url}`);
-                    return null;
-                }
-            } else {
-                // If not readable, keep it but warn
-                console.log(`Content unreadable for ${cleaned.url}, skipping auto-categorization but keeping.`);
+            if (!cleaned) {
+                console.log(`Skipping rejected article (rule violation): ${article.url}`);
+                return null;
             }
 
             return cleaned;
@@ -1155,7 +1193,7 @@ router.post('/generate-subjects', async (req, res) => {
         const normalized = {};
         ['MED', 'THC', 'CBD', 'INV'].forEach((category) => {
             const items = Array.isArray(categories[category]) ? categories[category] : [];
-            normalized[category] = items.slice(0, 3).map((article, index) => ({
+            normalized[category] = items.slice(0, 4).map((article, index) => ({
                 index: index + 1,
                 title: article.title || '',
                 url: article.url || '',

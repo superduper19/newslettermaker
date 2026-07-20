@@ -12,5 +12,7 @@
 10. Each article should be summarized by one sentence.
 12. Do not use past participles
 13. make it casual
-14. Dont include the names of the periodicals or the studies
-15. Keep sentences succinct but give important data if applicable.
+14. Here is the lancet article to summarize into a sentence.
+15. Dont include the names of the periodicals or the studies
+16. Keep sentences succinct but give important data if applicable.
+17. Abbreviate billion with a B and no space, million with and thousand with a K. So an example is that $3.5 billion - $3.5B

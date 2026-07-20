@@ -399,13 +399,55 @@ async function publishImageUrlToPurablis(url, target = 'article', options = {}) 
 
 function normalizeLibraryImages(images) {
     const seen = new Set();
-    return (Array.isArray(images) ? images : [])
+    const list = (Array.isArray(images) ? images : [])
         .filter(item => item && item.url)
-        .map(item => ({
-            name: item.name || extractFilenameFromUrl(item.url),
-            url: String(item.url).trim(),
-            source: item.source || 'db',
-        }))
+        .map(item => {
+            const url = String(item.url).trim();
+            const name = item.name || extractFilenameFromUrl(url);
+            return {
+                name,
+                url,
+                source: item.source || 'db',
+                metadata: item.metadata || null
+            };
+        });
+
+    // Extract all flaticon/freepik IDs and map them to their beautiful names and metadata
+    const idToInfo = new Map();
+    list.forEach(item => {
+        const urlStr = item.url.toLowerCase();
+        const idMatch = urlStr.match(/freepik-(\d+)\.png$/) || urlStr.match(/(\d+)\.png$/);
+        const name = String(item.name || '');
+        const hasDescriptiveName = name.includes('(') && name.includes(')');
+        if (idMatch && (hasDescriptiveName || item.metadata)) {
+            const id = idMatch[1];
+            idToInfo.set(id, {
+                name: item.name,
+                metadata: item.metadata
+            });
+        }
+    });
+
+    // Apply the mapped descriptive names and metadata to any unnamed occurrences of the same icon ID
+    const normalized = list.map(item => {
+        const urlStr = item.url.toLowerCase();
+        const idMatch = urlStr.match(/freepik-(\d+)\.png$/) || urlStr.match(/(\d+)\.png$/);
+        if (idMatch) {
+            const id = idMatch[1];
+            if (idToInfo.has(id)) {
+                const info = idToInfo.get(id);
+                return {
+                    ...item,
+                    name: info.name,
+                    metadata: info.metadata || item.metadata
+                };
+            }
+        }
+        return item;
+    });
+
+    // Unique-ify by url to prevent duplicates
+    return normalized
         .filter(item => {
             if (!item.url || seen.has(item.url)) return false;
             seen.add(item.url);
@@ -862,11 +904,22 @@ router.post('/upload', uploadMiddleware.single('image'), async (req, res) => {
         const localPath = req.file.path;
         try {
             const buffer = fs.readFileSync(localPath);
-            const resizedBuffer = await sharp(buffer)
+            const mimetype = String(req.file.mimetype || '').toLowerCase();
+            const originalName = String(req.file.originalname || '').toLowerCase();
+            const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || 
+                                      originalName.endsWith('.png') || originalName.endsWith('.gif') || originalName.endsWith('.webp') || originalName.endsWith('.svg');
+
+            let sharpChain = sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
-                .withMetadata({ density: 72 })
-                .jpeg({ quality: 80 })
-                .toBuffer();
+                .withMetadata({ density: 72 });
+
+            if (isTransparentFormat) {
+                sharpChain = sharpChain.png({ quality: 80, palette: false, compressionLevel: 9 });
+            } else {
+                sharpChain = sharpChain.jpeg({ quality: 80 });
+            }
+
+            const resizedBuffer = await sharpChain.toBuffer();
             fs.writeFileSync(localPath, resizedBuffer);
         } catch (err) {
             console.warn('Failed to resize uploaded image:', err.message);
@@ -908,11 +961,22 @@ router.post('/upload-article', uploadMiddleware.single('image'), async (req, res
 
         try {
             const buffer = fs.readFileSync(localPath);
-            const resizedBuffer = await sharp(buffer)
+            const mimetype = String(req.file.mimetype || '').toLowerCase();
+            const originalName = String(req.file.originalname || '').toLowerCase();
+            const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || 
+                                      originalName.endsWith('.png') || originalName.endsWith('.gif') || originalName.endsWith('.webp') || originalName.endsWith('.svg');
+
+            let sharpChain = sharp(buffer)
                 .resize(100, 100, { fit: 'inside', withoutEnlargement: true })
-                .withMetadata({ density: 72 })
-                .jpeg({ quality: 80 })
-                .toBuffer();
+                .withMetadata({ density: 72 });
+
+            if (isTransparentFormat) {
+                sharpChain = sharpChain.png({ quality: 80, palette: false, compressionLevel: 9 });
+            } else {
+                sharpChain = sharpChain.jpeg({ quality: 80 });
+            }
+
+            const resizedBuffer = await sharpChain.toBuffer();
             fs.writeFileSync(localPath, resizedBuffer);
         } catch (err) {
             console.warn('Failed to resize uploaded article image:', err.message);
@@ -1026,12 +1090,22 @@ router.post('/upload-inspirational', memoryUploadMiddleware.single('image'), asy
             return res.status(400).json({ error: 'Uploaded file buffer was empty' });
         }
 
+        const mimetype = String(req.file.mimetype || '').toLowerCase();
+        const isTransparentFormat = mimetype.includes('png') || mimetype.includes('gif') || mimetype.includes('webp') || mimetype.includes('svg') || 
+                                  originalName.toLowerCase().endsWith('.png') || originalName.toLowerCase().endsWith('.gif') || originalName.toLowerCase().endsWith('.webp') || originalName.toLowerCase().endsWith('.svg');
+
         let outBuffer = buffer;
         try {
-            outBuffer = await sharp(buffer)
-                .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: 80 })
-                .toBuffer();
+            let sharpChain = sharp(buffer)
+                .resize(300, 300, { fit: 'inside', withoutEnlargement: true });
+
+            if (isTransparentFormat) {
+                sharpChain = sharpChain.png({ quality: 80, palette: false, compressionLevel: 9 });
+            } else {
+                sharpChain = sharpChain.jpeg({ quality: 80 });
+            }
+
+            outBuffer = await sharpChain.toBuffer();
         } catch (err) {
             console.warn('Failed to resize uploaded inspirational image:', err.message);
         }

@@ -126,10 +126,10 @@ function normalizeSummaryRules(value) {
 const LEGACY_DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 const DEFAULT_SUBJECT_PROMPT = "From the top 3 articles for each 4 category, Create a small Clicky subject by suitable Emojis. Keep Emojis first then subjects with space and don't use \"|\" in between. Same articles should have same Subjects.";
 
-const DEFAULT_PUBLIC_IMAGE_BASE = 'https://purablis.com/Newsletter%20images/all';
-const DEFAULT_INSPIRATIONAL_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/inspirational';
-const DEFAULT_STATE_ICONS_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/all/states';
-const DEFAULT_ARTICLE_PUBLIC_SUBFOLDER = '';
+let DEFAULT_PUBLIC_IMAGE_BASE = 'https://purablis.com/Newsletter%20images/all';
+let DEFAULT_INSPIRATIONAL_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/inspirational';
+let DEFAULT_STATE_ICONS_PUBLIC_BASE = 'https://purablis.com/Newsletter%20images/all/states';
+let DEFAULT_ARTICLE_PUBLIC_SUBFOLDER = '';
 const LEGACY_NEWSLETTER_IMAGES_BASE = 'https://purablis.com/News-roundup/images';
 
 // Global State
@@ -512,10 +512,27 @@ function resolvePurablisImageUrl(articleOrUrl) {
     for (const raw of urlFields) {
         let safe = String(raw || '').trim();
         if (safe && isPurablisUrl(safe) && !isLocalOrAppImageUrl(safe) && !isShortPurablisImageUrl(safe)) {
-            if (safe.includes('/purablis.com/') || safe.includes('Newsletter images') || safe.includes('/News-roundup/images/')) {
-                // If it's a known legacy path with subfolders, don't strip the subfolder!
-                if (safe.includes('Newsletter images') || safe.includes('/News-roundup/images/')) {
+            // CRITICAL BYPASS: If the URL is already fully-qualified, correct, and under the active live GoDaddy base, return it directly!
+            const activeBase = (newsletterContent.publicImageBase || DEFAULT_PUBLIC_IMAGE_BASE).replace(/\/+$/, '');
+            if (safe.startsWith(activeBase) || safe.includes('/purablis.com/newsletter/')) {
+                return getDownloadSafeAssetUrl(safe);
+            }
+            if (safe.includes('/purablis.com/') || safe.includes('Newsletter images') || safe.includes('Newsletter%20images') || safe.includes('/News-roundup/images/')) {
+                if (safe.includes(' ')) {
                     safe = safe.replace(/ /g, '%20');
+                }
+                const lowerUrl = safe.toLowerCase();
+                if (lowerUrl.includes('newsletter images') || lowerUrl.includes('newsletter%20images') || lowerUrl.includes('news-roundup/images')) {
+                    const extractedFilename = safe.split('/').pop();
+                    if (extractedFilename) {
+                        if (lowerUrl.includes('inspiration1') || lowerUrl.includes('inspirational')) {
+                            safe = buildPublicInspirationalImageUrl(extractedFilename);
+                        } else if (isStateArticle || lowerUrl.includes('states') || lowerUrl.includes('state_icons')) {
+                            safe = buildPublicStateIconUrl(extractedFilename);
+                        } else {
+                            safe = buildPurablisPublicUrlFromFilename(extractedFilename, safe);
+                        }
+                    }
                 } else if (safe.includes('purablis.com')) {
                     const extractedFilename = safe.split('/').pop();
                     if (extractedFilename) {
@@ -679,7 +696,7 @@ async function ensureConfirmationPurablisUrls() {
     relevant.forEach((article) => {
         const idx = articles.indexOf(article);
         if (idx < 0) return;
-        const row = byId.get(article.id) || byTitle.get(String(article.title || '').toLowerCase().trim());
+        const row = byTitle.get(String(article.title || '').toLowerCase().trim()) || byId.get(article.id);
         if (!row || !row.url) return;
         articles[idx].purablisFilename = row.purablisFilename || articles[idx].purablisFilename;
         articles[idx].publishedImageUrl = row.url;
@@ -872,13 +889,31 @@ function applyWorkspaceState(state, { mergeLibrary = false } = {}) {
     };
     
     // Auto-migrate legacy URLs to the new newsletter path
-    const legacyUrl1 = 'https://purablis.com/News-roundup/images';
-    const legacyUrl2 = 'https://purablis.com/News-roundup/images/states';
-    const legacyUrl3 = 'https://purablis.com/Newsletter images';
-    const legacyUrl4 = 'https://purablis.com/News-roundup/inspirational';
-    if (newsletterContent.publicImageBase === legacyUrl1 || newsletterContent.publicImageBase === legacyUrl3 || newsletterContent.publicImageBase === 'https://purablis.com/Newsletter%20images') newsletterContent.publicImageBase = DEFAULT_PUBLIC_IMAGE_BASE;
-    if (newsletterContent.inspirationalPublicBase === legacyUrl1 || newsletterContent.inspirationalPublicBase === legacyUrl4) newsletterContent.inspirationalPublicBase = DEFAULT_INSPIRATIONAL_PUBLIC_BASE;
-    if (newsletterContent.stateIconsPublicBase === legacyUrl2) newsletterContent.stateIconsPublicBase = DEFAULT_STATE_ICONS_PUBLIC_BASE;
+    const baseLower = String(newsletterContent.publicImageBase || '').toLowerCase().trim();
+    if (!newsletterContent.publicImageBase || 
+        baseLower.includes('newsletter images') || 
+        baseLower.includes('newsletter%20images') || 
+        baseLower.includes('news-roundup/images')) {
+        newsletterContent.publicImageBase = DEFAULT_PUBLIC_IMAGE_BASE;
+    }
+
+    const inspLower = String(newsletterContent.inspirationalPublicBase || '').toLowerCase().trim();
+    if (!newsletterContent.inspirationalPublicBase || 
+        inspLower.includes('newsletter images') || 
+        inspLower.includes('newsletter%20images') || 
+        inspLower.includes('news-roundup/inspirational') ||
+        inspLower.includes('news-roundup/images')) {
+        newsletterContent.inspirationalPublicBase = DEFAULT_INSPIRATIONAL_PUBLIC_BASE;
+    }
+
+    const stateLower = String(newsletterContent.stateIconsPublicBase || '').toLowerCase().trim();
+    if (!newsletterContent.stateIconsPublicBase || 
+        stateLower.includes('newsletter images') || 
+        stateLower.includes('newsletter%20images') || 
+        stateLower.includes('news-roundup/images/states') ||
+        stateLower.includes('news-roundup/images')) {
+        newsletterContent.stateIconsPublicBase = DEFAULT_STATE_ICONS_PUBLIC_BASE;
+    }
 
     repairMisplacedPurablisImageUrls();
     inferPublicImageSettingsFromArticles();
@@ -1182,6 +1217,27 @@ window.updateStateHintFromDiagnostic = async function () {
 
 (async function loadFromDb() {
     try {
+        // Dynamically configure GoDaddy Public URLs from Backend settings
+        try {
+            const diagRes = await fetch('/api/state/diagnostic');
+            if (diagRes.ok) {
+                const diag = await diagRes.json().catch(() => ({}));
+                if (diag.godaddyPublicBaseUrl) {
+                    const root = diag.godaddyPublicBaseUrl.replace(/\/+$/, '');
+                    DEFAULT_PUBLIC_IMAGE_BASE = root;
+                    DEFAULT_STATE_ICONS_PUBLIC_BASE = `${root}/states`;
+                    DEFAULT_INSPIRATIONAL_PUBLIC_BASE = `${root}/inspirational`;
+                    console.log('Dynamic GoDaddy Base URLs Loaded:', {
+                        articleBase: DEFAULT_PUBLIC_IMAGE_BASE,
+                        stateBase: DEFAULT_STATE_ICONS_PUBLIC_BASE,
+                        inspirationalBase: DEFAULT_INSPIRATIONAL_PUBLIC_BASE
+                    });
+                }
+            }
+        } catch (diagErr) {
+            console.warn('Failed to resolve dynamic public base URLs:', diagErr);
+        }
+
         const [wrRes, sessRes] = await Promise.all([
             fetch('/api/state?key=workspace'),
             fetch('/api/state?key=sessions'),
@@ -1754,6 +1810,34 @@ window.filterPastIcons = function() {
     renderPastIcons(query);
 };
 
+function getCleanDisplayName(img) {
+    let name = String(img.name || '').trim();
+    // Remove file extension
+    name = name.replace(/\.[a-zA-Z0-9]+$/, '');
+    // Remove leading date prefix (e.g. 07-06-26-)
+    name = name.replace(/^\d{2}-\d{2}-\d{2}-/, '');
+    // Remove upload- prefix
+    name = name.replace(/^upload-/, '');
+    // Remove freepik- prefix
+    name = name.replace(/^freepik-/, '');
+    // Remove numeric timestamps (e.g. 1783369689169-)
+    name = name.replace(/^\d{10,}-/, '');
+    // Remove trailing numeric freepik IDs (e.g. -12345678)
+    name = name.replace(/-\d{6,}$/, '');
+    
+    // Replace hyphens and underscores with spaces
+    name = name.replace(/[-_]/g, ' ');
+    
+    // Strip trailing parenthesized keywords/context (e.g. "Costa Rica Flag (country, nation...)")
+    name = name.replace(/\s*\(.*\)$/i, '');
+    
+    // Capitalize first letters of each word
+    name = name.replace(/\b\w/g, l => l.toUpperCase());
+    
+    name = name.trim();
+    return name || 'Icon';
+}
+
 window.renderPastIcons = function(query = '') {
     const gallery = document.getElementById('past-icons-gallery');
     
@@ -1771,21 +1855,22 @@ window.renderPastIcons = function(query = '') {
     }
     
     // Grid layout with responsive columns, increased columns for smaller thumbnails
-    let html = '<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 p-2">';
+    let html = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 p-3">';
     
     filtered.forEach(img => {
         const url = img.url;
-        const name = escapeHtml(img.name || 'icon');
-        const thumbSrc = resolvePurablisImageUrl(url) || url;
+        const displayName = escapeHtml(getCleanDisplayName(img));
+        const fullName = escapeHtml(img.name || 'icon');
+        const thumbSrc = toAbsoluteAssetUrl(url);
         html += `
-            <div class="group flex flex-col cursor-pointer border-2 border-transparent hover:border-[#2f6e63] rounded-lg overflow-hidden bg-white shadow-sm transition-all"
+            <div class="group flex flex-col cursor-pointer border border-[#e5e7eb] hover:border-[#2f6e63] hover:shadow-md rounded-lg overflow-hidden bg-white transition-all duration-200"
                  onclick="selectPastIconAndClose('${escapeHtml(url)}')"
-                 title="${name}">
-                <div class="aspect-square flex items-center justify-center bg-[#f8f9fa] p-2 relative">
-                    <img src="${thumbSrc}" alt="${name}" class="w-full h-full object-contain" loading="lazy">
+                 title="${fullName}">
+                <div class="aspect-square flex items-center justify-center bg-[#f9fafb] group-hover:bg-white p-3 relative transition-colors duration-200">
+                    <img src="${thumbSrc}" alt="${displayName}" class="w-16 h-16 object-contain transition-transform duration-200 group-hover:scale-110" loading="lazy">
                 </div>
-                <div class="bg-[rgba(255,255,255,0.95)] p-1.5 text-[0.65rem] truncate text-center text-[#444] font-medium border-t border-[#eee]">
-                    ${name}
+                <div class="bg-[#f9fafb] p-1.5 text-[10px] truncate text-center text-[#6b7280] border-t border-[#e5e7eb] leading-tight select-none">
+                    ${displayName}
                 </div>
             </div>
         `;
@@ -1844,9 +1929,9 @@ window.searchArticleImages = async (index) => {
 
             const appendResultThumb = (img, useWrap) => {
                 const url = img.download || img.preview;
-                const thumbSrc = resolvePurablisImageUrl(url)
-                    || getDownloadSafeAssetUrl(img.preview || url)
-                    || (img.preview || url);
+                const thumbSrc = useWrap
+                    ? toAbsoluteAssetUrl(url)
+                    : (resolvePurablisImageUrl(url) || getDownloadSafeAssetUrl(img.preview || url) || (img.preview || url));
                 const isPicked = selectedUrl && toAbsoluteAssetUrl(selectedUrl) === toAbsoluteAssetUrl(url);
                 const onPick = () => selectImage(index, url);
                 if (useWrap) {
@@ -1966,7 +2051,12 @@ function repairArticleImagePreview(article) {
 function getArticlePreviewImageUrl(article) {
     if (!article) return '';
     repairArticleImagePreview(article);
-    return resolvePurablisImageUrl(article) || '';
+    let url = resolvePurablisImageUrl(article) || '';
+    if (url && url.includes('purablis.com')) {
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}v=${Date.now()}`;
+    }
+    return url;
 }
 
 function buildSelectedImageHtml(index, article, { publishing = false } = {}) {
@@ -3336,6 +3426,15 @@ window.generateSummary = async (category) => {
     const categoryArticles = getSummaryArticlesForCategory(category);
     const btnText = document.getElementById(`gen-btn-text-${category}`);
 
+    // Pre-populate manual content from local cache
+    const manualContent = {};
+    categoryArticles.forEach((article, index) => {
+        const cached = getCachedContent(article.url);
+        if (cached) {
+            manualContent[index] = cached;
+        }
+    });
+
     if (!articlesText) return alert('Add articles in the middle box, or click Sync from Article View picks.');
     if (categoryArticles.length === 0) return alert(`No articles picked for ${category}. In Article View, enter a rank number for each article.`);
 
@@ -3351,6 +3450,7 @@ window.generateSummary = async (category) => {
                 summaryRules,
                 category,
                 articles: categoryArticles,
+                manualContent,
                 model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
             }),
             timeout: 60000,
@@ -3694,17 +3794,31 @@ function updateSelectedImageBox(index, { publishing = false } = {}) {
 
 /** Preview, Confirmation, MailWizz — always public purablis (or other https CDN), never localhost proxy */
 function getArticleImageUrl(article) {
-    return resolvePurablisImageUrl(article);
+    let url = resolvePurablisImageUrl(article);
+    if (url && url.includes('purablis.com')) {
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}v=${Date.now()}`;
+    }
+    return url;
 }
 
 function getArticleImageUrlForSend(article) {
-    return resolvePurablisImageUrl(article);
+    let url = resolvePurablisImageUrl(article);
+    if (url && url.includes('purablis.com')) {
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}v=${Date.now()}`;
+    }
+    return url;
 }
 
 function setArticleImageSrcWithFallback(imgEl, article, url) {
     if (!imgEl) return;
-    const src = url || resolvePurablisImageUrl(article);
+    let src = url || resolvePurablisImageUrl(article);
     if (!src) return;
+    if (src.includes('purablis.com')) {
+        const sep = src.includes('?') ? '&' : '?';
+        src = `${src}${sep}v=${Date.now()}`;
+    }
     const title = ((article && article.title) || 'Article image').slice(0, 120);
     imgEl.setAttribute('src', src);
     imgEl.setAttribute('alt', title);
@@ -4133,9 +4247,23 @@ async function renderConfirmationPreviews() {
     frameWrap.innerHTML =
         `<iframe
             title="${currentConfirmationTab} newsletter preview"
-            class="w-225 min-w-225 min-h-275 border-0 bg-white block mx-auto"></iframe>`;
+            class="w-full max-w-[900px] border-0 bg-white block mx-auto"
+            style="min-height: 1500px; height: 1500px;"></iframe>`;
     const iframe = frameWrap.querySelector('iframe');
-    if (iframe) iframe.srcdoc = html;
+    if (iframe) {
+        iframe.onload = () => {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    const height = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight || 0);
+                    iframe.style.height = `${height + 50}px`;
+                }
+            } catch (e) {
+                console.warn('Could not auto-adjust iframe height:', e);
+            }
+        };
+        iframe.srcdoc = html;
+    }
 }
 
 window.updateSubjectPrompt = (value) => {
@@ -4748,13 +4876,36 @@ function updateChosenFileName(inputId, labelId) {
 
 function assignImportedArticles(importedArticles) {
     const importedAt = new Date().toISOString();
-    articles = (importedArticles || []).map((article, index) => ({
+    
+    // Normalize URL helper
+    const normalizeUrl = u => String(u || '').trim().toLowerCase().replace(/\/$/, '');
+    
+    // Create a set of existing normalized URLs to avoid duplicates
+    const existingUrls = new Set((articles || []).map(a => normalizeUrl(a.url)));
+    
+    // Filter out incoming articles that already exist
+    const newArticles = (importedArticles || []).filter(a => {
+        if (!a.url) return false;
+        const norm = normalizeUrl(a.url);
+        if (existingUrls.has(norm)) return false;
+        existingUrls.add(norm); // Prevent duplicates within the incoming sheet too
+        return true;
+    });
+    
+    // Map new articles with addedAt
+    const mappedNew = newArticles.map(article => ({
         ...article,
-        id: index + 1,
-        addedAt: article.addedAt || importedAt,
+        addedAt: article.addedAt || importedAt
     }));
-    archivedArticles = [];
-    laterCoolArticles = [];
+    
+    // Append the unique new articles to our existing articles list
+    const combined = [...(articles || []), ...mappedNew];
+    
+    // Re-index all sequentially
+    articles = combined.map((article, index) => ({
+        ...article,
+        id: index + 1
+    }));
 }
 
 function upsertImportedSession(name) {
@@ -5374,7 +5525,7 @@ function getSummaryArticlesForCategory(category) {
     const orderKeys = parseCategoryPickOrder(category);
 
     // Only return articles specified in pick order, not all eligible articles
-    if (orderKeys.length === 0) return eligible.slice(0, 3); // Default to first 3 if no pick order
+    if (orderKeys.length === 0) return eligible.slice(0, 4); // Default to first 4 if no pick order
 
     const result = [];
     const used = new Set();
@@ -5395,10 +5546,16 @@ function getSummaryArticlesForCategory(category) {
 
 function getSelectedRankCounts() {
     let counts = { MED: 0, THC: 0, CBD: 0, INV: 0 };
+    const coolFindUrls = new Set((laterCoolArticles || []).map(a => a.url));
+
     articles.forEach(a => {
+        if (a.selected === false) return;
+        if (a.status === 'COOL FINDS') return;
+        if (coolFindUrls.has(a.url)) return;
+
         ['MED', 'THC', 'CBD', 'INV'].forEach(cat => {
             let r = String((a.ranks && a.ranks[cat]) || '').trim().toUpperCase();
-            if (r === 'Y' || r === 'YM' || /^\d+$/.test(r)) {
+            if (r === 'Y' || r === 'YM' || r === 'M' || /^\d+$/.test(r)) {
                 counts[cat]++;
             }
         });
@@ -6317,7 +6474,7 @@ if (uploadBtn) {
             inputId: 'excel-upload',
             buttonId: 'btn-upload-file',
             buttonLabel: 'Upload & Load',
-            replacePrompt: 'This will replace the current {count} articles in your workspace. Continue?',
+            replacePrompt: 'You have {count} articles in your workspace. This will add the new articles from the Excel sheet to your list without deleting them. Continue?',
             successMessage: 'Loaded {count} articles for "{name}".',
             switchToStep2: true,
         });
@@ -6334,7 +6491,7 @@ if (articleViewUploadBtn) {
             inputId: 'article-view-excel-upload',
             buttonId: 'btn-article-view-upload',
             buttonLabel: 'Upload XLS Here',
-            replacePrompt: 'This will replace the current {count} articles shown in Article View and clear archived/later-cool lists. Continue?',
+            replacePrompt: 'You have {count} articles. This will add the articles from the Excel sheet to your list without deleting them. Continue?',
             successMessage: 'Restored {count} articles into "{name}". You can continue from Article View now.',
         });
         if (success) {

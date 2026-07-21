@@ -13,7 +13,7 @@ This file serves as a persistent record of changes made to this project and cruc
 
 ### Fixed
 - **Transparent Image Background Bug**: Fixed a bug where transparent PNG images uploaded by users (e.g. icons from Freepik) would be rendered with a black background in the app. The issue was traced to `sharp` image processing on serverless environments converting PNGs to JPEGs when file extensions/mimetypes were omitted by the browser/OS, and losing alpha channels when compressed using `pngquant`. The image upload endpoints (`/upload`, `/upload-article`, `/upload-inspirational`) have been updated to rely completely on `sharp(buffer).metadata().hasAlpha` instead of guessing from file extensions, and the `quality: 80` setting was removed from the `png()` output format to bypass `pngquant` which can break transparency on some environments.
-
+- **State Icon and Inspirational Image URL Bypass**: Fixed a bug where state icons and uploaded inspirational images were rendering as broken links (404) in the newsletter draft. Legacy path-parsing logic was incorrectly intercepting and bypassing the URL building process because `.env` variables contained the string `purablis.com/newsletter`, which tricked the `isPurablisUrl` check into returning the raw base URL instead of adding the required `/states/` or `/inspiration1/` subdirectories. Additionally, preserved the FTP `modifiedAt` timestamp when fetching inspirational library images so that upload dates correctly display in the UI.
 ## [2026-06-21] - API Keys, Search Grounding, and Hallucination Fixes
 
 ### Added

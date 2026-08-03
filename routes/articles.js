@@ -80,7 +80,7 @@ const cleanArticleData = (row, index) => {
 };
 
 // Helper to verify URL and fetch content
-const verifyAndAnalyzeUrl = async (url, skipScraping = false) => {
+const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
     if (!url) return { isValid: false, content: '' };
 
     // If we want to skip scraping, and the URL is already a final publisher URL (not a google search redirect),
@@ -155,19 +155,39 @@ const verifyAndAnalyzeUrl = async (url, skipScraping = false) => {
         const cleanedContent = content.trim();
         const lowerContent = cleanedContent.toLowerCase();
 
-        // Check for bot blocking / CAPTCHA / generic JS require content
+        // Check for bot blocking / CAPTCHA / generic JS require content or paywalls
         const isBotBlocked = lowerContent.includes('cloudflare') ||
                              lowerContent.includes('captcha') ||
                              lowerContent.includes('robot check') ||
                              lowerContent.includes('enable javascript') ||
                              lowerContent.includes('access denied') ||
                              lowerContent.includes('forbidden') ||
-                             lowerContent.includes('just a moment');
+                             lowerContent.includes('just a moment') ||
+                             lowerContent.includes('subscribe to read') ||
+                             lowerContent.includes('paywall') ||
+                             lowerContent.includes('subscription required') ||
+                             lowerContent.includes('archive.is') ||
+                             lowerContent.includes('please wait while your request is being verified') ||
+                             lowerContent.includes('pardon our interruption');
 
         // Check if there is enough content to be considered a readable article (at least 200 chars)
         const isTooShort = cleanedContent.length < 200;
 
-        const isReadable = !isBotBlocked && !isTooShort;
+        let isTitleMissing = false;
+        if (title && title.length > 0) {
+            // Find words with length > 4
+            const titleWords = title.toLowerCase().split(/\s+/).map(w => w.replace(/[^a-z0-9]/g, '')).filter(w => w.length > 4);
+            if (titleWords.length > 0) {
+                // We want to ensure at least one significant word from the title appears in the content
+                const hasMatch = titleWords.some(w => lowerContent.includes(w));
+                if (!hasMatch) {
+                    isTitleMissing = true;
+                    console.log(`Article content doesn't match title for ${url}. Treating as unreadable.`);
+                }
+            }
+        }
+
+        const isReadable = !isBotBlocked && !isTooShort && !isTitleMissing;
 
         return { isValid: true, isReadable, content: cleanedContent, finalUrl: response.url };
     } catch (error) {
@@ -1075,7 +1095,7 @@ router.post('/summarize', async (req, res) => {
         }));
 
         const fetchedArticles = await Promise.all(articleInputs.map(async (article) => {
-            const inspected = await verifyAndAnalyzeUrl(article.url);
+            const inspected = await verifyAndAnalyzeUrl(article.url, false, article.title);
             return {
                 ...article,
                 accessible: !!inspected.isValid,
@@ -1099,7 +1119,8 @@ router.post('/summarize', async (req, res) => {
         );
 
         // If there are unreadable selected articles and no manual content provided, ask the user to provide it
-        if (unreadableSelectedArticles.length > 0 && !manualContent) {
+        const needsManualInput = unreadableSelectedArticles.some(a => !manualContent || !manualContent[a.index - 1] || manualContent[a.index - 1].trim() === '');
+        if (unreadableSelectedArticles.length > 0 && needsManualInput) {
             return res.status(400).json({
                 success: false,
                 error: `${unreadableSelectedArticles.length} selected article(s) could not be fetched`,

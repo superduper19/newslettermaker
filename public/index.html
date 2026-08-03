@@ -400,11 +400,16 @@
           <p class="text-muted">Write prompts, import article links, generate summaries with AI.</p>
         </div>
         <div class="card-body">
-          <div class="tabs-container mb-5 border-b border-[#ddd]">
-            <button class="tab-btn active" onclick="switchEditorTab('MED')">MED</button>
-            <button class="tab-btn" onclick="switchEditorTab('THC')">THC</button>
-            <button class="tab-btn" onclick="switchEditorTab('CBD')">CBD</button>
-            <button class="tab-btn" onclick="switchEditorTab('INV')">INV</button>
+          <div class="tabs-container mb-5 border-b border-[#ddd] flex items-center justify-between flex-wrap gap-2">
+            <div class="flex flex-wrap">
+              <button class="tab-btn active" onclick="switchEditorTab('MED')">MED</button>
+              <button class="tab-btn" onclick="switchEditorTab('THC')">THC</button>
+              <button class="tab-btn" onclick="switchEditorTab('CBD')">CBD</button>
+              <button class="tab-btn" onclick="switchEditorTab('INV')">INV</button>
+            </div>
+            <button class="btn btn-primary btn-sm mb-2" onclick="summarizeAll()" title="Generate summaries for MED, THC, CBD, and INV in one go">
+              <span id="summarize-all-btn-text">Summarize All</span>
+            </button>
           </div>
 
           <div id="editor-bulk-workflow" class="mb-6 p-4 border border-[#c5cae9] rounded-lg bg-[#f3f4fb]">

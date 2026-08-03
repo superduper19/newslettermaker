@@ -1320,12 +1320,17 @@ window.startNewWeek = async () => {
         confirmationRenderedHtml[cat] = '';
     });
 
+    // Per-category summary text/result reference this week's specific articles,
+    // so they're cleared here rather than kept — otherwise the next week's
+    // "Articles for summary" box silently shows last week's picks until manually
+    // recalibrated, and can get sent to the AI as-is.
     const kept = newsletterContent || {};
+    const resetCategoryContent = (prev) => ({ ...(prev || {}), intro: '', outro: '', result: '', summaryArticlesText: '' });
     newsletterContent = {
-        MED: kept.MED || { intro: '', outro: '', result: '' },
-        THC: kept.THC || { intro: '', outro: '', result: '' },
-        CBD: kept.CBD || { intro: '', outro: '', result: '' },
-        INV: kept.INV || { intro: '', outro: '', result: '' },
+        MED: resetCategoryContent(kept.MED),
+        THC: resetCategoryContent(kept.THC),
+        CBD: resetCategoryContent(kept.CBD),
+        INV: resetCategoryContent(kept.INV),
         templates: kept.templates || { MED: '', THC: '', CBD: '', INV: '' },
         summaryRules: normalizeSummaryRules(kept.summaryRules),
         selectedGreeting: kept.selectedGreeting || DEFAULT_GREETING,
@@ -1417,7 +1422,7 @@ window.toggleAllArticles = (select) => {
 };
 
 window.toggleAllImagePublish = (select) => {
-    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
+    const relevant = articles.filter(a => (['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) || a.status === 'COOL FINDS');
     relevant.forEach(a => {
         a.publishImage = select;
     });
@@ -1435,7 +1440,7 @@ window.renderImagesView = () => {
     }
 
     const relevantArticles = articles
-        .filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS'))
+        .filter(a => a.selected !== false && ((['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) || a.status === 'COOL FINDS'))
         .slice();
 
     if (imageViewSortOrder === 'az' || imageViewSortOrder === 'za') {
@@ -1600,7 +1605,7 @@ window.renderImagesView = () => {
 function updateImageViewStats() {
     const statsEl = document.getElementById('image-view-stats');
     if (!statsEl) return;
-    const relevantArticles = articles.filter(a => a.selected !== false && ((a.categories && a.categories.length > 0) || a.status === 'COOL FINDS'));
+    const relevantArticles = articles.filter(a => a.selected !== false && ((['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) || a.status === 'COOL FINDS'));
     const counts = getSelectedRankCounts();
     let selectedCount = 0;
     relevantArticles.forEach(a => {
@@ -3032,6 +3037,9 @@ window.renderEditorContent = () => {
                             Custom (No Rules)
                         </label>
                     </div>
+                    <button class="btn btn-secondary mr-2" onclick="forceManualContentModal('${currentEditorTab}')">
+                        <span>Provide Article Text</span>
+                    </button>
                     <button class="btn btn-primary" onclick="generateSummary('${currentEditorTab}')">
                         <span id="gen-btn-text-${currentEditorTab}">Generate Summary</span>
                     </button>
@@ -3278,6 +3286,7 @@ window.uploadAllTemplates = () => {
 
 // Store modal state globally to avoid onclick parameter issues
 let currentManualContentState = null;
+let currentMultiManualContentState = null;
 
 // Manual content cache (by article URL)
 let manualContentCache = (() => {
@@ -3295,7 +3304,29 @@ window.saveCachedContent = (url, content) => {
     }
 };
 
+window.forceManualContentModal = (category) => {
+    const articlesEl = document.getElementById('editor-summary-articles');
+    const articlesText = articlesEl ? articlesEl.value.trim() : '';
+    const categoryArticles = getSummaryArticlesForCategory(category, articlesText);
+    
+    if (categoryArticles.length === 0) {
+        alert('No articles selected to provide text for.');
+        return;
+    }
+
+    const unreadableArticles = categoryArticles.map((article, idx) => ({
+        ...article,
+        index: idx + 1
+    }));
+
+    const isUseRules = document.getElementById(`rules-on-${category}`)?.checked !== false;
+    const summaryRules = document.getElementById(`rules-textarea-${category}`)?.value || '';
+
+    showManualContentModal(category, unreadableArticles, categoryArticles, isUseRules, summaryRules);
+};
+
 window.getCachedContent = (url) => {
+    // This is kept for backward compatibility to read old cache, but we now prefer article.manualContent
     return manualContentCache[url] || null;
 };
 
@@ -3312,16 +3343,18 @@ window.showManualContentModal = (category, unreadableArticles, allArticles, isUs
     `;
 
     unreadableArticles.forEach((article, idx) => {
-        const cachedContent = getCachedContent(article.url);
-        const isCached = !!cachedContent;
+        // Find the actual article in the global state to get its manualContent
+        const actualArticle = articles.find(a => a.url === article.url) || article;
+        const currentContent = actualArticle.manualContent || getCachedContent(article.url) || '';
+        const hasContent = !!currentContent;
         html += `
             <div class="mb-6 pb-4 border-b border-gray-200">
                 <div class="flex items-center gap-2 mb-2">
                     <h3 class="font-semibold text-sm">${article.index}. ${article.title}</h3>
-                    ${isCached ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Cached</span>' : ''}
+                    ${hasContent ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Text Provided</span>' : ''}
                 </div>
                 <p class="text-xs text-gray-500 mb-2">${article.url}</p>
-                <textarea id="manual-content-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${isCached ? cachedContent : ''}</textarea>
+                <textarea id="manual-content-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${currentContent}</textarea>
             </div>
         `;
     });
@@ -3354,115 +3387,142 @@ window.closeManualContentModal = () => {
     currentManualContentState = null;
 };
 
+// Text of the "articles to summarize" box for a category, from persisted state
+// (not the DOM, which only ever reflects the currently active tab). Detects
+// leftover text from a previous week (none of its URLs match any currently
+// picked article) and rebuilds it from the current picks before use, so a
+// stale box can't get sent to the AI. Any overlap is left untouched so manual
+// edits to the current picks' text aren't clobbered.
+function getArticlesTextForCategory(category) {
+    const content = newsletterContent[category];
+    if (!content) return '';
+    if (content.summaryArticlesText === undefined) {
+        content.summaryArticlesText = buildArticlesOnlyBlock(category) || '';
+    }
+
+    const currentPicks = getArticlesByPickOrder(category);
+    if (currentPicks.length > 0 && content.summaryArticlesText.trim()) {
+        const pickUrls = new Set(currentPicks.map(a => (a.url || '').trim()).filter(Boolean));
+        const urlsInText = content.summaryArticlesText.match(/https?:\/\/[^\s]+/g) || [];
+        const hasOverlap = urlsInText.some(u => pickUrls.has(u.trim()));
+        if (!hasOverlap) {
+            console.warn(`Articles box for ${category} didn't match any current picks — rebuilding from Article View selections.`);
+            content.summaryArticlesText = buildArticlesOnlyBlock(category) || '';
+            if (currentEditorTab === category) {
+                const articlesEl = document.getElementById('editor-summary-articles');
+                if (articlesEl) articlesEl.value = content.summaryArticlesText;
+            }
+            saveState();
+        }
+    }
+
+    return (content.summaryArticlesText || '').trim();
+}
+
+function getUseRulesForCategory(category) {
+    const content = newsletterContent[category];
+    return content ? content.useRules !== false : true;
+}
+
+// Builds the manualContent map (index -> text) from whatever content each
+// article already has saved (article.manualContent or the local cache).
+function buildManualContentMap(categoryArticles) {
+    const manualContent = {};
+    categoryArticles.forEach((article, index) => {
+        if (article.manualContent) {
+            manualContent[index] = article.manualContent;
+        } else {
+            const cached = getCachedContent(article.url);
+            if (cached) manualContent[index] = cached;
+        }
+    });
+    return manualContent;
+}
+
+// Single shared network call used by both the per-category "Generate Summary"
+// button and the "Summarize All" flow, so manual-content handling can't drift
+// between the two paths.
+async function requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules) {
+    const manualContent = buildManualContentMap(categoryArticles);
+    const res = await fetch('/api/articles/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            prompt: `Category: ${category}\n\nArticles to summarize:\n\n${articlesText}`,
+            useRules: isUseRules,
+            summaryRules,
+            category,
+            articles: categoryArticles,
+            manualContent,
+            model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
+        }),
+        timeout: 60000,
+    });
+    return res.json();
+}
+
+function applyGeneratedResult(category, resultText) {
+    newsletterContent[category].result = resultText || '';
+    saveState();
+    if (currentEditorTab === category) {
+        const resultEl = document.getElementById('editor-result');
+        if (resultEl) resultEl.value = resultText || '';
+    }
+}
+
 window.submitManualContent = async () => {
     if (!currentManualContentState) {
         alert('Modal state lost. Please try again.');
         return;
     }
 
-    const { category, unreadableArticles, allArticles, isUseRules, summaryRules, modal } = currentManualContentState;
-    const manualContent = {};
+    const { category, unreadableArticles } = currentManualContentState;
 
     unreadableArticles.forEach((article, idx) => {
         const textarea = document.getElementById(`manual-content-${idx}`);
         if (textarea && textarea.value.trim()) {
             const content = textarea.value.trim();
-            manualContent[article.index - 1] = content;
-            // Save to cache for future use in other categories
+
+            // Save directly to the article object in global state
+            const actualArticle = articles.find(a => a.url === article.url);
+            if (actualArticle) {
+                actualArticle.manualContent = content;
+            }
+
+            // Also save to cache as fallback for other categories that might share this url
             saveCachedContent(article.url, content);
         }
     });
 
-    // Close modal
+    saveState(); // Persist to newsletters.json
     closeManualContentModal();
 
-    const btnText = document.getElementById(`gen-btn-text-${category}`);
-    if (btnText) btnText.textContent = 'Generating...';
-
-    try {
-        const articlesEl = document.getElementById('editor-summary-articles');
-        const articlesText = articlesEl ? articlesEl.value.trim() : '';
-
-        const res = await fetch('/api/articles/summarize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt: `Category: ${category}\n\nArticles to summarize:\n\n${articlesText}`,
-                useRules: isUseRules,
-                summaryRules,
-                category,
-                articles: allArticles,
-                model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
-                manualContent,
-            }),
-            timeout: 60000,
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            const resultText = data.resultText || '';
-            newsletterContent[category].result = resultText;
-            saveState();
-            const resultEl = document.getElementById('editor-result');
-            if (resultEl) resultEl.value = resultText;
-        } else {
-            alert('Generation failed: ' + (data.error || 'Unknown error'));
-        }
-    } catch (e) {
-        console.error('Summary generation error:', e);
-        alert('Error generating summary: ' + (e.message || 'Unknown error'));
-    } finally {
-        if (btnText) btnText.textContent = 'Generate Summary';
-    }
+    // Re-run generation now that manual content is saved on the articles. This
+    // reuses the exact same request path as a normal click, so the content just
+    // provided is guaranteed to be included, and if any article is still
+    // unreadable (or a different one becomes unreadable on this pass) the modal
+    // re-opens asking only for what's still missing, pre-filled with anything
+    // already provided.
+    await generateSummary(category);
 };
 
 window.generateSummary = async (category) => {
-    const articlesEl = document.getElementById('editor-summary-articles');
-    const articlesText = articlesEl ? articlesEl.value.trim() : '';
-    const resultEl = document.getElementById('editor-result');
-    const currentResult = resultEl ? resultEl.value.trim() : '';
-    const rulesOnEl = document.getElementById(`rules-on-${category}`);
-    const isUseRules = rulesOnEl ? rulesOnEl.checked : true;
+    const articlesText = getArticlesTextForCategory(category);
+    const isUseRules = getUseRulesForCategory(category);
     const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
     const categoryArticles = getSummaryArticlesForCategory(category);
     const btnText = document.getElementById(`gen-btn-text-${category}`);
 
-    // Pre-populate manual content from local cache
-    const manualContent = {};
-    categoryArticles.forEach((article, index) => {
-        const cached = getCachedContent(article.url);
-        if (cached) {
-            manualContent[index] = cached;
-        }
-    });
-
     if (!articlesText) return alert('Add articles in the middle box, or click Sync from Article View picks.');
     if (categoryArticles.length === 0) return alert(`No articles picked for ${category}. In Article View, enter a rank number for each article.`);
 
-    btnText.textContent = 'Generating...';
+    if (btnText) btnText.textContent = 'Generating...';
 
     try {
-        const res = await fetch('/api/articles/summarize', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt: `Category: ${category}\n\nArticles to summarize:\n\n${articlesText}`,
-                useRules: isUseRules,
-                summaryRules,
-                category,
-                articles: categoryArticles,
-                manualContent,
-                model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
-            }),
-            timeout: 60000,
-        });
-        const data = await res.json();
+        const data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules);
 
         if (data.success) {
-            const resultText = data.resultText || '';
-            newsletterContent[category].result = resultText;
-            saveState();
-            if (resultEl) resultEl.value = resultText;
+            applyGeneratedResult(category, data.resultText);
         } else if (data.needsManualContent && data.unreadableArticles) {
             // Show modal for unreadable articles
             showManualContentModal(category, data.unreadableArticles, categoryArticles, isUseRules, summaryRules);
@@ -3474,8 +3534,151 @@ window.generateSummary = async (category) => {
         const errMsg = e.message || 'Unknown error';
         alert(`Error generating summary: ${errMsg}\n\nYour manual edits are preserved. Check that:\n- API keys are configured\n- Articles are accessible\n- You have API credits remaining`);
     } finally {
-        btnText.textContent = 'Generate Summary';
+        if (btnText) btnText.textContent = 'Generate Summary';
     }
+};
+
+// Generates summaries for all four categories in one go. Any articles that
+// can't be fetched across ANY of the categories are collected into a single
+// modal so the admin is asked once for everything that's missing, instead of
+// being interrupted category-by-category.
+async function runSummarizeAllPass(categories) {
+    const btnText = document.getElementById('summarize-all-btn-text');
+    if (btnText) btnText.textContent = 'Summarizing All...';
+
+    const pending = [];
+    const succeeded = [];
+    const skipped = [];
+
+    try {
+        for (const category of categories) {
+            const articlesText = getArticlesTextForCategory(category);
+            const isUseRules = getUseRulesForCategory(category);
+            const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
+            const categoryArticles = getSummaryArticlesForCategory(category);
+
+            if (!articlesText || categoryArticles.length === 0) {
+                skipped.push(category);
+                continue;
+            }
+
+            let data;
+            try {
+                data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules);
+            } catch (e) {
+                console.error(`Summarize All error for ${category}:`, e);
+                skipped.push(`${category} (${e.message || 'request failed'})`);
+                continue;
+            }
+
+            if (data.success) {
+                applyGeneratedResult(category, data.resultText);
+                succeeded.push(category);
+            } else if (data.needsManualContent && data.unreadableArticles) {
+                pending.push({ category, unreadableArticles: data.unreadableArticles, categoryArticles, isUseRules, summaryRules });
+            } else {
+                skipped.push(`${category} (${data.error || 'unknown error'})`);
+            }
+        }
+
+        if (pending.length > 0) {
+            showMultiCategoryManualContentModal(pending);
+            return;
+        }
+
+        let msg = '';
+        if (succeeded.length) msg += `Generated: ${succeeded.join(', ')}.`;
+        if (skipped.length) msg += `${msg ? '\n' : ''}Skipped: ${skipped.join(', ')}.`;
+        alert(msg || 'Nothing to summarize.');
+    } finally {
+        if (btnText) btnText.textContent = 'Summarize All';
+    }
+}
+
+window.summarizeAll = async () => {
+    await runSummarizeAllPass(['MED', 'THC', 'CBD', 'INV']);
+};
+
+window.showMultiCategoryManualContentModal = (pending) => {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-[rgba(22,34,30,0.5)] z-[2000] flex items-center justify-center p-4 backdrop-blur-md';
+    modal.id = 'multi-manual-content-modal';
+    modal.onclick = (e) => e.target === modal && closeMultiManualContentModal();
+
+    const totalCount = pending.reduce((sum, p) => sum + p.unreadableArticles.length, 0);
+
+    let html = `
+        <div onclick="event.stopPropagation()" class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Missing Article Content</h2>
+            <p class="text-sm text-gray-600 mb-4">${totalCount} article(s) across ${pending.length} newsletter(s) couldn't be fetched. Please paste their content below:</p>
+    `;
+
+    pending.forEach((entry, catIdx) => {
+        html += `<h3 class="font-bold text-sm mt-5 mb-2 text-[#333]">${entry.category}</h3>`;
+        entry.unreadableArticles.forEach((article, idx) => {
+            const actualArticle = articles.find(a => a.url === article.url) || article;
+            const currentContent = actualArticle.manualContent || getCachedContent(article.url) || '';
+            const hasContent = !!currentContent;
+            html += `
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <h4 class="font-semibold text-sm">${article.index}. ${article.title}</h4>
+                        ${hasContent ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Text Provided</span>' : ''}
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">${article.url}</p>
+                    <textarea id="manual-content-multi-${catIdx}-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${currentContent}</textarea>
+                </div>
+            `;
+        });
+    });
+
+    html += `
+        <div class="flex gap-3 justify-end">
+            <button onclick="closeMultiManualContentModal()" class="btn btn-secondary px-4 py-2">Cancel</button>
+            <button onclick="submitMultiManualContent()" class="btn btn-primary px-4 py-2">Generate with Manual Content</button>
+        </div>
+    `;
+
+    modal.innerHTML = html;
+    currentMultiManualContentState = { pending };
+    document.body.appendChild(modal);
+};
+
+window.closeMultiManualContentModal = () => {
+    const modal = document.getElementById('multi-manual-content-modal');
+    if (modal) modal.remove();
+    currentMultiManualContentState = null;
+    const btnText = document.getElementById('summarize-all-btn-text');
+    if (btnText) btnText.textContent = 'Summarize All';
+};
+
+window.submitMultiManualContent = async () => {
+    if (!currentMultiManualContentState) {
+        alert('Modal state lost. Please try again.');
+        return;
+    }
+    const { pending } = currentMultiManualContentState;
+
+    pending.forEach((entry, catIdx) => {
+        entry.unreadableArticles.forEach((article, idx) => {
+            const textarea = document.getElementById(`manual-content-multi-${catIdx}-${idx}`);
+            if (textarea && textarea.value.trim()) {
+                const content = textarea.value.trim();
+                const actualArticle = articles.find(a => a.url === article.url);
+                if (actualArticle) actualArticle.manualContent = content;
+                saveCachedContent(article.url, content);
+            }
+        });
+    });
+
+    saveState();
+    const modal = document.getElementById('multi-manual-content-modal');
+    if (modal) modal.remove();
+    currentMultiManualContentState = null;
+
+    // Retry only the categories that were still missing content; anything that
+    // already succeeded on the first pass is left as-is.
+    await runSummarizeAllPass(pending.map(p => p.category));
 };
 
 window.updateSummary = (category, index, field, value) => {
@@ -4522,7 +4725,7 @@ window.generateNewsletters = async () => {
         newsletters[cat] = {
             html,
             resultText,
-            articles: articles.filter(a => ['Y', 'YM'].includes(a.status) && a.categories && a.categories.includes(cat)),
+            articles: getArticlesByPickOrder(cat).filter(a => ['Y', 'YM'].includes(a.status)),
             inspirationalImage: inspirationalImg,
         };
     }
@@ -4603,7 +4806,7 @@ async function ensureInspirationalImageOnPurablis() {
 
 async function ensureAllArticleImagesOnPurablis(options = {}) {
     const { silent = false } = options;
-    const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
+    const relevant = articles.filter(a => (['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) || a.status === 'COOL FINDS');
     const withImages = relevant.filter(a => {
         const hasImage = a.image || a.originalImageUrl;
         const wantsPublish = a.publishImage !== false;
@@ -4662,7 +4865,7 @@ window.publishAllImagesToPurablis = async () => {
         btn.textContent = 'Publish Selected to purablis';
     }
     if (result.ok === 0 && result.fail === 0) {
-        const relevant = articles.filter(a => (a.categories && a.categories.length > 0) || a.status === 'COOL FINDS');
+        const relevant = articles.filter(a => (['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) || a.status === 'COOL FINDS');
         const allPublished = relevant.every(a => !a.image || (a.publishedImageUrl && isPurablisUrl(a.publishedImageUrl)));
         alert(allPublished ? 'All images are already on purablis.com.' : 'No images to publish. Select images for articles first.');
         return;
@@ -4682,7 +4885,7 @@ window.downloadAllImagesZip = async () => {
     const withImages =
         articles
             .filter(a =>
-                (a.categories && a.categories.length > 0) ||
+                (['MED', 'THC', 'CBD', 'INV'].some(cat => isCategoryRankIncluded(a, cat))) ||
                 a.status === 'COOL FINDS',
             ).filter(a => a.image || a.originalImageUrl);
 
@@ -5526,7 +5729,7 @@ function getSummaryArticlesForCategory(category) {
     const orderKeys = parseCategoryPickOrder(category);
 
     // Only return articles specified in pick order, not all eligible articles
-    if (orderKeys.length === 0) return eligible.slice(0, 4); // Default to first 4 if no pick order
+    if (orderKeys.length === 0) return eligible.slice(0, 3); // Default to first 3 if no pick order
 
     const result = [];
     const used = new Set();

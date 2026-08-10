@@ -1201,7 +1201,7 @@ router.post('/summarize', async (req, res) => {
         }));
 
         // Check for unreadable articles and accept manual content override
-        const { manualContent } = req.body;
+        const { manualContent, confirmed } = req.body;
         const unreadableArticles = fetchedArticles
             .map((article, index) => ({
                 ...article,
@@ -1214,9 +1214,12 @@ router.post('/summarize', async (req, res) => {
             articles.some(a => a.url === article.url)
         );
 
-        // If there are unreadable selected articles and no manual content provided, ask the user to provide it
-        const needsManualInput = unreadableSelectedArticles.some(a => !manualContent || !manualContent[a.index - 1] || manualContent[a.index - 1].trim() === '');
-        if (unreadableSelectedArticles.length > 0 && needsManualInput) {
+        // Always show the manual-content prompt for unreadable articles, even when
+        // cached/previously-saved text exists for them — the modal pre-fills that text
+        // so the user can see and confirm it (or replace it) rather than it being
+        // silently reused. Only skip the prompt once the client has explicitly
+        // confirmed via that modal (the retry request sets confirmed: true).
+        if (unreadableSelectedArticles.length > 0 && !confirmed) {
             return res.status(400).json({
                 success: false,
                 error: `${unreadableSelectedArticles.length} selected article(s) could not be fetched`,

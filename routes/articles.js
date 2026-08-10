@@ -1252,7 +1252,14 @@ router.post('/summarize', async (req, res) => {
                     { role: "user", content: userMessage },
                 ],
             });
-            content = message.content[0].text;
+            content = getAnthropicTextContent(message);
+        }
+
+        if (!content || !content.trim()) {
+            return res.status(500).json({
+                success: false,
+                error: 'Model returned no summary text (empty response).',
+            });
         }
 
         res.json({

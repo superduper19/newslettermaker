@@ -1246,8 +1246,9 @@ router.post('/summarize', async (req, res) => {
         } else {
             const message = await anthropic.messages.create({
                 model: apiModel,
-                max_tokens: 4000,
+                max_tokens: 8000,
                 system: systemPrompt,
+                output_config: { effort: 'low' },
                 messages: [
                     { role: "user", content: userMessage },
                 ],

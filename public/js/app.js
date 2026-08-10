@@ -6342,8 +6342,8 @@ async function searchMoreArticles() {
         );
 
         if (data.success && data.articles) {
-            const existingUrls = new Set(articles.map(a => normalizeUrl(a.url)));
-            const newArticles = data.articles.filter(a => !existingUrls.has(normalizeUrl(a.url)));
+            const existingUrlSet = new Set(articles.map(a => normalizeUrl(a.url)));
+            let newArticles = data.articles.filter(a => !existingUrlSet.has(normalizeUrl(a.url)));
 
             // Assign IDs continuing from current max; mark when added
             const maxId = articles.reduce((max, a) => Math.max(max, a.id || 0), 0);
@@ -6353,6 +6353,8 @@ async function searchMoreArticles() {
                 a.addedAt = addedAt;
             });
 
+            // Add the raw results immediately so they're never lost, even if
+            // verification/categorization below is slow or fails.
             articles = articles.concat(newArticles);
             saveState();
             renderArticles();
@@ -6360,8 +6362,34 @@ async function searchMoreArticles() {
             const dupeCount = data.articles.length - newArticles.length;
             let msg = `Added ${newArticles.length} new articles.`;
             if (dupeCount > 0) msg += ` (${dupeCount} duplicates skipped)`;
-            status.textContent = msg;
-            showWithClass(status, 'block');
+
+            if (data.stage === 'raw' && newArticles.length > 0) {
+                msg += ' Verifying & categorizing...';
+                status.textContent = msg;
+                showWithClass(status, 'block');
+                try {
+                    const verified = await verifyArticlesRemote(newArticles);
+                    const verifiedByUrl = {};
+                    verified.forEach(a => { verifiedByUrl[normalizeUrl(a.url)] = a; });
+                    articles = articles.map(a => {
+                        const v = verifiedByUrl[normalizeUrl(a.url)];
+                        return v ? { ...v, id: a.id, addedAt: a.addedAt } : a;
+                    }).filter(a => {
+                        // Drop newly-added articles that failed verification (rejected/invalid URL)
+                        const wasNew = newArticles.some(n => n.id === a.id);
+                        return !wasNew || verifiedByUrl[normalizeUrl(a.url)];
+                    });
+                    saveState();
+                    renderArticles();
+                    status.textContent = `Added and verified ${verified.length} new articles.` + (dupeCount > 0 ? ` (${dupeCount} duplicates skipped)` : '');
+                } catch (verifyErr) {
+                    console.error("Verification error (raw articles were kept):", verifyErr);
+                    status.textContent = `Added ${newArticles.length} new articles, but verification/categorization failed or timed out — kept them unverified.`;
+                }
+            } else {
+                status.textContent = msg;
+                showWithClass(status, 'block');
+            }
         } else {
             const clarification = await getAiClarificationFromError(data);
             const details = clarification || String(data.details || '').trim();
@@ -6383,6 +6411,26 @@ async function searchMoreArticles() {
 function normalizeUrl(url) {
     if (!url) return '';
     return url.replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
+}
+
+// Stage 2 (URL verification + categorization) is a separate, slower request from
+// the AI search itself, so a timeout there never throws away search results the
+// user already paid Claude credits for. Callers should already have the raw
+// articles rendered/saved before calling this.
+async function verifyArticlesRemote(rawArticles) {
+    const response = await fetch('/api/articles/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articles: rawArticles }),
+    });
+    const data = await parseJsonResponse(
+        response,
+        'Verification failed: server returned HTML instead of JSON (often a timeout). Your found articles were kept, unverified.',
+    );
+    if (!data.success || !Array.isArray(data.articles)) {
+        throw new Error(data.error || 'Verification failed.');
+    }
+    return data.articles;
 }
 
 // --- MODIFY EXISTING ARTICLES ---
@@ -6633,20 +6681,44 @@ if (searchBtn) {
             if (data.success) {
                 console.log("AI Search Results:", data.articles);
                 const now = new Date().toISOString();
+                const addedAtByUrl = {};
                 data.articles.forEach(a => {
                     if (!a.addedAt) a.addedAt = now;
+                    addedAtByUrl[normalizeUrl(a.url)] = a.addedAt;
                 });
-                articles = data.articles; // Store in state
-                batchFilter = null; // Clear batch filter so new articles show up
-                renderArticles(); // Render to grid
 
-                // Stay on page, show success message and next button
+                // Show + save the raw results immediately so they're never lost,
+                // even if the verification/categorization step below is slow or fails.
+                articles = data.articles;
+                batchFilter = null; // Clear batch filter so new articles show up
+                saveState();
+                renderArticles();
+
                 if (searchStatus) {
-                    searchStatus.textContent = `Found ${data.articles.length} articles!`;
+                    searchStatus.textContent = data.stage === 'raw'
+                        ? `Found ${data.articles.length} articles. Verifying & categorizing...`
+                        : `Found ${data.articles.length} articles!`;
                     showWithClass(searchStatus, 'inline');
                 }
                 if (nextStep2Btn) {
                     showWithClass(nextStep2Btn, 'inline-block');
+                }
+
+                if (data.stage === 'raw') {
+                    try {
+                        const verified = await verifyArticlesRemote(data.articles);
+                        articles = verified.map(a => ({ ...a, addedAt: addedAtByUrl[normalizeUrl(a.url)] || now }));
+                        saveState();
+                        renderArticles();
+                        if (searchStatus) {
+                            searchStatus.textContent = `Found and verified ${articles.length} articles!`;
+                        }
+                    } catch (verifyErr) {
+                        console.error("Verification error (raw articles were kept):", verifyErr);
+                        if (searchStatus) {
+                            searchStatus.textContent = `Found ${data.articles.length} articles, but verification/categorization failed or timed out — kept them unverified. You can edit categories manually, or search again to retry.`;
+                        }
+                    }
                 }
 
             } else {

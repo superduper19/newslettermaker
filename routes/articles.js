@@ -834,14 +834,48 @@ Example format:
             });
         }
 
-        console.log(`AI found ${rawArticles.length} articles. Starting Stage 2: Verification & Categorization...`);
+        console.log(`AI found ${rawArticles.length} articles. Returning raw results before Stage 2 (Verification & Categorization) so nothing is lost if that step is slow.`);
 
-        // Stage 2: Verification & Categorization
+        // Return the AI-found articles immediately, lightly cleaned but NOT yet
+        // URL-verified or categorized. Stage 2 (verification/categorization) is a
+        // separate, non-AI, network-heavy step done via POST /api/articles/verify —
+        // splitting it out means the (paid, Claude-metered) search work is never lost
+        // even if verification is slow or times out.
+        const rawCleaned = rawArticles.map((article, i) => ({
+            ...cleanArticleData(article, 0),
+            id: i + 1,
+            needsVerification: true,
+        }));
+
+        res.json({
+            success: true,
+            newsletterName,
+            source: 'ai',
+            stage: 'raw',
+            count: rawCleaned.length,
+            articles: rawCleaned,
+        });
+
+    } catch (error) {
+        console.error('Error with AI Search:', error);
+        res.status(500).json(buildAiErrorResponse(error, model));
+    }
+});
+
+// POST /api/articles/verify - Stage 2: URL verification & categorization for
+// articles already found by /search. Kept separate so a slow/timed-out
+// verification pass never throws away the (Claude-metered) search results.
+router.post('/verify', async (req, res) => {
+    try {
+        const { articles: rawArticles } = req.body || {};
+        if (!Array.isArray(rawArticles) || rawArticles.length === 0) {
+            return res.status(400).json({ error: 'No articles provided to verify.' });
+        }
+
         const processArticle = async (article) => {
-            // Clean first
             let cleaned = cleanArticleData(article, 0);
 
-            // 1. Verify URL (skipScraping = true, which resolves redirects instantly but skips downloading body)
+            // Verify URL (skipScraping = true, which resolves redirects instantly but skips downloading body)
             if (!cleaned.url || cleaned.url.includes('example.com') || cleaned.url === '#') {
                 return null;
             }
@@ -852,12 +886,12 @@ Example format:
                 console.log(`Skipping invalid URL (failed verification): ${cleaned.url}`);
                 return null;
             }
-            
+
             if (finalUrl) {
                 cleaned.url = finalUrl;
             }
 
-            // 2. Categorize (and apply rejection rules from brief, using description fallback if unreadable/skipped)
+            // Categorize (and apply rejection rules from brief, using description fallback if unreadable/skipped)
             cleaned = categorizeArticle(cleaned, content);
 
             if (!cleaned) {
@@ -876,19 +910,16 @@ Example format:
         // Re-index
         const finalArticles = validArticles.map((a, i) => ({ ...a, id: i + 1 }));
 
-        console.log(`Returning ${finalArticles.length} valid articles after categorization.`);
+        console.log(`Verification complete: ${finalArticles.length}/${rawArticles.length} articles valid after categorization.`);
 
         res.json({
             success: true,
-            newsletterName,
-            source: 'ai',
             count: finalArticles.length,
             articles: finalArticles,
         });
-
     } catch (error) {
-        console.error('Error with AI Search:', error);
-        res.status(500).json(buildAiErrorResponse(error, model));
+        console.error('Error with article verification:', error);
+        res.status(500).json(buildAiErrorResponse(error));
     }
 });
 

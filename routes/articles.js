@@ -80,7 +80,7 @@ const cleanArticleData = (row, index) => {
 };
 
 // Helper to verify URL and fetch content
-const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
+const attemptFetchAndAnalyze = async (url, skipScraping = false, title = '') => {
     if (!url) return { isValid: false, content: '' };
 
     // If we want to skip scraping, and the URL is already a final publisher URL (not a google search redirect),
@@ -195,6 +195,18 @@ const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
         // Be lenient: if a redirect fails to resolve due to network issues, preserve the article rather than dropping it.
         return { isValid: true, isReadable: false, content: '', finalUrl: url };
     }
+};
+
+// Sites intermittently block/rate-limit the first request (especially when several
+// categories fetch the same URL back-to-back) but succeed on a second try shortly
+// after, so retry once before giving up and asking the user for manual content.
+const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
+    const first = await attemptFetchAndAnalyze(url, skipScraping, title);
+    if (skipScraping || !first.isValid || first.isReadable) return first;
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const retry = await attemptFetchAndAnalyze(url, skipScraping, title);
+    return retry.isReadable ? retry : first;
 };
 
 // Helper to categorize article based on content (implements newsletter_categorization_brief.md)

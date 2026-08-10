@@ -168,10 +168,24 @@ const attemptFetchAndAnalyze = async (url, skipScraping = false, title = '') => 
                              lowerContent.includes('subscription required') ||
                              lowerContent.includes('archive.is') ||
                              lowerContent.includes('please wait while your request is being verified') ||
-                             lowerContent.includes('pardon our interruption');
+                             lowerContent.includes('pardon our interruption') ||
+                             // Metered-paywall stubs (e.g. Scientific American) served on a later
+                             // fetch of the same URL instead of the full article the first fetch got.
+                             lowerContent.includes('free article') ||
+                             lowerContent.includes('already a subscriber') ||
+                             lowerContent.includes('sign in to continue') ||
+                             lowerContent.includes('sign in to read') ||
+                             lowerContent.includes('log in to continue') ||
+                             lowerContent.includes('create a free account') ||
+                             lowerContent.includes('unlock this article') ||
+                             lowerContent.includes('continue reading with') ||
+                             lowerContent.includes('digital subscription');
 
-        // Check if there is enough content to be considered a readable article (at least 200 chars)
-        const isTooShort = cleanedContent.length < 200;
+        // Check if there is enough content to be considered a readable article. Real
+        // scraped articles run well into the thousands of characters; short-content
+        // paywall/metering stubs and nav-only pages can still clear a low bar (e.g. 200
+        // chars) while containing no real article body, so require a lot more headroom.
+        const isTooShort = cleanedContent.length < 600;
 
         let isTitleMissing = false;
         if (title && title.length > 0) {

@@ -477,6 +477,8 @@ const extractJSON = (text) => {
 
 // Shared Model Mapping
 const MODEL_MAPPING = {
+    'claude-opus-5': 'claude-opus-5',
+    'claude-opus-5-extended': 'claude-opus-5',
     'claude-opus-4-8': 'claude-opus-4-8',
     'claude-opus-4-7': 'claude-opus-4-7',
     'claude-opus-4-7-extended': 'claude-opus-4-7',
@@ -510,7 +512,7 @@ function getAnthropicSearchConfig(userModel) {
             || (extended ? '32000' : '16000'),
         10,
     );
-    const useDynamicWebSearch = /opus-4-[678]|sonnet-4-6/.test(apiModel);
+    const useDynamicWebSearch = /opus-4-[678]|opus-5|sonnet-4-6/.test(apiModel);
     const request = {
         model: apiModel,
         max_tokens: maxTokens,
@@ -520,10 +522,10 @@ function getAnthropicSearchConfig(userModel) {
             max_uses: maxWebUses,
         }],
     };
-    if (extended && /opus-4-[678]|sonnet-4-6/.test(apiModel)) {
+    if (extended && /opus-4-[678]|opus-5|sonnet-4-6/.test(apiModel)) {
         request.thinking = { type: 'adaptive' };
         request.output_config = {
-            effort: /opus-4-[78]/.test(apiModel) ? 'xhigh' : 'high',
+            effort: /opus-4-[78]|opus-5/.test(apiModel) ? 'xhigh' : 'high',
         };
     }
     return request;
@@ -556,14 +558,16 @@ function resolveAiProvider(model) {
     }
 
     const isGemini = apiModel.toLowerCase().includes('gemini');
-    
-    // We now require Gemini for Phase 1 web searching regardless of the selected model
-    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+
+    // Gemini is only required when Gemini (or OpenRouter, which has no native search)
+    // is actually doing the web search. Claude models search with their own native
+    // web_search tool, so they don't need a Gemini key at all.
+    if ((isGemini || isOpenRouter) && !process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
         return {
-            error: 'GEMINI_API_KEY is not configured on the server. It is required for the web search engine. Add it in Vercel.',
+            error: 'GEMINI_API_KEY is not configured on the server. It is required for the web search engine when using a Gemini or OpenRouter model. Add it in Vercel, or switch to a Claude model.',
         };
     }
-    
+
     if (isOpenRouter && !process.env.OPENROUTER_API_KEY) {
         return {
             error: 'OPENROUTER_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
@@ -673,22 +677,56 @@ router.post('/search', async (req, res) => {
 
         const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
-        // --- PHASE 1: WEB SEARCH (GEMINI) ---
-        console.log(`Phase 1: Fetching raw search results using Gemini Search Engine`);
+        // --- PHASE 1: WEB SEARCH ---
+        // Claude models search with Anthropic's native web_search tool (no Google/Gemini
+        // dependency). Gemini and OpenRouter models fall back to Gemini's Google Search
+        // grounding since they have no equivalent native search of their own.
+        const useClaudeSearch = !isGemini && !provider.isOpenRouter;
+        console.log(`Phase 1: Fetching raw search results using ${useClaudeSearch ? 'Claude native web_search' : 'Gemini Search Engine'}`);
         let rawSearchResults = "";
-        try {
-            // Phase 1 ALWAYS uses Gemini for Google Search Grounding.
-            // We use the 'gemini-3.1-pro-preview' equivalent for this step since it supports tools.
-            const searchModel = genAI.getGenerativeModel({
-                model: 'gemini-3.1-pro-preview',
-                tools: [{ googleSearch: {} }],
-            });
-            let existingUrlText = '';
-            if (existingUrls && existingUrls.length > 0) {
-                existingUrlText = `\nCRITICAL ANTI-DUPLICATION RULE: The user already has the following articles in their newsletter. You MUST NOT include these articles, and you MUST NOT include any articles from different publishers that cover the exact same story/topic. Find NEW stories only:\n${existingUrls.join('\n')}\n`;
-            }
 
-            const searchPrompt = `You are a research assistant. Today's date is ${today}. 
+        let existingUrlText = '';
+        if (existingUrls && existingUrls.length > 0) {
+            existingUrlText = `\nCRITICAL ANTI-DUPLICATION RULE: The user already has the following articles in their newsletter. You MUST NOT include these articles, and you MUST NOT include any articles from different publishers that cover the exact same story/topic. Find NEW stories only:\n${existingUrls.join('\n')}\n`;
+        }
+
+        if (useClaudeSearch) {
+            try {
+                const searchConfig = getAnthropicSearchConfig(model);
+                const searchPrompt = `You are a research assistant. Today's date is ${today}.
+Search the web for news articles matching the following user request: "${prompt}"
+${existingUrlText}
+CRITICAL DATE RULE: If the user specifies a date range or cutoff (e.g. "after June 1st, 2026"), you MUST strictly enforce it. Only include articles published within that date range. Do NOT include articles outside that range. Verify the publication date before including each article.
+
+CRITICAL URL RULE: You MUST provide the full, raw URL string starting with http:// or https://, taken directly from your search results. DO NOT use citation footnotes like [1] or [2]. DO NOT guess, hallucinate, or reverse-engineer URLs.
+
+SOURCE & DIVERSITY RULE: Prioritize checking well-known industry sources such as mjbizdaily.com, norml.org, and ganjapreneur.com. However, ensure source diversity. Do not include more than 2-3 articles from any single source unless the information is highly unique and cannot be found elsewhere.
+
+Please return a comprehensive list of the articles you found, including their titles, exact URLs from the search results, a short description of each, and their publication dates.`;
+
+                const searchMessage = await anthropic.messages.create({
+                    ...searchConfig,
+                    system: searchPrompt,
+                    messages: [
+                        { role: 'user', content: 'Find the articles now.' },
+                    ],
+                }, { timeout: 300000 });
+
+                rawSearchResults = getAnthropicTextContent(searchMessage);
+                console.log("Phase 1 Complete. Raw search results fetched via Claude.");
+            } catch (searchErr) {
+                console.error('Phase 1 Search Error (Claude):', searchErr);
+                return res.status(500).json(buildAiErrorResponse(searchErr, apiModel));
+            }
+        } else {
+            try {
+                // We use the 'gemini-3.1-pro-preview' equivalent for this step since it supports tools.
+                const searchModel = genAI.getGenerativeModel({
+                    model: 'gemini-3.1-pro-preview',
+                    tools: [{ googleSearch: {} }],
+                });
+
+                const searchPrompt = `You are a research assistant. Today's date is ${today}.
 Search the web for news articles matching the following user request: "${prompt}"
 ${existingUrlText}
 CRITICAL DATE RULE: If the user specifies a date range or cutoff (e.g. "after June 1st, 2026"), you MUST strictly enforce it. Only include articles published within that date range. Do NOT include articles outside that range. Verify the publication date before including each article.
@@ -699,13 +737,14 @@ SOURCE & DIVERSITY RULE: Prioritize checking well-known industry sources such as
 
 Please return a comprehensive list of the articles you found, including their titles, exact URLs from the search results, a short description of each, and their publication dates.`;
 
-            const searchResult = await searchModel.generateContent(searchPrompt);
-            console.log("Gemini search response object:", JSON.stringify(searchResult.response, null, 2));
-            rawSearchResults = await searchResult.response.text();
-            console.log("Phase 1 Complete. Raw search results fetched.");
-        } catch (searchErr) {
-            console.error('Phase 1 Search Error:', searchErr);
-            return res.status(500).json(buildAiErrorResponse(searchErr));
+                const searchResult = await searchModel.generateContent(searchPrompt);
+                console.log("Gemini search response object:", JSON.stringify(searchResult.response, null, 2));
+                rawSearchResults = await searchResult.response.text();
+                console.log("Phase 1 Complete. Raw search results fetched via Gemini.");
+            } catch (searchErr) {
+                console.error('Phase 1 Search Error (Gemini):', searchErr);
+                return res.status(500).json(buildAiErrorResponse(searchErr));
+            }
         }
 
         // --- PHASE 2: JSON EXTRACTION (SELECTED MODEL) ---

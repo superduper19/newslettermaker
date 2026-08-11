@@ -1273,11 +1273,13 @@ router.post('/summarize', async (req, res) => {
             });
             content = response.choices[0]?.message?.content || '';
         } else {
+            // effort is unsupported on Haiku (and errors outright there) — only Opus/Sonnet take it.
+            const supportsEffort = !apiModel.includes('haiku');
             const message = await anthropic.messages.create({
                 model: apiModel,
                 max_tokens: 8000,
                 system: systemPrompt,
-                output_config: { effort: 'low' },
+                ...(supportsEffort ? { output_config: { effort: 'low' } } : {}),
                 messages: [
                     { role: "user", content: userMessage },
                 ],

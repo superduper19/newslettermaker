@@ -9,6 +9,11 @@ This file serves as a persistent record of changes made to this project and cruc
 3. **EXPLICIT ERRORS OVER FALLBACKS**: If an LLM encounters a billing issue, quota limit, or missing capability, the system MUST explicitly report the exact error to the user. Do NOT automatically silently switch to another LLM to hide the error. 
 4. **STRICT MODEL NAMES**: Do not alter model names based on assumptions of what "should" exist. Ensure the exact model identifiers expected by the APIs (e.g., `gemini-3.1-pro-preview`) are used, even if a stable version "should" be out.
 
+## [2026-08-17] - Archive.is Source Labels in Final Email
+
+### Fixed
+- **"More at archive.is" in newsletter emails**: When an article URL is an archive.is (or archive.ph/today) snapshot that embeds the original publisher URL, the email "More at ..." label now uses the original domain (e.g. `https://archive.is/https://www.wsj.com/...` displays as **More at wsj.com...**). The clickable link still goes to the archive snapshot so paywalled articles remain readable.
+
 ## [2026-07-20] - Image Upload Transparency Fixes
 
 ### Fixed

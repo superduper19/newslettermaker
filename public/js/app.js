@@ -4035,10 +4035,43 @@ function setArticleImageSrcWithFallback(imgEl, article, url) {
     imgEl.removeAttribute('onerror');
 }
 
+function isArchiveSnapshotHost(hostname) {
+    return /^archive\.(is|ph|today|li|md|vn|fo)$/i.test(String(hostname || '').replace(/^www\./i, ''));
+}
+
+function unwrapArchivedArticleUrl(url) {
+    if (!url) return url;
+    try {
+        const parsed = new URL(url);
+        if (!isArchiveSnapshotHost(parsed.hostname)) return url;
+
+        const queryUrl = parsed.searchParams.get('url');
+        if (queryUrl && /^https?:\/\//i.test(queryUrl)) {
+            return queryUrl;
+        }
+
+        let path = parsed.pathname || '';
+        try {
+            path = decodeURIComponent(path);
+        } catch (e) {
+            // Keep the raw path if it is not URI-encoded.
+        }
+
+        const match = path.match(/https?:\/{1,2}\S+/i);
+        if (!match) return url;
+
+        const embedded = match[0].replace(/^(https?:\/)([^/])/i, '$1/$2');
+        new URL(embedded);
+        return embedded;
+    } catch (e) {
+        return url;
+    }
+}
+
 function getSourceLabel(url) {
     if (!url) return 'More at purablis.com...';
     try {
-        const hostname = new URL(url).hostname.replace(/^www\./i, '');
+        const hostname = new URL(unwrapArchivedArticleUrl(url)).hostname.replace(/^www\./i, '');
         return `More at ${hostname}...`;
     } catch (e) {
         return 'More at source...';

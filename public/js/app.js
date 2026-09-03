@@ -3442,7 +3442,7 @@ function buildManualContentMap(categoryArticles) {
 // Single shared network call used by both the per-category "Generate Summary"
 // button and the "Summarize All" flow, so manual-content handling can't drift
 // between the two paths.
-async function requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules) {
+async function requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules, confirmed = false) {
     const manualContent = buildManualContentMap(categoryArticles);
     const res = await fetch('/api/articles/summarize', {
         method: 'POST',
@@ -3454,6 +3454,7 @@ async function requestCategorySummary(category, categoryArticles, articlesText, 
             category,
             articles: categoryArticles,
             manualContent,
+            confirmed,
             model: document.getElementById('ai-model') ? document.getElementById('ai-model').value : '',
         }),
         timeout: 60000,
@@ -3497,16 +3498,13 @@ window.submitManualContent = async () => {
     saveState(); // Persist to newsletters.json
     closeManualContentModal();
 
-    // Re-run generation now that manual content is saved on the articles. This
-    // reuses the exact same request path as a normal click, so the content just
-    // provided is guaranteed to be included, and if any article is still
-    // unreadable (or a different one becomes unreadable on this pass) the modal
-    // re-opens asking only for what's still missing, pre-filled with anything
-    // already provided.
-    await generateSummary(category);
+    // Re-run generation now that manual content is saved on the articles, and mark
+    // this pass as confirmed so the server uses what's provided (even if left as the
+    // pre-filled cached text) instead of asking again in a loop.
+    await generateSummary(category, true);
 };
 
-window.generateSummary = async (category) => {
+window.generateSummary = async (category, confirmed = false) => {
     const articlesText = getArticlesTextForCategory(category);
     const isUseRules = getUseRulesForCategory(category);
     const summaryRules = isUseRules ? normalizeSummaryRules(newsletterContent.summaryRules) : '';
@@ -3519,7 +3517,7 @@ window.generateSummary = async (category) => {
     if (btnText) btnText.textContent = 'Generating...';
 
     try {
-        const data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules);
+        const data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules, confirmed);
 
         if (data.success) {
             applyGeneratedResult(category, data.resultText);
@@ -3542,7 +3540,7 @@ window.generateSummary = async (category) => {
 // can't be fetched across ANY of the categories are collected into a single
 // modal so the admin is asked once for everything that's missing, instead of
 // being interrupted category-by-category.
-async function runSummarizeAllPass(categories) {
+async function runSummarizeAllPass(categories, confirmed = false) {
     const btnText = document.getElementById('summarize-all-btn-text');
     if (btnText) btnText.textContent = 'Summarizing All...';
 
@@ -3564,7 +3562,7 @@ async function runSummarizeAllPass(categories) {
 
             let data;
             try {
-                data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules);
+                data = await requestCategorySummary(category, categoryArticles, articlesText, isUseRules, summaryRules, confirmed);
             } catch (e) {
                 console.error(`Summarize All error for ${category}:`, e);
                 skipped.push(`${category} (${e.message || 'request failed'})`);
@@ -3677,8 +3675,9 @@ window.submitMultiManualContent = async () => {
     currentMultiManualContentState = null;
 
     // Retry only the categories that were still missing content; anything that
-    // already succeeded on the first pass is left as-is.
-    await runSummarizeAllPass(pending.map(p => p.category));
+    // already succeeded on the first pass is left as-is. Mark confirmed so the
+    // server uses what's provided instead of asking again in a loop.
+    await runSummarizeAllPass(pending.map(p => p.category), true);
 };
 
 window.updateSummary = (category, index, field, value) => {

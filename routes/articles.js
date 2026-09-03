@@ -80,7 +80,7 @@ const cleanArticleData = (row, index) => {
 };
 
 // Helper to verify URL and fetch content
-const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
+const attemptFetchAndAnalyze = async (url, skipScraping = false, title = '') => {
     if (!url) return { isValid: false, content: '' };
 
     // If we want to skip scraping, and the URL is already a final publisher URL (not a google search redirect),
@@ -168,10 +168,24 @@ const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
                              lowerContent.includes('subscription required') ||
                              lowerContent.includes('archive.is') ||
                              lowerContent.includes('please wait while your request is being verified') ||
-                             lowerContent.includes('pardon our interruption');
+                             lowerContent.includes('pardon our interruption') ||
+                             // Metered-paywall stubs (e.g. Scientific American) served on a later
+                             // fetch of the same URL instead of the full article the first fetch got.
+                             lowerContent.includes('free article') ||
+                             lowerContent.includes('already a subscriber') ||
+                             lowerContent.includes('sign in to continue') ||
+                             lowerContent.includes('sign in to read') ||
+                             lowerContent.includes('log in to continue') ||
+                             lowerContent.includes('create a free account') ||
+                             lowerContent.includes('unlock this article') ||
+                             lowerContent.includes('continue reading with') ||
+                             lowerContent.includes('digital subscription');
 
-        // Check if there is enough content to be considered a readable article (at least 200 chars)
-        const isTooShort = cleanedContent.length < 200;
+        // Check if there is enough content to be considered a readable article. Real
+        // scraped articles run well into the thousands of characters; short-content
+        // paywall/metering stubs and nav-only pages can still clear a low bar (e.g. 200
+        // chars) while containing no real article body, so require a lot more headroom.
+        const isTooShort = cleanedContent.length < 600;
 
         let isTitleMissing = false;
         if (title && title.length > 0) {
@@ -195,6 +209,18 @@ const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
         // Be lenient: if a redirect fails to resolve due to network issues, preserve the article rather than dropping it.
         return { isValid: true, isReadable: false, content: '', finalUrl: url };
     }
+};
+
+// Sites intermittently block/rate-limit the first request (especially when several
+// categories fetch the same URL back-to-back) but succeed on a second try shortly
+// after, so retry once before giving up and asking the user for manual content.
+const verifyAndAnalyzeUrl = async (url, skipScraping = false, title = '') => {
+    const first = await attemptFetchAndAnalyze(url, skipScraping, title);
+    if (skipScraping || !first.isValid || first.isReadable) return first;
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const retry = await attemptFetchAndAnalyze(url, skipScraping, title);
+    return retry.isReadable ? retry : first;
 };
 
 // Helper to categorize article based on content (implements newsletter_categorization_brief.md)
@@ -1175,7 +1201,7 @@ router.post('/summarize', async (req, res) => {
         }));
 
         // Check for unreadable articles and accept manual content override
-        const { manualContent } = req.body;
+        const { manualContent, confirmed } = req.body;
         const unreadableArticles = fetchedArticles
             .map((article, index) => ({
                 ...article,
@@ -1188,9 +1214,12 @@ router.post('/summarize', async (req, res) => {
             articles.some(a => a.url === article.url)
         );
 
-        // If there are unreadable selected articles and no manual content provided, ask the user to provide it
-        const needsManualInput = unreadableSelectedArticles.some(a => !manualContent || !manualContent[a.index - 1] || manualContent[a.index - 1].trim() === '');
-        if (unreadableSelectedArticles.length > 0 && needsManualInput) {
+        // Always show the manual-content prompt for unreadable articles, even when
+        // cached/previously-saved text exists for them — the modal pre-fills that text
+        // so the user can see and confirm it (or replace it) rather than it being
+        // silently reused. Only skip the prompt once the client has explicitly
+        // confirmed via that modal (the retry request sets confirmed: true).
+        if (unreadableSelectedArticles.length > 0 && !confirmed) {
             return res.status(400).json({
                 success: false,
                 error: `${unreadableSelectedArticles.length} selected article(s) could not be fetched`,
@@ -1244,11 +1273,13 @@ router.post('/summarize', async (req, res) => {
             });
             content = response.choices[0]?.message?.content || '';
         } else {
+            // effort is unsupported on Haiku (and errors outright there) — only Opus/Sonnet take it.
+            const supportsEffort = !apiModel.includes('haiku');
             const message = await anthropic.messages.create({
                 model: apiModel,
                 max_tokens: 8000,
                 system: systemPrompt,
-                output_config: { effort: 'low' },
+                ...(supportsEffort ? { output_config: { effort: 'low' } } : {}),
                 messages: [
                     { role: "user", content: userMessage },
                 ],

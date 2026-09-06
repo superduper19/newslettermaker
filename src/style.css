@@ -657,6 +657,14 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
   @apply bg-linear-to-b from-[rgba(255,255,255,0.98)] to-[rgba(255,250,243,0.95)] text-[#1f3e37] border-t-2 border-t-(--primary) shadow-[0_-8px_18px_rgba(95,77,52,0.06)];
 }
 
+.bulk-tab-btn {
+  @apply py-2 px-3.5 bg-[rgba(255,255,255,0.6)] border border-solid border-[rgba(132,114,83,0.14)] border-b-0 cursor-pointer font-semibold rounded-t-xl text-[0.85rem] text-[#5a6158] [&:not(.active)]:hover:bg-[rgba(47,110,99,0.06)];
+}
+
+.bulk-tab-btn.active {
+  @apply bg-white text-[#1f3e37] border-t-2 border-t-(--primary);
+}
+
 /* Stat Items */
 .stat-item {
   @apply inline-block py-1.75 px-3 rounded-full text-[0.8rem] font-bold bg-[rgba(255,255,255,0.72)] text-[#495057] ml-1 shadow-[0_10px_22px_rgba(95,77,52,0.06)];

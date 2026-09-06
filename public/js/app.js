@@ -4439,6 +4439,43 @@ function isArchiveUrl(url) {
     }
 }
 
+// Regex twin of isArchiveUrl used by unwrapArchivedArticleUrl to detect snapshot hosts.
+function isArchiveSnapshotHost(hostname) {
+    return /^archive\.(is|ph|today|li|md|vn|fo)$/i.test(String(hostname || '').replace(/^www\./i, ''));
+}
+
+// Tries to recover the original publisher URL embedded in an archive.is snapshot
+// link (query ?url= or the URL embedded in the path). Returns the input unchanged
+// when the snapshot doesn't expose the original.
+function unwrapArchivedArticleUrl(url) {
+    if (!url) return url;
+    try {
+        const parsed = new URL(url);
+        if (!isArchiveSnapshotHost(parsed.hostname)) return url;
+
+        const queryUrl = parsed.searchParams.get('url');
+        if (queryUrl && /^https?:\/\//i.test(queryUrl)) {
+            return queryUrl;
+        }
+
+        let path = parsed.pathname || '';
+        try {
+            path = decodeURIComponent(path);
+        } catch (e) {
+            // Keep the raw path if it is not URI-encoded.
+        }
+
+        const match = path.match(/https?:\/{1,2}\S+/i);
+        if (!match) return url;
+
+        const embedded = match[0].replace(/^(https?:\/)([^/])/i, '$1/$2');
+        new URL(embedded);
+        return embedded;
+    } catch (e) {
+        return url;
+    }
+}
+
 function hostnameFromUrl(url) {
     try {
         return new URL(url).hostname.replace(/^www\./i, '');
@@ -4456,7 +4493,10 @@ function getSourceLabel(articleOrUrl) {
     const originalHostname = originalSourceUrl ? hostnameFromUrl(originalSourceUrl) : '';
     if (originalHostname) return `More at ${originalHostname}...`;
     if (!url) return 'More at purablis.com...';
-    const hostname = hostnameFromUrl(url);
+    // For archive.is snapshots with no stored originalSourceUrl, try to auto-recover
+    // the publisher URL embedded in the snapshot link before falling back to the host.
+    const resolvedUrl = isArchiveUrl(url) ? unwrapArchivedArticleUrl(url) : url;
+    const hostname = hostnameFromUrl(resolvedUrl);
     return hostname ? `More at ${hostname}...` : 'More at source...';
 }
 

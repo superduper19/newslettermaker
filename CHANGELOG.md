@@ -83,6 +83,11 @@ This file serves as a persistent record of changes made to this project and cruc
 - **Search engine dropdown** in the nav bar (next to AI Model): **Auto**, **You.com**, **Claude web**, **Gemini Google**. Search controls Phase 1 only; AI Model still controls JSON extraction, summaries, and modifications.
 - Env tuning: `YOUCOM_FRESHNESS`, `YOUCOM_SEARCH_COUNT`, `YOUCOM_COUNTRY`, `YOUCOM_BOOST_DOMAINS`.
 
+## [2026-08-17] - Archive.is Source Labels in Final Email
+
+### Fixed
+- **"More at archive.is" in newsletter emails**: When an article URL is an archive.is (or archive.ph/today) snapshot that embeds the original publisher URL, the email "More at ..." label now uses the original domain (e.g. `https://archive.is/https://www.wsj.com/...` displays as **More at wsj.com...**). The clickable link still goes to the archive snapshot so paywalled articles remain readable.
+
 ## [2026-07-20] - Image Upload Transparency Fixes
 
 ### Fixed

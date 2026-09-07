@@ -1637,6 +1637,23 @@ router.post('/summarize', async (req, res) => {
             systemPrompt = `You are a professional newsletter editor. Create a newsletter-ready summary for the provided category articles only.\n\nWrite exactly 6 to 7 short lines total.\nEach line should be concise, natural, and publication-ready.\nOnly use the fetched article content and article metadata provided by the user.\nDo not use outside knowledge.\nDo not mention URLs in the output.\nFocus on the most important developments across the provided articles for the selected category.\nNever say a link could not be accessed. Summarize every fetched article.`;
         }
 
+        // The editable base prompt names a fixed article count ("3 short sentences,
+        // articles 1, 2 and 3"), which silently stops matching whenever a category
+        // carries a different number — and the model then drops the trailing article.
+        // State the real count, so coverage is pinned to what was actually sent.
+        const articleCount = Array.isArray(articles) ? articles.length : 0;
+        if (articleCount > 0) {
+            const numbers = Array.from({ length: articleCount }, (_, i) => i + 1);
+            const list = numbers.length > 1
+                ? `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
+                : '1';
+            systemPrompt += `\n\nMANDATORY COVERAGE: You have been given exactly ${articleCount} article(s), numbered ${list}.`
+                + ` Write one sentence for EVERY one of them, in that order, and do not stop before article ${articleCount}.`
+                + ` Article ${articleCount} is the one most often forgotten — check it is present before you answer.`
+                + ` Do not merge two articles into a single sentence, and do not add a sentence for anything not in the list.`
+                + ` This overrides any different article count stated above.`;
+        }
+
         if (useRules && summaryRules && summaryRules.trim()) {
             systemPrompt += `\n\nHere are the specific rules you MUST follow:\n${sanitizeSummaryRules(summaryRules)}`;
         } else if (useRules) {
@@ -1751,6 +1768,52 @@ router.post('/summarize', async (req, res) => {
                 success: false,
                 error: 'Model returned no summary text (empty response).',
             });
+        }
+
+        // The model reliably covers the first articles and sometimes drops the last
+        // one, padding with a second sentence about an earlier story instead. Telling
+        // it the count up front is not enough — the base prompt already names the
+        // number — so check the output and, if an article went missing, ask once more
+        // naming exactly which. Deterministic, and costs a retry only when it fails.
+        const missing = findUncoveredArticles(content, articlePayload);
+        if (missing.length) {
+            console.log(`Summarize for ${category} omitted ${missing.length} article(s): ${missing.map((m) => m.index).join(', ')}. Retrying.`);
+            const fixPrompt = `${userMessage}\n\nYOUR PREVIOUS ATTEMPT WAS REJECTED. It left out `
+                + `${missing.length === 1 ? 'this article' : 'these articles'}:\n`
+                + missing.map((m) => `  - Article ${m.index}: ${m.title}`).join('\n')
+                + `\n\nHere is what you wrote:\n"""\n${content}\n"""\n\n`
+                + `Rewrite the paragraph so EVERY numbered article gets its own sentence, including the one(s) above. `
+                + `Keep the sentences you already have for the other articles. Do not write two sentences about the same article.`;
+            try {
+                let retry = '';
+                if (isGemini) {
+                    const gm = genAI.getGenerativeModel({ model: apiModel });
+                    retry = (await gm.generateContent(`${systemPrompt}\n\n${fixPrompt}`)).response.text();
+                } else if (isOpenRouter) {
+                    const r = await openrouter.chat.completions.create({
+                        model: apiModel,
+                        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: fixPrompt }],
+                    });
+                    retry = r.choices[0]?.message?.content || '';
+                } else {
+                    const m = await anthropic.messages.create({
+                        model: apiModel,
+                        max_tokens: 8000,
+                        system: systemPrompt,
+                        messages: [{ role: 'user', content: fixPrompt }],
+                    });
+                    retry = getAnthropicTextContent(m);
+                }
+                // Only take the retry if it actually covers more than the first pass.
+                if (retry && retry.trim() && findUncoveredArticles(retry, articlePayload).length < missing.length) {
+                    content = retry;
+                    console.log(`Retry for ${category} recovered the missing article(s).`);
+                } else {
+                    console.warn(`Retry for ${category} did not improve coverage; keeping the first draft.`);
+                }
+            } catch (retryErr) {
+                console.error(`Coverage retry failed for ${category}:`, retryErr.message);
+            }
         }
 
         if (summaryLooksIncomplete(content)) {
@@ -2074,6 +2137,33 @@ router.post('/summary-rules', express.json(), (req, res) => {
         res.status(500).json({ error: 'Failed to save summary rules' });
     }
 });
+
+/**
+ * Which of the supplied articles have no sentence of their own in the summary.
+ * Matches on the distinctive words of each headline: an article that was actually
+ * written about shares several of them, one that was skipped shares almost none.
+ * Short and very common words are ignored so the test is not fooled by filler.
+ */
+const COVERAGE_STOPWORDS = new Set([
+    'about', 'after', 'again', 'against', 'their', 'there', 'these', 'those', 'which', 'while',
+    'would', 'could', 'should', 'other', 'first', 'where', 'being', 'under', 'over', 'into',
+    'cannabis', 'marijuana', 'hemp', 'state', 'states', 'new', 'says', 'said', 'report', 'reports',
+]);
+
+function findUncoveredArticles(summaryText, articleList) {
+    const text = String(summaryText || '').toLowerCase();
+    if (!text) return [];
+
+    return (articleList || []).filter((article) => {
+        const words = String(article.title || '').toLowerCase().match(/[a-z]{5,}/g) || [];
+        const distinctive = [...new Set(words)].filter((w) => !COVERAGE_STOPWORDS.has(w));
+        // Nothing distinctive to test against — assume covered rather than risk a
+        // pointless retry on a very generic headline.
+        if (distinctive.length < 3) return false;
+        const hits = distinctive.filter((w) => text.includes(w)).length;
+        return hits / distinctive.length < 0.25;
+    });
+}
 
 // ── Duplicate story grouping ──────────────────────────────────────────────────
 // A sweep across six trade sites routinely returns eight or ten write-ups of the

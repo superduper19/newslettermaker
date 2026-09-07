@@ -18,3 +18,4 @@ backups/
 .idea/
 coverage/
 test-report.junit.xml
+.env*

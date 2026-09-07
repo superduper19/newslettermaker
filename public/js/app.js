@@ -3121,7 +3121,19 @@ window.applyBulkNewsletterPaste = () => {
     persistBulkWorkflowFields();
     saveState();
     renderEditorContent();
-    setBulkNewsletterStatus(`Applied ${sourceLabel} to Selected Content: ${updated.join(', ')}.`);
+
+    // Name the categories that did NOT come through. A pasted block whose header
+    // lost its dashes silently matches nothing, and reporting only successes made
+    // that look like the apply had worked for all four.
+    const missing = EDITOR_NEWSLETTER_CATEGORIES.filter((cat) => !updated.includes(cat));
+    let msg = `Applied ${sourceLabel} to Selected Content: ${updated.join(', ')}.`;
+    if (missing.length) {
+        msg += ` No "--- ${missing.join(' ---", "--- ')} ---" heading found, so ${missing.join(', ')} ${missing.length === 1 ? 'was' : 'were'} left unchanged.`;
+    }
+    if (currentEditorTab && !updated.includes(currentEditorTab) && updated.length) {
+        msg += ` (You are viewing ${currentEditorTab} — switch tabs to see the updated ones.)`;
+    }
+    setBulkNewsletterStatus(msg, missing.length > 0);
 };
 
 window.requestBulkNewsletterChanges = async () => {
@@ -4005,35 +4017,48 @@ window.showMultiCategoryManualContentModal = (pending, generateCategories) => {
     modal.id = 'multi-manual-content-modal';
     modal.onclick = (e) => e.target === modal && closeMultiManualContentModal();
 
-    const totalCount = pending.reduce((sum, p) => sum + p.unreadableArticles.length, 0);
+    // One article often sits in two newsletters, and the pending list is per
+    // category — so asking per entry made the user paste the same article twice.
+    // Manual content is stored on the article itself, so once is enough; collapse
+    // by URL and name every newsletter the article is feeding.
+    const byUrl = new Map();
+    pending.forEach((entry) => {
+        entry.unreadableArticles.forEach((article) => {
+            const key = normalizeUrl(article.url) || article.url || article.title;
+            if (!byUrl.has(key)) byUrl.set(key, { article, categories: [] });
+            byUrl.get(key).categories.push(entry.category);
+        });
+    });
+    const uniqueArticles = [...byUrl.values()];
+    const totalCount = uniqueArticles.length;
+    const dupeNote = pending.reduce((sum, p) => sum + p.unreadableArticles.length, 0) - totalCount;
 
     let html = `
         <div onclick="event.stopPropagation()" class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-lg">
             <h2 class="text-xl font-bold mb-4">Missing Article Content</h2>
-            <p class="text-sm text-gray-600 mb-4">${totalCount} article(s) across ${pending.length} newsletter(s) couldn't be fetched. Please paste their content below:</p>
+            <p class="text-sm text-gray-600 mb-4">${totalCount} article(s) across ${pending.length} newsletter(s) couldn't be fetched. Please paste their content below${dupeNote > 0 ? ' — each one appears once even when it runs in several newsletters' : ''}:</p>
     `;
 
-    pending.forEach((entry, catIdx) => {
-        html += `<h3 class="font-bold text-sm mt-5 mb-2 text-[#333]">${entry.category}</h3>`;
-        entry.unreadableArticles.forEach((article, idx) => {
-            const actualArticle = articles.find(a => a.url === article.url) || article;
-            const paste = manualPasteState(actualArticle);
-            const hasContent = paste.status === 'ok';
-            const mismatchNote = paste.status === 'mismatch'
-                ? '<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">Saved text was for a different article. Paste this article here.</p>'
-                : '';
-            html += `
-                <div class="mb-6 pb-4 border-b border-gray-200">
-                    <div class="flex items-center gap-2 mb-2">
-                        <h4 class="font-semibold text-sm">${article.index}. ${escapeHtml(article.title)}</h4>
-                        ${hasContent ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Text Provided</span>' : ''}
-                    </div>
-                    <p class="text-xs text-gray-500 mb-2">${articleUrlLinkHtml(article.url)}</p>
-                    ${mismatchNote}
-                    <textarea id="manual-content-multi-${catIdx}-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${escapeHtml(paste.text)}</textarea>
+    uniqueArticles.forEach((item, idx) => {
+        const { article, categories } = item;
+        const actualArticle = articles.find(a => a.url === article.url) || article;
+        const paste = manualPasteState(actualArticle);
+        const hasContent = paste.status === 'ok';
+        const mismatchNote = paste.status === 'mismatch'
+            ? '<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">Saved text was for a different article. Paste this article here.</p>'
+            : '';
+        html += `
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                    <h4 class="font-semibold text-sm">${idx + 1}. ${escapeHtml(article.title)}</h4>
+                    <span class="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">${categories.join(' + ')}</span>
+                    ${hasContent ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Text Provided</span>' : ''}
                 </div>
-            `;
-        });
+                <p class="text-xs text-gray-500 mb-2">${articleUrlLinkHtml(article.url)}</p>
+                ${mismatchNote}
+                <textarea id="manual-content-multi-${idx}" placeholder="Paste article content here..." class="w-full h-32 p-2 border border-gray-300 rounded text-sm font-mono resize-none">${escapeHtml(paste.text)}</textarea>
+            </div>
+        `;
     });
 
     html += `
@@ -4046,6 +4071,7 @@ window.showMultiCategoryManualContentModal = (pending, generateCategories) => {
     modal.innerHTML = html;
     currentMultiManualContentState = {
         pending,
+        uniqueArticles,
         generateCategories: generateCategories || pending.map((p) => p.category),
     };
     document.body.appendChild(modal);
@@ -4064,18 +4090,17 @@ window.submitMultiManualContent = async () => {
         alert('Modal state lost. Please try again.');
         return;
     }
-    const { pending, generateCategories } = currentMultiManualContentState;
+    const { pending, generateCategories, uniqueArticles } = currentMultiManualContentState;
 
-    pending.forEach((entry, catIdx) => {
-        entry.unreadableArticles.forEach((article, idx) => {
-            const textarea = document.getElementById(`manual-content-multi-${catIdx}-${idx}`);
-            if (textarea && textarea.value.trim()) {
-                const content = textarea.value.trim();
-                const actualArticle = articles.find(a => a.url === article.url);
-                if (actualArticle) actualArticle.manualContent = content;
-                saveCachedContent(article.url, content);
-            }
-        });
+    // One textarea per unique article; the pasted text is stored on the article, so
+    // every newsletter that uses it picks the same text up.
+    (uniqueArticles || []).forEach((item, idx) => {
+        const textarea = document.getElementById(`manual-content-multi-${idx}`);
+        if (!textarea || !textarea.value.trim()) return;
+        const content = textarea.value.trim();
+        const actualArticle = articles.find(a => a.url === item.article.url);
+        if (actualArticle) actualArticle.manualContent = content;
+        saveCachedContent(item.article.url, content);
     });
 
     saveState();

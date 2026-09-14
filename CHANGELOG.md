@@ -9,6 +9,64 @@ This file serves as a persistent record of changes made to this project and cruc
 3. **EXPLICIT ERRORS OVER FALLBACKS**: If an LLM encounters a billing issue, quota limit, or missing capability, the system MUST explicitly report the exact error to the user. Do NOT automatically silently switch to another LLM to hide the error. 
 4. **STRICT MODEL NAMES**: Do not alter model names based on assumptions of what "should" exist. Ensure the exact model identifiers expected by the APIs (e.g., `gemini-3.1-pro-preview`) are used, even if a stable version "should" be out.
 
+## [2026-09-13] - Bring Back One Story Group Inline
+
+### Added
+- **↺ next to “N other sites”**: If you read the kept article and don't like it, one click puts that group's hidden versions back as their own rows right below. The icon sits on the same line as the chip, so it adds no height. “Add all” in the expanded panel does the same thing.
+
+## [2026-09-13] - Open Selected Opens All Tabs
+
+### Fixed
+- **"Open 30 tabs" only opened one**: The confirm dialog used up the click, so the browser allowed a single `window.open`. Open selected no longer confirms first. If the popup blocker still stops some tabs, a panel lets you allow pop-ups and click Open all tabs (or copy the URLs).
+
+## [2026-09-13] - Priority Sweep Keeps the Full Site Harvest
+
+### Fixed
+- **Too few articles from top sources**: Sweep stopped at the first feed (often ~10 RSS items) and then an editor model kept only rows it assigned a newsletter category. It now merges WordPress, RSS, listing pages, and search indexes, paginates WP, and adds every in-window URL. Verify can still mark junk as NO.
+
+## [2026-09-13] - Sweep First, Then Search, One Combined List
+
+### Changed
+- **Intended order**: Sweep Priority Sources, then Find Articles. Search no longer replaces the workspace. Both sets are counted in Total, same stories collapse onto one row, and the usual top-source URL stays as the primary (or in the other-sites chip) instead of being thrown out as a duplicate.
+
+## [2026-09-13] - Priority Sweep After Search Adds Articles Again
+
+### Fixed
+- **Sweep sources after Find Articles added nothing**: The Article View search box (the “find 45…” prompt) was sent as extra editor instructions, so the sweep model kept almost nothing. Verify then deleted the rest. Sweep now uses only newsletter rules and the date window, keeps rejects as NO, and folds same-story top-source URLs onto the existing row’s other-sites chip.
+
+## [2026-09-13] - Verify No Longer Treats Sep 11 as “Too Old”
+
+### Fixed
+- **NO notes saying Sep 11, 2026 is more than 7 days old**: On Sep 13 that date is two days old. The reviewer model did not know today's date, so it treated 2026 as a future/system error and applied a fake 7-day cutoff. Recency stays in code (`isArticleTooOld` / the search window). The reviewer is told today's date and age-only flags are ignored.
+
+## [2026-09-13] - Article Row Border and Readability
+
+### Changed
+- **Article View cards**: Stronger 2px border, darker title/notes/summary/URL text, taller notes box, and a wider Archive/Remove column so labels are not clipped.
+
+
+
+### Added
+- **Same story, different site**: Search groups syndicated write-ups automatically (no need to click Group same stories). It keeps one comprehensive/professional URL (AP, Reuters, Politico, MJBizDaily, NORML, etc.) and shows a count chip to expand the others. **Add this version** / **Add all** puts grouped URLs back on the list if grouping was wrong.
+- **No cannabis service sites** except legal orgs: Leafly, Weedmaps, Dutchie and similar shop/menu hosts are dropped. NORML and other legal-advocacy hosts stay.
+
+
+
+### Fixed
+- **100 results, PBS/Leafly repeats, homepages, off-topic links**: Search asked You.com for 50 web + 50 news and kept every URL, including `mjbizdaily.com/`, AP hub pages, Leafly podcasts, PBS videos, and a Scotland dog-rescue story. The "Group same stories" button was not involved. Search now takes only `results.news` then `results.web` (no recursive JSON walk), caps at the requested count (~45), drops video/hub/homepage/podcast URLs, drops hits whose You.com date is before the "after September 7" window, and dedupes by URL and title.
+
+
+
+### Fixed
+- **Deleted articles still counted as 49**: Total/Load Saved were reading the old Week 32 session copy after the workspace was cleared. The named session now updates when the list length changes, and the extra "Saved: 49" badge is gone. The number you see is the list you see.
+- **You.com search only returning 2**: Search was a single short query with no pagination. It now queries cannabis / hemp / psychedelics separately, pages You.com offsets until it reaches the requested count, uses the documented `ydc-index.io` endpoint, and verify no longer deletes rows — rejects stay in the list as NO.
+
+
+
+### Fixed
+- **Saved Week 32 showed 49 while the list showed 2**: Find Articles had replaced the workspace with a new "find 45" You.com search. The saved session still had 49 (identical URLs to Week 31). Stats now flag when the loaded session name's saved copy has a different count than the workspace.
+- **Search for ~45 articles only kept 2**: You.com already returns structured URLs; Phase 2 LLM extract was shrinking that list. Search now uses the You.com result list directly, asks for at least 50 hits (and a second query if still short), honors "after September 7th" as the verify window instead of the blanket 7-day drop, and leaves rejected rows in the list as Status NO with the reason in Notes.
+
 ## [2026-08-31] - Selected Content No Longer Ships a Stale Draft
 
 ### Fixed

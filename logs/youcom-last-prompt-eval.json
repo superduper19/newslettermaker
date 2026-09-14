@@ -1,0 +1,207 @@
+{
+  "httpStatus": 200,
+  "count": 34,
+  "requested": 45,
+  "searchEngine": "youcom",
+  "dateWindow": {
+    "since": "2026-09-08",
+    "until": ""
+  },
+  "duplicateCountFromApi": 0,
+  "uniqueUrls": 34,
+  "uniqueTitles": 34,
+  "dupUrl": 0,
+  "dupTitle": 0,
+  "junk": 0,
+  "homepage": 0,
+  "offTopic": 0,
+  "oldOrUndated": 2,
+  "ads": 1,
+  "bills": 1,
+  "issues": [
+    {
+      "i": 5,
+      "kind": "unpassed-law",
+      "title": "Virginia draft cannabis rules set stage for competitive lottery",
+      "url": "https://www.12onyourside.com/2026/09/10/virginia-draft-cannabis-rules-set-stage-competitive-lottery/"
+    },
+    {
+      "i": 7,
+      "kind": "ad-roundup",
+      "title": "Illinois Quick Hits: State issues more medical cannabis licenses",
+      "url": "https://www.yahoo.com/news/us/articles/illinois-quick-hits-state-issues-133000666.html"
+    }
+  ],
+  "sample": [
+    {
+      "title": "Cancer patients see improvement in symptoms from medical cannabis",
+      "url": "https://www.wdio.com/top-stories/cancer-patients-see-improvement-in-symptoms-from-medical-cannabis/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Massachusetts Cannabis Repeal Vote: What It Means For Banks",
+      "url": "https://www.forbes.com/sites/petersu/2026/09/12/massachusetts-cannabis-repeal-vote-puts-cannabis-banking-to-the-test/",
+      "date": "09/12/26"
+    },
+    {
+      "title": "Liberalized Cannabis Policies May Increase Substance Use",
+      "url": "https://www.medscape.com/viewarticle/liberalized-cannabis-policies-may-increase-substance-use-2026a1000xr7",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Moline could allow drive-up cannabis dispensaries",
+      "url": "https://www.kwqc.com/2026/09/11/moline-could-allow-drive-up-cannabis-dispensaries/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Nebraska Supreme Court tosses medical cannabis federal preemption case, for now",
+      "url": "https://www.1011now.com/2026/09/11/nebraska-supreme-court-tosses-medical-cannabis-federal-preemption-case-now/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Virginia draft cannabis rules set stage for competitive lottery",
+      "url": "https://www.12onyourside.com/2026/09/10/virginia-draft-cannabis-rules-set-stage-competitive-lottery/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Why Massachusetts Risks Reversing Cannabis Legalization Despite $10 Billion In Sales",
+      "url": "https://www.forbes.com/sites/dariosabaghi/2026/09/10/why-massachusetts-risks-reversing-cannabis-legalization-despite-10-billion-in-sales/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Illinois Quick Hits: State issues more medical cannabis licenses",
+      "url": "https://www.yahoo.com/news/us/articles/illinois-quick-hits-state-issues-133000666.html",
+      "date": "09/11/26"
+    },
+    {
+      "title": "First cannabis dispensary opens on Bourbon Street",
+      "url": "https://www.fox8live.com/2026/09/10/first-cannabis-dispensary-opens-bourbon-street/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Migos rapper Offset visits Cincinnati restaurant for cannabis event",
+      "url": "https://www.yahoo.com/entertainment/music/articles/migos-rapper-offset-visits-cincinnati-120753375.html",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Vancouver cannabis shop burns in ‘devastating’ fire",
+      "url": "https://www.yahoo.com/news/articles/vancouver-cannabis-shop-burns-devastating-163050495.html",
+      "date": "09/09/26"
+    },
+    {
+      "title": "NY to crack down on ‘black market’ cannabis drinks: ‘Disaster waiting to happen’",
+      "url": "https://nypost.com/2026/09/11/us-news/ny-set-to-crack-down-on-black-market-cannabis-drinks-disaster-waiting-to-happen/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Accidental ingestion of cannabis edibles among young kids has surged. What to know | CNN",
+      "url": "https://www.cnn.com/2026/09/10/health/marijuana-cannabis-edibles-children-poisoning-wellness",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Plot Twist: These Cannabis Gummies May Curb Your Appetite and Boost Energy",
+      "url": "https://www.thedailybeast.com/tribetokes-thcv-fit-and-focused-gummies-for-energy/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Cannabis farmers use former BHS store for £1.3m crop",
+      "url": "https://www.yahoo.com/news/us/articles/cannabis-farmers-former-bhs-store-114618616.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Portadown: Man charged after 300 cannabis plants seized",
+      "url": "https://www.bbc.com/news/articles/c980dy85gg7o",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Cannabis edibles pose a growing danger to young kids. An ER doctor explains what to know",
+      "url": "https://www.ktbs.com/health/cannabis-edibles-pose-a-growing-danger-to-young-kids-an-er-doctor-explains-what-to/article_bd1cc991-b16f-576a-9b8d-a93afab435cf.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Judge upholds permit for controversial cannabis shop in Streeterville",
+      "url": "https://www.yahoo.com/news/us/articles/judge-upholds-permit-controversial-cannabis-212000531.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "You still can’t smoke medical cannabis in Georgia, but you can vape it. What’s the difference? | Chattanooga Times Free Press",
+      "url": "https://www.timesfreepress.com/news/2026/sep/09/you-still-cant-smoke-medical-cannabis-in-georgia/",
+      "date": "09/09/26"
+    },
+    {
+      "title": "Fresh Cut - Ganjapreneur",
+      "url": "https://ganjapreneur.com/news/fresh-cut/",
+      "date": ""
+    },
+    {
+      "title": "Legalized recreational marijuana is here to stay - The Boston Globe",
+      "url": "https://www.bostonglobe.com/2026/09/13/opinion/letters-mass-legalized-recreational-marijuana/",
+      "date": "09/13/26"
+    },
+    {
+      "title": "Man arrested over 'sophisticated' operation to grow 300 cannabis plants",
+      "url": "https://www.yahoo.com/news/us/articles/man-arrested-over-sophisticated-operation-132507542.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Cedar Creek Cannabis in east Vancouver damaged in Tuesday fire",
+      "url": "https://www.columbian.com/news/2026/sep/09/cedar-creek-cannabis-in-east-vancouver-damaged-in-tuesday-fire/",
+      "date": "09/09/26"
+    },
+    {
+      "title": "Aurora Cannabis Inc. stock falls Thursday, underperforms market",
+      "url": "https://www.marketwatch.com/data-news/aurora-cannabis-inc-stock-falls-thursday-underperforms-market-d69a5e6c-c44503d2a147",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Cannabis industry faces tax, banking hurdles",
+      "url": "https://www.the-messenger.com/news/national/article_34b3d192-535b-526d-ac99-e42555d716d3.html",
+      "date": "09/08/26"
+    },
+    {
+      "title": "Maine cannabis enforcement slow to address local complaints",
+      "url": "https://wgme.com/newsletter-daily/cannabis-enforcement-slow-to-address-local-complaints",
+      "date": "09/08/26"
+    },
+    {
+      "title": "New 3-story cannabis dispensary to open in the French Quarter",
+      "url": "https://www.yahoo.com/news/us/articles/3-story-cannabis-dispensary-open-144937036.html",
+      "date": "09/08/26"
+    },
+    {
+      "title": "Cannabis farmers used Slough's former BHS in £1.3m operation",
+      "url": "https://www.bbc.com/news/articles/c2kwnx8wlvdo",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Not your parents’ pot: Experts push against teen use of highly concentrated THC products",
+      "url": "https://chicago.suntimes.com/2026/09/12/not-your-parents-pot-experts-push-against-teen-use-of-highly-concentrated-thc-products",
+      "date": "09/12/26"
+    },
+    {
+      "title": "East Lyme Selectmen Back $46K In Cannabis Revenue For Streetscape Improvements",
+      "url": "https://patch.com/connecticut/thelymes/east-lyme-selectmen-back-46k-cannabis-revenue-streetscape-improvements",
+      "date": "09/09/26"
+    },
+    {
+      "title": "The federal-state cannabis conundrum - POLITICO",
+      "url": "https://www.politico.com/newsletters/morning-cannabis-preview/2019/09/11/the-federal-state-cannabis-conundrum-475739",
+      "date": ""
+    },
+    {
+      "title": "Marijuana legalization, medical marijuana, and marijuana facts news",
+      "url": "https://www.cbsnews.com/marijuana-nation/",
+      "date": "09/09/26"
+    },
+    {
+      "title": "Daily Cannabis News Brief for 9/8/2026",
+      "url": "https://themarijuanaherald.com/2026/09/daily-cannabis-news-brief-for-9-8-2026/",
+      "date": "09/08/26"
+    },
+    {
+      "title": "Cannabis Industry Digest For September 9 2026 - Cannabis News | ...",
+      "url": "https://www.nugmag.com/cannabis-industry-digest-for-september-9-2026/",
+      "date": "09/09/26"
+    }
+  ]
+}

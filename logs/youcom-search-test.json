@@ -1,0 +1,116 @@
+{
+  "count": 19,
+  "hosts": {
+    "www.yahoo.com": 6,
+    "www.forbes.com": 1,
+    "www.medscape.com": 1,
+    "www.1011now.com": 1,
+    "www.kwqc.com": 1,
+    "www.wdio.com": 1,
+    "www.12onyourside.com": 1,
+    "www.thedailybeast.com": 1,
+    "www.fox8live.com": 1,
+    "www.cnn.com": 1,
+    "www.bbc.com": 1,
+    "ganjapreneur.com": 1,
+    "www.wcax.com": 1,
+    "www.kptv.com": 1
+  },
+  "titles": [
+    {
+      "title": "Medical cannabis study shows cancer patients report symptom relief",
+      "url": "https://www.yahoo.com/news/science/articles/medical-cannabis-study-shows-cancer-215521087.html",
+      "date": "09/12/26"
+    },
+    {
+      "title": "Massachusetts Cannabis Repeal Vote: What It Means For Banks",
+      "url": "https://www.forbes.com/sites/petersu/2026/09/12/massachusetts-cannabis-repeal-vote-puts-cannabis-banking-to-the-test/",
+      "date": "09/12/26"
+    },
+    {
+      "title": "Liberalized Cannabis Policies May Increase Substance Use",
+      "url": "https://www.medscape.com/viewarticle/liberalized-cannabis-policies-may-increase-substance-use-2026a1000xr7",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Nebraska Supreme Court tosses medical cannabis federal preemption case, for now",
+      "url": "https://www.1011now.com/2026/09/11/nebraska-supreme-court-tosses-medical-cannabis-federal-preemption-case-now/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Moline could allow drive-up cannabis dispensaries",
+      "url": "https://www.kwqc.com/2026/09/11/moline-could-allow-drive-up-cannabis-dispensaries/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Cancer patients see improvement in symptoms from medical cannabis",
+      "url": "https://www.wdio.com/top-stories/cancer-patients-see-improvement-in-symptoms-from-medical-cannabis/",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Virginia draft cannabis rules set stage for competitive lottery",
+      "url": "https://www.12onyourside.com/2026/09/10/virginia-draft-cannabis-rules-set-stage-competitive-lottery/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Illinois Quick Hits: State issues more medical cannabis licenses",
+      "url": "https://www.yahoo.com/news/us/articles/illinois-quick-hits-state-issues-133000666.html",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Vancouver cannabis shop burns in ‘devastating’ fire",
+      "url": "https://www.yahoo.com/news/articles/vancouver-cannabis-shop-burns-devastating-163050495.html",
+      "date": "09/09/26"
+    },
+    {
+      "title": "Migos rapper Offset visits Cincinnati restaurant for cannabis event",
+      "url": "https://www.yahoo.com/entertainment/music/articles/migos-rapper-offset-visits-cincinnati-120753375.html",
+      "date": "09/11/26"
+    },
+    {
+      "title": "Plot Twist: These Cannabis Gummies May Curb Your Appetite and Boost Energy",
+      "url": "https://www.thedailybeast.com/tribetokes-thcv-fit-and-focused-gummies-for-energy/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "First cannabis dispensary opens on Bourbon Street",
+      "url": "https://www.fox8live.com/2026/09/10/first-cannabis-dispensary-opens-bourbon-street/",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Accidental ingestion of cannabis edibles among young kids has surged. What to know | CNN",
+      "url": "https://www.cnn.com/2026/09/10/health/marijuana-cannabis-edibles-children-poisoning-wellness",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Portadown: Man charged after 300 cannabis plants seized",
+      "url": "https://www.bbc.com/news/articles/c980dy85gg7o",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Judge upholds permit for controversial cannabis shop in Streeterville",
+      "url": "https://www.yahoo.com/news/us/articles/judge-upholds-permit-controversial-cannabis-212000531.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Fresh Cut - Ganjapreneur",
+      "url": "https://ganjapreneur.com/news/fresh-cut/",
+      "date": ""
+    },
+    {
+      "title": "Vermont lieutenant governor accused of violating state cannabis laws",
+      "url": "https://www.wcax.com/2026/09/09/vermont-lieutenant-governor-accused-violating-state-cannabis-laws/",
+      "date": "09/09/26"
+    },
+    {
+      "title": "Cannabis farmers use former BHS store for £1.3m crop",
+      "url": "https://www.yahoo.com/news/us/articles/cannabis-farmers-former-bhs-store-114618616.html",
+      "date": "09/10/26"
+    },
+    {
+      "title": "Vancouver cannabis warehouse damaged in 2-alarm fire",
+      "url": "https://www.kptv.com/2026/09/09/vancouver-cannabis-warehouse-damaged-2-alarm-fire/",
+      "date": "09/09/26"
+    }
+  ]
+}

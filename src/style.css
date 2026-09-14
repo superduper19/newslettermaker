@@ -111,6 +111,10 @@
   overflow: hidden;
 }
 
+#step-2 .card {
+  overflow-x: auto;
+}
+
 .card-header {
   @apply pt-6 px-7 pb-5 border-b border-solid border-[rgba(132,114,83,0.12)];
   background:
@@ -359,7 +363,8 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 
 /* Article List Table Grid Layout */
 .articles-table-header, .article-row {
-  @apply grid grid-cols-[72px_minmax(320px,2.2fr)_96px_72px_120px_repeat(4,56px)_minmax(190px,1.1fr)_110px] gap-3 items-start py-4 px-4.5 my-2.5 mx-5;
+  @apply grid grid-cols-[56px_minmax(240px,2fr)_88px_56px_112px_repeat(4,48px)_minmax(180px,1fr)_148px] gap-2 items-start py-4 px-3.5 my-2.5 mx-2;
+  min-width: 1120px;
 }
 
 .articles-table-header {
@@ -387,11 +392,11 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .article-row {
-  @apply bg-white transition-all duration-200 border border-solid border-[#e7ecf3] rounded-[14px] mb-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)];
+  @apply bg-white transition-all duration-200 border-2 border-solid border-[#c5d0c8] rounded-[14px] mb-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)];
 }
 
 .article-row:hover {
-  @apply bg-[#fcfdff] border-[#d7e1ec] shadow-[0_10px_24px_rgba(15,23,42,0.08)];
+  @apply bg-[#fcfdff] border-[#8fa89a] shadow-[0_10px_24px_rgba(15,23,42,0.08)];
 }
 
 /* Column Styles */
@@ -404,7 +409,7 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .title-edit {
-  @apply w-full max-w-full min-w-0 text-[0.95rem] font-medium py-1.75 px-2.25 border border-solid border-[#d8dee8] rounded-lg leading-[1.4] resize-y box-border bg-white;
+  @apply w-full max-w-full min-w-0 text-[0.95rem] font-medium text-[#1f2937] py-1.75 px-2.25 border border-solid border-[#94a3b8] rounded-lg leading-[1.4] resize-y box-border bg-white;
 }
 
 .title-edit.title-overflow {
@@ -420,11 +425,11 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .col-date input {
-  @apply w-full text-center py-1.5 px-1 border border-solid border-[#d8dee8] rounded-lg text-[0.85rem] bg-white;
+  @apply w-full text-center py-1.5 px-1 border border-solid border-[#94a3b8] rounded-lg text-[0.85rem] text-[#1f2937] bg-white;
 }
 
 .url-edit {
-  @apply border border-solid border-[#d8dee8] rounded-lg bg-[#f8fafc];
+  @apply border border-solid border-[#94a3b8] rounded-lg bg-[#f8fafc] text-[0.85rem] text-[#1e3a34];
 }
 
 .col-paywall {
@@ -460,11 +465,15 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .col-keyword textarea {
-  @apply w-full py-2 px-2.5 text-[0.85rem] border border-solid border-[#d8dee8] rounded-[10px] bg-white;
+  @apply w-full min-h-20 py-2 px-2.5 text-[0.85rem] leading-[1.4] text-[#1f2937] border border-solid border-[#94a3b8] rounded-[10px] bg-white overflow-y-auto break-words;
 }
 
 .col-actions {
-  @apply text-right pt-1.5;
+  @apply text-right pt-1.5 min-w-[148px];
+}
+
+.col-actions .btn {
+  @apply text-[0.78rem] whitespace-nowrap px-2;
 }
 
 /*
@@ -485,10 +494,10 @@ input[type="text"], input[type="date"], input[type="file"], textarea, select {
 }
 
 .article-summary {
-  @apply m-0 text-[0.85rem] text-[#666] leading-[1.45] min-w-0;
+  @apply m-0 text-[0.9rem] text-[#334155] leading-[1.5] min-w-0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

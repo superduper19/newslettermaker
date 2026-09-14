@@ -7,7 +7,7 @@
   <link rel="icon" href="/favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="/favicon.png">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260913read2">
   <!-- Font Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -218,6 +218,7 @@
               </div>
               <button type="button" class="btn btn-secondary btn-sm" onclick="checkPrioritySources()" id="btn-check-priority-sources" title="Fetch each site and report whether it blocks us, and by which route it can be read">Check access</button>
               <button type="button" class="btn btn-primary btn-sm" onclick="sweepPrioritySources()" id="btn-sweep-priority-sources" title="Pull every article in the window from the enabled sites and evaluate them">Sweep sources</button>
+              <span class="text-[0.75rem] text-[#555]">Sweep first, then Find Articles — both lists stay and same stories group together.</span>
             </div>
 
             <div class="border border-[#e0ddd5] rounded-lg overflow-hidden">
@@ -722,6 +723,7 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/admonitions.js"></script>
-<script src="js/app.js?v=20260831selected2"></script>
+<script src="js/story-groups.js?v=20260913group2"></script>
+<script src="js/app.js?v=20260913restore1"></script>
 </body>
 </html>

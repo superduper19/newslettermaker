@@ -1308,6 +1308,16 @@ let workspaceSyncTimeout = null;
 function saveState() {
     const state = buildWorkspaceState();
     persistWorkspaceLocal(state);
+    if (currentSessionName) {
+        const sessions = getSavedSessions();
+        const prev = sessions[currentSessionName];
+        const prevCount = prev && Array.isArray(prev.articles) ? prev.articles.length : -1;
+        if (prevCount !== articles.length) {
+            sessions[currentSessionName] = buildSessionPayload();
+            saveSavedSessions(sessions);
+            if (typeof populateSavedDropdown === 'function') populateSavedDropdown();
+        }
+    }
     // Debounced sync to Supabase
     if (workspaceSyncTimeout) clearTimeout(workspaceSyncTimeout);
     workspaceSyncTimeout = setTimeout(() => {
@@ -5745,6 +5755,121 @@ window.setBatchFilter = (value) => {
     batchFilter = value || '';
 };
 
+function renderStoryGroupToggle(article, index) {
+    const alts = article.groupedSources || [];
+    if (!alts.length) return '';
+    const open = !!article.groupedExpanded;
+    return `<div class="mt-2 flex items-center gap-1.5">
+        <button type="button" class="px-2 py-1 text-[0.72rem] font-bold rounded-full border border-solid border-[#2f6e63] bg-[#e8f3ef] text-[#16423c] cursor-pointer"
+            title="${alts.length} other site(s) covering this story. Click to expand and add any that should stay in the list."
+            onclick="toggleStoryGroup(${index})">${open ? '▾' : '▸'} ${alts.length} other site${alts.length === 1 ? '' : 's'}</button>
+        <button type="button"
+            class="inline-flex items-center justify-center h-[22px] w-[22px] p-0 rounded-full border border-solid border-[#2f6e63] bg-[#e8f3ef] text-[#16423c] cursor-pointer text-[0.78rem] leading-none"
+            title="Read the kept one and don't like it? Bring back the ${alts.length} grouped version${alts.length === 1 ? '' : 's'} as their own rows, right below this one."
+            aria-label="Bring back grouped versions"
+            onclick="restoreStoryGroup(${index})">&#8634;</button>
+    </div>`;
+}
+
+function renderStoryGroupPanel(article, index) {
+    const alts = article.groupedSources || [];
+    if (!alts.length || !article.groupedExpanded) return '';
+    const rows = alts.map((alt, ai) => `
+        <div class="flex items-start gap-2 py-1.5 border-b border-[#e0e7e4] last:border-0">
+            <div class="min-w-0 flex-1">
+                <div class="text-[0.72rem] font-bold text-[#2f6e63]">${escapeHtml(alt.host || '')}</div>
+                <a href="${escapeHtml(alt.url)}" target="_blank" rel="noopener">${escapeHtml(alt.title || alt.url)}</a>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline shrink-0" onclick="includeGroupedSource(${index}, ${ai})">Add this version</button>
+        </div>`).join('');
+    return `<div class="mt-2 p-2.5 rounded-[10px] border border-solid border-[#b7d0c6] bg-[#f3faf7]">
+        <div class="flex justify-between items-center gap-2 mb-2">
+            <span class="text-[0.75rem] font-bold text-[#16423c]">Other sites for this story. Add any that should not have been grouped.</span>
+            <button type="button" class="btn btn-sm btn-outline shrink-0" onclick="includeAllGroupedSources(${index})">Add all</button>
+        </div>
+        ${rows}
+    </div>`;
+}
+
+window.toggleStoryGroup = (index) => {
+    if (!articles[index]) return;
+    articles[index].groupedExpanded = !articles[index].groupedExpanded;
+    renderArticles();
+};
+
+window.includeGroupedSource = (index, altIndex) => {
+    const primary = articles[index];
+    const alts = primary && primary.groupedSources;
+    if (!alts || !alts[altIndex]) return;
+    const alt = alts[altIndex];
+    const row = {
+        title: alt.title,
+        url: alt.url,
+        date: alt.date || '',
+        description: alt.description || '',
+        status: 'Y',
+        selected: true,
+        addedAt: new Date().toISOString(),
+        groupedSources: [],
+        groupedExpanded: false,
+        notes: 'Included from same-story group',
+        ranks: {},
+        categories: [],
+    };
+    primary.groupedSources.splice(altIndex, 1);
+    articles.splice(index + 1, 0, row);
+    saveState();
+    renderArticles();
+};
+
+window.includeAllGroupedSources = (index) => {
+    window.restoreStoryGroup(index);
+};
+
+/**
+ * Un-group one story: every hidden version becomes its own row directly below the
+ * kept one (what you want when you read the primary pick and it isn't the right one).
+ * The primary stays; only the grouping is undone.
+ */
+window.restoreStoryGroup = (index) => {
+    const primary = articles[index];
+    const alts = primary && Array.isArray(primary.groupedSources) ? [...primary.groupedSources] : [];
+    if (!alts.length) return;
+
+    const existing = new Set(
+        articles
+            .filter((_, i) => i !== index)
+            .map((a) => normalizeUrl(a.url))
+            .filter(Boolean),
+    );
+    const rows = [];
+    alts.forEach((alt) => {
+        const key = normalizeUrl(alt.url);
+        if (key && existing.has(key)) return;
+        if (key) existing.add(key);
+        rows.push({
+            title: alt.title,
+            url: alt.url,
+            date: alt.date || '',
+            description: alt.description || '',
+            status: 'Y',
+            selected: true,
+            addedAt: new Date().toISOString(),
+            groupedSources: [],
+            groupedExpanded: false,
+            notes: 'Brought back from same-story group',
+            ranks: {},
+            categories: [],
+        });
+    });
+
+    primary.groupedSources = [];
+    primary.groupedExpanded = false;
+    if (rows.length) articles.splice(index + 1, 0, ...rows);
+    saveState();
+    renderArticles();
+};
+
 // Render Articles Function (Table View)
 function renderArticles() {
     const list = document.getElementById('articles-list');
@@ -5840,6 +5965,7 @@ function renderArticles() {
                                     ${article.addedAt ? 'added ' + formatAddedAt(article.addedAt) : '—'}
                                 </span>
                                 ${admonition !== null ? `<span class="admonition-text font-bold text-[0.75rem] text-[${admonition.color}] mt-2">${admonition.message}</span>` : ''}
+                                ${renderStoryGroupToggle(article, index)}
                             </div>
                         </div>
                     </div>
@@ -5875,7 +6001,7 @@ function renderArticles() {
 
                     <div class="col-keyword">
                         <textarea
-                            class="form-control w-full h-15 text-[0.85rem] resize-y"
+                            class="form-control w-full min-h-20 text-[0.85rem] resize-y"
                             onchange="updateArticleField(${index}, 'notes', this.value)"
                             placeholder="Notes..."
                         >${article.notes || ''}</textarea>
@@ -5902,6 +6028,7 @@ function renderArticles() {
                             <summary class="cursor-pointer text-[#1976d2]">Article summary (from real page text)</summary>
                             <p class="mt-1 text-[#444]">${escapeHtml(article.summary)}</p>
                         </details>` : ''}
+                        ${renderStoryGroupPanel(article, index)}
                     </div>
 
                     <div class="col-span-full flex items-start gap-1.25 mt-2 border-t border-dashed border-[#e2e8f0] pt-2">
@@ -6363,21 +6490,82 @@ window.removeSelectedArticles = () => {
     }
 };
 
+function selectedHttpArticleUrls(list) {
+    return (list || [])
+        .filter((a) => a && a.selected !== false && /^https?:\/\//i.test(String(a.url || '')))
+        .map((a) => a.url);
+}
+
+function openUrlsInNewTabs(urls) {
+    let opened = 0;
+    let blocked = 0;
+    (urls || []).forEach((url) => {
+        const win = window.open(url, '_blank');
+        if (win) {
+            try { win.opener = null; } catch (e) { /* ignore */ }
+            opened += 1;
+        } else {
+            blocked += 1;
+        }
+    });
+    return { opened, blocked };
+}
+
+function hideOpenTabsFallback() {
+    const overlay = document.getElementById('open-tabs-fallback');
+    if (overlay) overlay.remove();
+}
+
+function showOpenTabsFallback(urls, opened) {
+    hideOpenTabsFallback();
+    const overlay = document.createElement('div');
+    overlay.id = 'open-tabs-fallback';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    overlay.innerHTML = `<div style="background:#fff;max-width:480px;width:100%;border-radius:12px;padding:20px 22px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+        <h3 style="margin:0 0 8px;font-size:1.1rem;">Opened ${opened} of ${urls.length} tabs</h3>
+        <p style="margin:0 0 14px;color:#444;font-size:0.92rem;line-height:1.4;">The browser blocked the rest. Allow pop-ups for this site (icon in the address bar), then click Open all tabs. Do not use a confirm dialog first — that also blocks extra tabs.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" id="open-tabs-retry" class="btn btn-primary">Open all tabs</button>
+            <button type="button" id="open-tabs-copy" class="btn btn-secondary">Copy URLs</button>
+            <button type="button" id="open-tabs-close" class="btn btn-outline">Close</button>
+        </div>
+    </div>`;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) hideOpenTabsFallback(); });
+    document.body.appendChild(overlay);
+    document.getElementById('open-tabs-retry').addEventListener('click', () => {
+        const result = openUrlsInNewTabs(urls);
+        if (result.blocked) {
+            alert(`Still blocked ${result.blocked}. Allow pop-ups for ${location.host}, then click Open all tabs again.`);
+        } else {
+            hideOpenTabsFallback();
+        }
+    });
+    document.getElementById('open-tabs-copy').addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(urls.join('\n'));
+            alert(`Copied ${urls.length} URLs.`);
+        } catch (e) {
+            prompt('Copy these URLs:', urls.join('\n'));
+        }
+    });
+    document.getElementById('open-tabs-close').addEventListener('click', hideOpenTabsFallback);
+}
+
 window.openSelectedArticles = () => {
-    const toOpen = articles.filter((a) => a.selected !== false);
-    if (!toOpen.length) {
+    const urls = selectedHttpArticleUrls(articles);
+    if (!urls.length) {
         alert('No articles checked. Use the Select column checkboxes, then click Open selected.');
         return;
     }
-    if (!confirm(`You are about to open ${toOpen.length} tabs. Your browser's pop-up blocker may prevent this unless you "Allow Pop-ups" for this site. Continue?`)) {
-        return;
+    // Must run in this click handler. A confirm() uses up the user gesture, so the
+    // browser then allows only one window.open (what you saw: "30 tabs" then one).
+    const result = openUrlsInNewTabs(urls);
+    if (result.blocked) {
+        showOpenTabsFallback(urls, result.opened);
     }
-    toOpen.forEach(a => {
-        if (a.url && a.url.startsWith('http')) {
-            window.open(a.url, '_blank');
-        }
-    });
 };
+
+window._openTabsTest = { selectedHttpArticleUrls, openUrlsInNewTabs };
 
 window.fixRedirectLinks = async () => {
     const urlsToFix = articles
@@ -6881,7 +7069,7 @@ async function searchMoreArticles() {
     hideWithClass(status);
 
     try {
-        const existingUrls = articles.map(a => a.url).filter(Boolean);
+        const existingUrls = collectWorkspaceArticleUrls(articles);
         const response = await fetch('/api/articles/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -6910,7 +7098,7 @@ async function searchMoreArticles() {
 
             // Add the raw results immediately so they're never lost, even if
             // verification/categorization below is slow or fails.
-            articles = articles.concat(newArticles);
+            articles = mergeSearchHitsIntoWorkspace(articles, newArticles);
             saveState();
             renderArticles();
 
@@ -6923,18 +7111,21 @@ async function searchMoreArticles() {
                 status.textContent = msg;
                 showWithClass(status, 'block');
                 try {
-                    const verifyResult = await verifyArticlesRemote(newArticles, workspaceBefore);
+                    const verifyResult = await verifyArticlesRemote(newArticles, [], data.dateWindow);
                     const verified = verifyResult.articles;
                     const verifiedByUrl = {};
                     verified.forEach(a => { verifiedByUrl[normalizeUrl(a.url)] = a; });
+                    const rejectedNo = rejectedArticlesAsNo(verifyResult.rejected, addedAt);
+                    const rejectedByUrl = {};
+                    rejectedNo.forEach(a => { rejectedByUrl[normalizeUrl(a.url)] = a; });
                     articles = articles.map(a => {
                         const v = verifiedByUrl[normalizeUrl(a.url)];
-                        return v ? { ...v, id: a.id, addedAt: a.addedAt } : a;
-                    }).filter(a => {
-                        // Drop newly-added articles that failed verification (rejected/invalid URL)
-                        const wasNew = newArticles.some(n => n.id === a.id);
-                        return !wasNew || verifiedByUrl[normalizeUrl(a.url)];
+                        if (v) return { ...v, id: a.id, addedAt: a.addedAt, groupedSources: a.groupedSources || v.groupedSources || [] };
+                        const rejected = rejectedByUrl[normalizeUrl(a.url)];
+                        if (rejected) return { ...rejected, id: a.id, addedAt: a.addedAt, groupedSources: a.groupedSources };
+                        return a;
                     });
+                    articles = regroupWorkspaceArticles(articles);
                     saveState();
                     renderArticles();
                     status.textContent = `Added ${verified.length} new articles.`
@@ -7400,6 +7591,93 @@ function renderPriorityAccessReport(results) {
     showWithClass(box, 'block');
 }
 
+function regroupWorkspaceArticles(list) {
+    if (!window.StoryGroups || typeof window.StoryGroups.collapseStoryGroups !== 'function') {
+        return Array.isArray(list) ? list : [];
+    }
+    return window.StoryGroups.collapseStoryGroups(list).map((a, i) => ({ ...a, id: i + 1 }));
+}
+
+function mergeSearchHitsIntoWorkspace(existing, incoming) {
+    return regroupWorkspaceArticles((existing || []).concat(incoming || []));
+}
+
+function collectWorkspaceArticleUrls(list) {
+    const urls = [];
+    (list || []).forEach((a) => {
+        if (a && a.url) urls.push(a.url);
+        (a.groupedSources || []).forEach((g) => {
+            if (g && g.url) urls.push(g.url);
+        });
+    });
+    return urls;
+}
+
+function mergeSweepArticlesIntoWorkspace(existing, incoming) {
+    const articles = (existing || []).map((a) => ({ ...a, groupedSources: Array.isArray(a.groupedSources) ? a.groupedSources.slice() : [] }));
+    const urlSet = new Set(collectWorkspaceArticleUrls(articles).map((u) => normalizeUrl(u)));
+    const sameStory = window.StoryGroups && typeof window.StoryGroups.titlesAreSameStory === 'function'
+        ? window.StoryGroups.titlesAreSameStory
+        : () => false;
+    const pickPrimary = window.StoryGroups && typeof window.StoryGroups.pickPrimary === 'function'
+        ? window.StoryGroups.pickPrimary
+        : (group) => group[0];
+    const addedAt = new Date().toISOString();
+    const fresh = [];
+    let maxId = articles.reduce((max, a) => Math.max(max, a.id || 0), 0);
+
+    incoming.forEach((raw) => {
+        if (!raw || !raw.url) return;
+        const urlKey = normalizeUrl(raw.url);
+        if (urlSet.has(urlKey)) return;
+
+        const twinIndex = articles.findIndex((e) => sameStory(e.title, raw.title));
+        if (twinIndex >= 0) {
+            const twin = articles[twinIndex];
+            const group = [twin, { ...raw, groupedSources: [] }];
+            const primary = pickPrimary(group);
+            const alts = [];
+            const seenAlt = new Set([normalizeUrl(primary.url)]);
+            const pushAlt = (item) => {
+                const key = normalizeUrl(item.url);
+                if (!key || seenAlt.has(key)) return;
+                seenAlt.add(key);
+                alts.push({
+                    title: item.title || '',
+                    url: item.url || '',
+                    date: item.date || '',
+                    host: (window.StoryGroups && window.StoryGroups.hostOf)
+                        ? window.StoryGroups.hostOf(item.url)
+                        : '',
+                    description: item.description || '',
+                });
+            };
+            pushAlt(twin);
+            (twin.groupedSources || []).forEach(pushAlt);
+            pushAlt(raw);
+            articles[twinIndex] = {
+                ...twin,
+                title: primary.title || twin.title,
+                url: primary.url || twin.url,
+                description: primary.description || twin.description,
+                date: primary.date || twin.date,
+                sourceLabel: primary.sourceLabel || twin.sourceLabel,
+                groupedSources: alts,
+            };
+            urlSet.add(urlKey);
+            return;
+        }
+
+        maxId += 1;
+        const row = { ...raw, id: maxId, addedAt };
+        articles.push(row);
+        fresh.push(row);
+        urlSet.add(urlKey);
+    });
+
+    return { articles, fresh, addedAt };
+}
+
 /** Harvest every article in the window from the enabled sites, then evaluate them. */
 window.sweepPrioritySources = async function () {
     const enabled = prioritySources.filter((s) => s.enabled !== false && s.url);
@@ -7425,8 +7703,7 @@ window.sweepPrioritySources = async function () {
                 until,
                 model,
                 perSourceLimit,
-                existingUrls: articles.map((a) => a.url).filter(Boolean),
-                extraInstructions: document.getElementById('step2-query')?.value.trim() || '',
+                existingUrls: collectWorkspaceArticleUrls(articles),
             }),
         });
 
@@ -7445,51 +7722,52 @@ window.sweepPrioritySources = async function () {
 
         const newArticles = data.articles || [];
         if (newArticles.length === 0) {
-            setPriorityStatus(`Swept ${data.harvested || 0} articles — none met the criteria.`, '#e65100');
+            const pulled = data.harvested || 0;
+            const already = data.alreadyInList || 0;
+            setPriorityStatus(
+                already && pulled
+                    ? `Swept ${pulled} headlines — ${already} were already in the list.`
+                    : `Swept ${pulled} articles — none met the newsletter criteria.`,
+                '#e65100',
+            );
             return;
         }
 
-        // Same merge path as an AI search: dedupe, assign ids, save immediately.
-        const existingUrlSet = new Set(articles.map((a) => normalizeUrl(a.url)));
-        const fresh = newArticles.filter((a) => !existingUrlSet.has(normalizeUrl(a.url)));
-        const maxId = articles.reduce((max, a) => Math.max(max, a.id || 0), 0);
-        const addedAt = new Date().toISOString();
-        fresh.forEach((a, i) => { a.id = maxId + i + 1; a.addedAt = addedAt; });
-
-        articles = articles.concat(fresh);
+        const merge = mergeSweepArticlesIntoWorkspace(articles, newArticles);
+        articles = merge.articles;
+        const fresh = merge.fresh;
+        const addedAt = merge.addedAt;
         saveState();
         renderArticles();
 
         setPriorityStatus(`Swept ${data.harvested} articles, kept ${fresh.length}. Verifying...`, '#2f6e63');
 
-        // Skip verification for Google-News redirect links — they can't be resolved
-        // server-side and verification would drop them.
         const verifiable = fresh.filter((a) => !a.isRedirectLink);
         if (verifiable.length) {
             try {
-                // Pass the pre-existing list so verify can also drop title-level dupes.
-                const verifyResult = await verifyArticlesRemote(verifiable, articles.filter((a) => a.addedAt !== addedAt));
+                const verifyResult = await verifyArticlesRemote(verifiable, [], currentDateWindow());
                 const verified = verifyResult.articles || [];
-
-                // Verification can rewrite a URL (redirect resolution), so title is
-                // carried as a second key — otherwise a rewritten article looks like
-                // one that was dropped.
                 const lookup = new Map();
                 verified.forEach((a) => {
                     lookup.set(normalizeUrl(a.url), a);
                     if (a.title) lookup.set(`t:${a.title.toLowerCase().trim()}`, a);
                 });
                 const find = (a) => lookup.get(normalizeUrl(a.url)) || lookup.get(`t:${String(a.title || '').toLowerCase().trim()}`);
+                const rejectedByUrl = {};
+                (verifyResult.rejected || []).forEach((r) => {
+                    if (r && r.url) rejectedByUrl[normalizeUrl(r.url)] = r.reason || 'rejected';
+                });
 
-                const verifiableIds = new Set(verifiable.map((a) => a.id));
-                articles = articles
-                    .map((a) => {
-                        const v = find(a);
-                        return v ? { ...a, ...v, id: a.id, addedAt: a.addedAt, notes: a.notes } : a;
-                    })
-                    // Drop the ones verification rejected — a dead URL, or a real
-                    // publication date outside the newsletter's window.
-                    .filter((a) => !(verifiableIds.has(a.id) && a.addedAt === addedAt && !find(a)));
+                articles = articles.map((a) => {
+                    if (a.addedAt !== addedAt) return a;
+                    const v = find(a);
+                    if (v) return { ...a, ...v, id: a.id, addedAt: a.addedAt, groupedSources: a.groupedSources || v.groupedSources || [] };
+                    const reason = rejectedByUrl[normalizeUrl(a.url)];
+                    if (reason) return { ...a, status: 'NO', notes: `Not kept: ${reason}`, selected: false };
+                    return a;
+                });
+
+                articles = regroupWorkspaceArticles(articles);
 
                 saveState();
                 renderArticles();
@@ -7497,7 +7775,10 @@ window.sweepPrioritySources = async function () {
                 console.error('Sweep verification failed (articles kept):', verifyErr);
             }
         }
-        setPriorityStatus(`Swept ${data.harvested} articles, added ${articles.filter(a=>a.addedAt===addedAt).length} to the list.` + verifyReportSuffix(), '#2f6e63');
+        articles = regroupWorkspaceArticles(articles);
+        saveState();
+        renderArticles();
+        setPriorityStatus(`Swept ${data.harvested} articles, list now ${articles.length}.` + verifyReportSuffix(), '#2f6e63');
     } catch (err) {
         console.error(err);
         if (isAnthropicCreditError(err.message)) {
@@ -7523,7 +7804,7 @@ function renderPrioritySweepReport(data) {
     const errors = (data.evalErrors || []).length
         ? `<div class="mt-1.5 text-[#c62828]">Some batches failed to evaluate: ${escapeHtml(data.evalErrors.join('; '))}</div>`
         : '';
-    box.innerHTML = `<div class="font-semibold mb-1.5">Sweep: ${data.harvested} pulled, ${data.kept} met the criteria</div>
+    box.innerHTML = `<div class="font-semibold mb-1.5">Sweep: ${data.harvested} pulled, ${data.kept} added from top sources</div>
         <ul class="list-disc ml-5 text-[0.78rem]">${rows}</ul>${errors}`;
     showWithClass(box, 'block');
 }
@@ -7579,8 +7860,10 @@ function currentDateWindow() {
 
 let lastVerifyReport = null;
 
-async function verifyArticlesRemote(rawArticles, existingArticles = []) {
-    const { since, until } = currentDateWindow();
+async function verifyArticlesRemote(rawArticles, existingArticles = [], windowOverride = null) {
+    const { since, until } = windowOverride && (windowOverride.since || windowOverride.until)
+        ? windowOverride
+        : currentDateWindow();
     const response = await fetch('/api/articles/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7609,6 +7892,25 @@ async function verifyArticlesRemote(rawArticles, existingArticles = []) {
         duplicateCount: data.duplicateCount || 0,
         rejected: Array.isArray(data.rejected) ? data.rejected : [],
     };
+}
+
+function rejectedArticlesAsNo(rejected, addedAt) {
+    const keptUrls = new Set();
+    return (Array.isArray(rejected) ? rejected : [])
+        .filter((r) => r && r.url && !keptUrls.has(normalizeUrl(r.url)) && (keptUrls.add(normalizeUrl(r.url)), true))
+        .map((r) => ({
+            title: r.title || r.url,
+            url: r.url,
+            description: '',
+            date: '',
+            status: 'NO',
+            notes: r.reason ? `Not kept: ${r.reason}` : 'Not kept on verify',
+            selected: false,
+            addedAt,
+            needsVerification: false,
+            ranks: {},
+            categories: [],
+        }));
 }
 
 function formatVerifyStatusMessage(keptCount, rejectedCount, duplicateCount = 0) {
@@ -7863,11 +8165,8 @@ if (searchBtn) {
             return;
         }
 
-        if (articles.length > 0) {
-            if (!confirm(`This will replace the ${articles.length} articles currently in the workspace.\n\nMake sure you've saved first if you need them.\n\nContinue?`)) {
-                return;
-            }
-        }
+        // Keep Priority Sources (and anything already in the list). Search adds
+        // to that set and same-story URLs are grouped, including the usual top links.
 
         saveRecentPrompt(prompt);
         setAiQuery(prompt);
@@ -7880,10 +8179,18 @@ if (searchBtn) {
         if (searchStatus) hideWithClass(searchStatus);
 
         try {
+            const priorCount = articles.length;
+            const priorArticles = articles.slice();
             const response = await fetch('/api/articles/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, newsletterName, model, searchEngine }),
+                body: JSON.stringify({
+                    prompt,
+                    newsletterName,
+                    model,
+                    searchEngine,
+                    existingUrls: collectWorkspaceArticleUrls(priorArticles),
+                }),
             });
 
             const data = await parseJsonResponse(
@@ -7902,15 +8209,15 @@ if (searchBtn) {
 
                 // Show + save the raw results immediately so they're never lost,
                 // even if the verification/categorization step below is slow or fails.
-                articles = data.articles;
-                batchFilter = null; // Clear batch filter so new articles show up
+                articles = mergeSearchHitsIntoWorkspace(priorArticles, data.articles);
+                batchFilter = null;
                 saveState();
                 renderArticles();
 
                 if (searchStatus) {
                     searchStatus.textContent = data.stage === 'raw'
-                        ? `Found ${data.articles.length} articles. Verifying & categorizing...`
-                        : `Found ${data.articles.length} articles!`;
+                        ? `Had ${priorCount}, search found ${data.articles.length}. Combined & grouped to ${articles.length}. Verifying new hits...`
+                        : `Combined list: ${articles.length} articles.`;
                     showWithClass(searchStatus, 'inline');
                 }
                 if (nextStep2Btn) {
@@ -7919,16 +8226,40 @@ if (searchBtn) {
 
                 if (data.stage === 'raw') {
                     try {
-                        const verifyResult = await verifyArticlesRemote(data.articles, []);
-                        articles = verifyResult.articles.map(a => ({ ...a, addedAt: addedAtByUrl[normalizeUrl(a.url)] || now }));
+                        const verifyResult = await verifyArticlesRemote(data.articles, [], data.dateWindow);
+                        const verifiedByUrl = {};
+                        verifyResult.articles.forEach((a) => { verifiedByUrl[normalizeUrl(a.url)] = a; });
+                        const rejectedByUrl = {};
+                        (verifyResult.rejected || []).forEach((r) => {
+                            if (r && r.url) rejectedByUrl[normalizeUrl(r.url)] = r.reason || 'rejected';
+                        });
+                        articles = articles.map((a) => {
+                            const url = normalizeUrl(a.url);
+                            const verified = verifiedByUrl[url];
+                            if (verified) {
+                                return {
+                                    ...verified,
+                                    addedAt: a.addedAt || now,
+                                    groupedSources: a.groupedSources || verified.groupedSources || [],
+                                    groupedExpanded: !!a.groupedExpanded,
+                                };
+                            }
+                            const reason = rejectedByUrl[url];
+                            if (reason) {
+                                return { ...a, status: 'NO', notes: `Not kept: ${reason}`, selected: false };
+                            }
+                            return a;
+                        });
+                        articles = regroupWorkspaceArticles(articles);
                         saveState();
                         renderArticles();
                         if (searchStatus) {
-                            searchStatus.textContent = formatVerifyStatusMessage(
-                                articles.length,
-                                verifyResult.rejectedCount,
-                                (data.duplicateCount || 0) + verifyResult.duplicateCount,
-                            );
+                            searchStatus.textContent = `Combined list: ${articles.length} (had ${priorCount} from sources/workspace, search returned ${data.articles.length}). `
+                                + formatVerifyStatusMessage(
+                                    verifyResult.articles.length,
+                                    verifyResult.rejectedCount,
+                                    (data.duplicateCount || 0) + verifyResult.duplicateCount,
+                                );
                         }
                     } catch (verifyErr) {
                         console.error("Verification error (raw articles were kept):", verifyErr);

@@ -38,7 +38,7 @@ Purely local ordinances — one city allowing/banning cannabis delivery, one cou
 Duplicate topics — if this week already covered the same subject, skip it
 International busts — drug seizures from other countries are not newsworthy for this audience
 Anti-cannabis propaganda — articles arguing cannabis is dangerous, causes mental illness, or should remain illegal; do not platform these
-Old articles — anything more than 7 days old unless it's a verified cool find with evergreen value
+Old articles — the app already enforces recency against today's real calendar date. Do not reject 2026 dates as "future" or invent a 7-day cutoff here.
 Too short / no substance — articles under ~300 words or that say nothing beyond what the headline conveys
 Opinion/editorial masquerading as news — flag but do not categorize
 If its a pharmaceutical solution for opioids we aren't promoting that.

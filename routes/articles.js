@@ -8,7 +8,9 @@ const OpenAI = require('openai');
 const fs = require('fs');
 const path = require('path');
 const prioritySources = require('../lib/priority-sources');
-const { searchYouCom, getYouComApiKey } = require('../lib/youcom-search');
+const { searchYouComMany, getYouComApiKey } = require('../lib/youcom-search');
+const { youComQueriesFromPrompt } = require('../lib/search-intent');
+const { collapseStoryGroups } = require('../public/js/story-groups');
 const { shouldRejectArticleUrl } = require('../lib/article-source-domains');
 const { filterDuplicateArticles, dedupeArticleList } = require('../lib/article-dedup');
 
@@ -211,6 +213,33 @@ function isArticleTooOld(dateStr, maxAgeDays = ARTICLE_MAX_AGE_DAYS) {
     cutoff.setDate(cutoff.getDate() - maxAgeDays);
     cutoff.setHours(0, 0, 0, 0);
     return d < cutoff;
+}
+
+function formatReviewerToday() {
+    return new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+}
+
+function isDateAgeComplaint(text) {
+    const t = String(text || '');
+    return /more than \d+ days old|too old|archival|future date|system error|from future|hasn't happened yet|has not happened yet/i.test(t)
+        && /date|dated|old|future|year|september|october|november|december|january|february|march|april|may|june|july|august|\d{4}/i.test(t);
+}
+
+function stripDateAgeFromEditorialFlag(analysis) {
+    if (!analysis || !analysis.flagged) return analysis;
+    const reason = String(analysis.flagReason || '').trim();
+    if (!reason) return analysis;
+    const parts = reason.split(/\s*(?:Additionally,|Also,)\s*/i).map((p) => p.trim()).filter(Boolean);
+    const kept = parts.filter((p) => !isDateAgeComplaint(p));
+    if (kept.length === 0) {
+        return { ...analysis, flagged: false, flagReason: '' };
+    }
+    return { ...analysis, flagReason: kept.join(' ') };
 }
 
 function shouldAutoRejectUrl(url) {
@@ -525,13 +554,19 @@ const analyzeArticleContent = async (article, content) => {
     if (!content || content.length < 300) return { summary: '', flagged: false, flagReason: '' };
 
     const brief = getCategorizationBrief();
+    const today = formatReviewerToday();
+    const articleDate = article.date ? `Confirmed publish date: ${article.date} (MM/DD/YY).` : 'Confirmed publish date: unknown (do not guess age).';
     const systemPrompt = `You are an editorial reviewer for a cannabis/psychedelics newsletter. You will be given the ACTUAL fetched text of a news article, along with our editorial guidelines below.
 
 ${brief}
 
+Today's real calendar date is ${today}. Dates in 2026 are current, not future, and not a system error.
+
+Do NOT reject an article because of publish date, recency, being "more than ${ARTICLE_MAX_AGE_DAYS} days old", archival age, or a "future date". The app already dropped out-of-window articles before this step.
+
 Your job:
 1. Write a factual 2-3 sentence summary of what this article actually says (based only on the fetched text, not the title).
-2. Decide whether this article should be REJECTED under the "Universal Rejection Rules" section above (ads/PR for one brand, press releases, paywalled content, a bill/law that hasn't passed yet and isn't extremely significant, purely local ordinances, international drug busts, anti-cannabis propaganda, opinion/editorial masquerading as news, too short/no real substance, old/archival content more than ${ARTICLE_MAX_AGE_DAYS} days old, TV/video clips instead of written news, Wikipedia or encyclopedia pages). Flagged items are dropped automatically — be strict.
+2. Decide whether this article should be REJECTED under the "Universal Rejection Rules" section above EXCEPT the old-articles/age rule (ads/PR for one brand, press releases, paywalled content, a bill/law that hasn't passed yet and isn't extremely significant, purely local ordinances, international drug busts, anti-cannabis propaganda, opinion/editorial masquerading as news, too short/no real substance, TV/video clips instead of written news, Wikipedia or encyclopedia pages). Flagged items are dropped automatically — be strict on those rules only.
 
 Return ONLY valid JSON, no markdown, no commentary:
 {"summary": "...", "flagged": true or false, "flagReason": "short reason if flagged, empty string otherwise"}`;
@@ -542,17 +577,17 @@ Return ONLY valid JSON, no markdown, no commentary:
             max_tokens: 500,
             system: systemPrompt,
             messages: [
-                { role: 'user', content: `Title: ${article.title || ''}\n\nFetched article text:\n${content.substring(0, 8000)}` },
+                { role: 'user', content: `Title: ${article.title || ''}\n${articleDate}\nToday is ${today}.\n\nFetched article text:\n${content.substring(0, 8000)}` },
             ],
         }, { timeout: 60000 });
 
         const text = getAnthropicTextContent(message).replace(/```json\s*/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(text);
-        return {
+        return stripDateAgeFromEditorialFlag({
             summary: String(parsed.summary || '').trim(),
             flagged: parsed.flagged === true,
             flagReason: String(parsed.flagReason || '').trim(),
-        };
+        });
     } catch (err) {
         console.error(`analyzeArticleContent failed for "${article.title}":`, err.message);
         return { summary: '', flagged: false, flagReason: '' };
@@ -958,17 +993,37 @@ router.post('/search', async (req, res) => {
             : (useClaudeSearch ? 'Claude native web_search' : 'Gemini Search Engine');
         console.log(`Phase 1: Fetching raw search results using ${phase1Label}`);
         let rawSearchResults = "";
+        let youComArticles = [];
+        const { queries: youQueries, intent: searchIntent } = youComQueriesFromPrompt(prompt);
+        const requestedCount = searchIntent.requestedCount || 45;
 
         let existingUrlText = '';
         if (existingUrls && existingUrls.length > 0) {
-            existingUrlText = `\nCRITICAL ANTI-DUPLICATION RULE: The user already has the following articles in their newsletter. You MUST NOT include these articles, and you MUST NOT include any articles from different publishers that cover the exact same story/topic. Find NEW stories only:\n${existingUrls.join('\n')}\n`;
+            existingUrlText = `\nThe user already has these URLs in the workspace. Do not return the same URL again. You MAY return the same news story from a different publisher — the app will group those onto one row:\n${existingUrls.join('\n')}\n`;
         }
 
         if (useYouComSearch) {
             try {
-                const youResult = await searchYouCom(prompt);
+                const todayIso = new Date().toISOString().slice(0, 10);
+                const freshness = searchIntent.since
+                    ? `${searchIntent.since}to${searchIntent.until || todayIso}`
+                    : (process.env.YOUCOM_FRESHNESS || 'week');
+                const youResult = await searchYouComMany(youQueries, {
+                    count: 20,
+                    minResults: Math.min(requestedCount, 50),
+                    freshness,
+                    sinceISO: searchIntent.since || '',
+                    untilISO: searchIntent.until || todayIso,
+                });
+                youComArticles = youResult.articles || [];
+                if (existingUrls && existingUrls.length) {
+                    const skip = new Set(existingUrls.map((u) => String(u).replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase()));
+                    const before = youComArticles.length;
+                    youComArticles = youComArticles.filter((a) => !skip.has(String(a.url || '').replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase()));
+                    console.log(`You.com skipped ${before - youComArticles.length} URL(s) already in the workspace`);
+                }
                 rawSearchResults = `${youResult.rawText}\n\n${existingUrlText}`.trim();
-                console.log(`Phase 1 Complete. You.com returned ${youResult.totalCount} results (${youResult.newsCount} news, ${youResult.webCount} web).`);
+                console.log(`Phase 1 Complete. You.com structured ${youComArticles.length} unique URLs. queries=${JSON.stringify(youQueries)} freshness=${freshness}`);
             } catch (searchErr) {
                 console.error('Phase 1 Search Error (You.com):', searchErr);
                 return res.status(searchErr.status === 401 || searchErr.status === 402 ? 503 : 500).json({
@@ -1034,6 +1089,11 @@ Please return a comprehensive list of the articles you found, including their ti
             }
         }
 
+        let rawArticles = [];
+        if (youComArticles.length) {
+            rawArticles = youComArticles;
+            console.log(`Skipping Phase 2 extract — using ${rawArticles.length} structured You.com URLs.`);
+        } else {
         // --- PHASE 2: JSON EXTRACTION (SELECTED MODEL) ---
         console.log(`Phase 2: Extracting JSON using model ${model}`);
         const extractPrompt = `You are a data extraction assistant. I have performed a web search for articles based on this user request: "${prompt}"
@@ -1101,7 +1161,6 @@ Example format:
             }
         }
 
-        let rawArticles = [];
         try {
             rawArticles = extractJSON(content);
         } catch (e) {
@@ -1122,6 +1181,7 @@ Example format:
                 logId
             });
         }
+        }
 
         console.log(`AI found ${rawArticles.length} articles. Returning raw results before Stage 2 (Verification & Categorization) so nothing is lost if that step is slow.`);
 
@@ -1139,6 +1199,11 @@ Example format:
         if (duplicateCount > 0) {
             console.log(`Search deduped ${duplicateCount} article(s) with matching URL or title.`);
         }
+        const groupedRaw = collapseStoryGroups(dedupedRaw);
+        const hiddenAlts = groupedRaw.reduce((n, a) => n + ((a.groupedSources || []).length), 0);
+        if (hiddenAlts) {
+            console.log(`Story groups: ${groupedRaw.length} rows, ${hiddenAlts} other-site versions tucked behind the primary.`);
+        }
 
         res.json({
             success: true,
@@ -1146,9 +1211,15 @@ Example format:
             source: 'ai',
             stage: 'raw',
             searchEngine: phase1Mode,
-            count: dedupedRaw.length,
+            count: groupedRaw.length,
             duplicateCount,
-            articles: dedupedRaw.map((a, i) => ({ ...a, id: i + 1 })),
+            groupedAltCount: hiddenAlts,
+            articles: groupedRaw.map((a, i) => ({ ...a, id: i + 1 })),
+            dateWindow: {
+                since: searchIntent.since || '',
+                until: searchIntent.until || '',
+            },
+            requestedCount,
         });
 
     } catch (error) {
@@ -1244,7 +1315,7 @@ router.post('/verify', async (req, res) => {
                 return dropArticle(cleaned.url, cleaned.title, 'no confirmable publish date');
             }
 
-            if (cleaned.date && isArticleTooOld(cleaned.date)) {
+            if (cleaned.date && isArticleTooOld(cleaned.date) && !since && !until) {
                 return dropArticle(cleaned.url, cleaned.title, `older than ${ARTICLE_MAX_AGE_DAYS} days (${cleaned.date})`);
             }
 
@@ -2391,7 +2462,7 @@ INV — business & investment: M&A, earnings, stock moves, fundraising, major mu
 const REJECT_BRIEF = `Reject an article when it is: a pure company press release (unless it is M&A, major earnings, or major clinical-trial results); an advertisement, sponsored post, or the site's own promotion (conferences, webinars, memberships, internships, fundraising appeals, podcast episodes); a duplicate of another article in this batch; or off-topic for all four newsletters.`;
 
 function buildSourceEvaluationPrompt(items, options) {
-    const { since, until, extraInstructions } = options;
+    const { since, until } = options;
     const window = since || until
         ? `Only keep articles published between ${since || 'any date'} and ${until || 'today'}. The date of each candidate is given; if a date is missing, keep the article and leave its date empty.`
         : 'No date restriction.';
@@ -2414,9 +2485,10 @@ REJECTION RULES:
 ${REJECT_BRIEF}
 
 DATE RULE: ${window}
+Today's real calendar date is ${formatReviewerToday()}. Dates in 2026 are current, not future.
 
 SOURCE RULES: Each candidate may carry its own "SOURCE RULES". Those restrictions are mandatory for articles from that source.
-${extraInstructions ? `\nADDITIONAL INSTRUCTIONS FROM THE EDITOR (these override the general rules where they conflict):\n${extraInstructions}\n` : ''}
+Do not treat the Article Search / Find Articles box as extra instructions. Judge only the category, rejection, date, and source rules above.
 CANDIDATES:
 ${candidates}
 
@@ -2523,24 +2595,21 @@ router.post('/priority-sources/sweep', express.json(), async (req, res) => {
             model,
             existingUrls = [],
             perSourceLimit = 40,
-            extraInstructions = '',
         } = req.body || {};
 
         const sources = normalizeSourceList(rawSources).filter((s) => s.enabled);
         if (sources.length === 0) return res.status(400).json({ error: 'No enabled sources to sweep.' });
 
-        const provider = resolveAiProvider(model);
-        if (provider.error) return res.status(503).json({ error: provider.error, configured: false });
-
         console.log(`Priority sweep: ${sources.length} sources, since=${since || 'any'}, until=${until || 'today'}`);
 
-        // Stage 1 — harvest (network only, no AI spend).
+        // Stage 1 — harvest (network only). Keep every in-window URL. An editor model
+        // used to omit most of them; verify still flags ads/roundups as NO afterwards.
         const harvests = await prioritySources.mapLimited(sources, 3, async (source) => {
             try {
                 return await prioritySources.harvestSource(source, {
                     sinceISO: since || null,
                     untilISO: until || null,
-                    limit: Math.min(Number(perSourceLimit) || 40, 60),
+                    limit: Math.min(Number(perSourceLimit) || 40, 80),
                 });
             } catch (error) {
                 return { source: source.url, label: source.label, method: null, blocked: true, items: [], notes: [error.message] };
@@ -2549,10 +2618,16 @@ router.post('/priority-sources/sweep', express.json(), async (req, res) => {
 
         const seen = new Set((existingUrls || []).map((u) => String(u).replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase()));
         const candidates = [];
+        let alreadyInList = 0;
+        let harvestedRaw = 0;
         for (const harvest of harvests) {
+            harvestedRaw += (harvest.items || []).length;
             for (const item of harvest.items) {
                 const key = String(item.url).replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
-                if (seen.has(key)) continue;
+                if (seen.has(key)) {
+                    alreadyInList += 1;
+                    continue;
+                }
                 seen.add(key);
                 candidates.push(item);
             }
@@ -2573,68 +2648,36 @@ router.post('/priority-sources/sweep', express.json(), async (req, res) => {
                 success: true,
                 stage: 'raw',
                 articles: [],
-                harvested: 0,
+                harvested: harvestedRaw,
+                alreadyInList,
                 kept: 0,
                 sources: sourceReport,
-                message: 'No new articles found in that window (everything found was already in the workspace).',
+                message: alreadyInList
+                    ? 'Those headlines were already in the workspace (including grouped other-site versions).'
+                    : 'No new articles found in that window.',
             });
         }
 
-        // Stage 2 — evaluate in batches so one oversized prompt can't blow the context.
-        const BATCH = 20;
-        const batches = [];
-        for (let i = 0; i < candidates.length; i += BATCH) batches.push(candidates.slice(i, i + BATCH));
-
-        // Batches run a few at a time: a full sweep can be 100+ articles, and doing
-        // them one after another risks hitting the serverless request timeout.
-        const evalErrors = [];
-        const batchResults = await mapWithConcurrency(batches, 3, async (batch) => {
-            try {
-                const content = await evaluateSourceBatch(batch, provider, { since, until, extraInstructions });
-                const decisions = extractJSON(content);
-                const out = [];
-                for (const decision of Array.isArray(decisions) ? decisions : []) {
-                    const item = batch[Number(decision.index)];
-                    if (!item) continue;
-                    const ranks = decision.ranks && typeof decision.ranks === 'object' ? decision.ranks : {};
-                    const categories = Object.keys(ranks).filter((c) => ['MED', 'THC', 'CBD', 'INV'].includes(c));
-                    if (categories.length === 0) continue;
-                    out.push({
-                        title: decision.title || item.title,
-                        url: item.url,
-                        description: decision.description || item.description || '',
-                        date: item.date || '',
-                        categories,
-                        ranks: categories.reduce((acc, c) => ({ ...acc, [c]: ranks[c] === 'Y' ? 'Y' : 'YM' }), {}),
-                        // Notes stays empty — that column is the user's own scratch space.
-                        // The source is kept on sourceLabel, which the UI and the
-                        // duplicate grouper read directly.
-                        notes: '',
-                        status: 'Y',
-                        paywall: false,
-                        sourceLabel: item.sourceLabel,
-                        isRedirectLink: !!item.isRedirectLink,
-                    });
-                }
-                return out;
-            } catch (error) {
-                console.error('Priority sweep evaluation batch failed:', error);
-                evalErrors.push(parseAIError(error));
-                return [];
-            }
+        const kept = candidates.map((item) => {
+            const base = {
+                title: item.title,
+                url: item.url,
+                description: item.description || '',
+                date: item.date || '',
+                notes: '',
+                status: 'Y',
+                paywall: false,
+                sourceLabel: item.sourceLabel,
+                isRedirectLink: !!item.isRedirectLink,
+            };
+            const cleaned = cleanArticleData(base, 0);
+            const categorized = categorizeArticle(cleaned, item.description || '') || cleaned;
+            return categorized;
         });
-        const kept = batchResults.flat();
-
-        if (kept.length === 0 && evalErrors.length) {
-            return res.status(500).json({ error: `Evaluation failed: ${evalErrors[0]}`, sources: sourceReport, harvested: candidates.length });
-        }
 
         const articles = kept.map((a, i) => ({
-            ...cleanArticleData(a, 0),
+            ...a,
             id: i + 1,
-            categories: a.categories,
-            ranks: a.ranks,
-            notes: a.notes,
             sourceLabel: a.sourceLabel,
             isRedirectLink: a.isRedirectLink,
             needsVerification: true,
@@ -2644,10 +2687,11 @@ router.post('/priority-sources/sweep', express.json(), async (req, res) => {
             success: true,
             stage: 'raw',
             source: 'priority-sweep',
-            harvested: candidates.length,
+            harvested: harvestedRaw,
+            alreadyInList,
             kept: articles.length,
             sources: sourceReport,
-            evalErrors,
+            evalErrors: [],
             articles,
         });
     } catch (error) {
